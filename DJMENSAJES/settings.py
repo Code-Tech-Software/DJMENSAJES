@@ -13,7 +13,7 @@ ALLOWED_HOSTS = ['*']
 
 # CAMBIAR POR LA RUTA QUE DA RAILWAY
 CSRF_TRUSTED_ORIGINS = [
-    "https://grupoem.up.railway.app/",
+    "https://grupoem.up.railway.app",
 ]
 
 INSTALLED_APPS = [
