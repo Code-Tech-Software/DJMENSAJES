@@ -13,7 +13,7 @@ ALLOWED_HOSTS = ['*']
 
 # CAMBIAR POR LA RUTA QUE DA RAILWAY
 CSRF_TRUSTED_ORIGINS = [
-    "https://osmit.up.railway.app",
+    "https://grupoem.up.railway.app/",
 ]
 
 INSTALLED_APPS = [
@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic'
     'eventos',
     'channels'
 ]
@@ -33,6 +34,7 @@ LOGOUT_REDIRECT_URL = 'login'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,5 +110,18 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",  # Esta línea le indica a Django que busque los archivos estáticos en la carpeta "static"
 ]
+
+
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # recolecta todo lo estatic
+
+STORAGES = {
+    #"default": {
+    #    "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    #},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
