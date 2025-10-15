@@ -1,3 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ evento.nombre_evento }}</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
 
 <div>
   <h1>{{ evento.nombre_evento }}</h1>
@@ -19,7 +29,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   // Manejo de cookies
   function setCookie(nombre, valor, dias=7) {
@@ -149,3 +158,5 @@
   // Inicializar UI al cargar
   actualizarUI();
 </script>
+</body>
+</html>
