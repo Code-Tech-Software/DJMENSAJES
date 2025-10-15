@@ -1,1 +1,1 @@
-web:  python manage.py collectstatic && gunicorn DJMENSAJES.wsgi
+web: gunicorn DJMENSAJES.wsgi
