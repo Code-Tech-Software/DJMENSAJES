@@ -26,7 +26,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'whitenoise.runserver_nostatic',
     'eventos',
-    'channels'
+    'channels',
+    'cloudinary',  # cloudinary
+    'cloudinary_storage',  # cloudinary
 ]
 
 LOGIN_URL = 'login'
@@ -64,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'DJMENSAJES.wsgi.application'
 
-# Channels y Redis C
+# Channels y Redis
 ASGI_APPLICATION = 'DJMENSAJES.asgi.application'
 
 CHANNEL_LAYERS = {
@@ -98,10 +100,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-LANGUAGE_CODE = 'es-mx'  # Español (México)
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
+TIME_ZONE = 'America/Mexico_City'
+USE_I18N = True  # Activar internacionalización
+USE_L10N = True  # Activar localización
+USE_TZ = True  # Activar soporte para zonas horarias
 
 STATIC_URL = 'static/'
 
@@ -114,12 +116,22 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # recolecta todo lo estatic
 
 STORAGES = {
-    #"default": {
-    #    "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    #},
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+MEDIA_URL = '/media/'  # URL base para los archivos multimedia

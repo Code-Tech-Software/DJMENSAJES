@@ -1,6 +1,35 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
+
+class SonidoDJ(models.Model):
+    nombre = models.CharField(max_length=200)
+    eslogan = models.TextField(blank=True, null=True)
+    facebook = models.URLField(blank=True, null=True)
+    whatsapp = models.CharField(max_length=50, blank=True, null=True)
+    instagram = models.URLField(blank=True, null=True)
+    tiktok = models.URLField(blank=True, null=True)
+    imagen1 = models.ImageField(upload_to='sonidos/', blank=True, null=True)
+    imagen2 = models.ImageField(upload_to='sonidos/', blank=True, null=True)
+    estado = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nombre
+
+
+class Banner(models.Model):
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, null=True)
+    imagen1 = models.ImageField(upload_to='banners/', blank=True, null=True)
+    imagen2 = models.ImageField(upload_to='banners/', blank=True, null=True)
+    imagen3 = models.ImageField(upload_to='banners/', blank=True, null=True)
+    estado = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nombre
+
+
 class Evento(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='eventos')
     nombre_evento = models.CharField(max_length=200)
@@ -14,22 +43,10 @@ class Evento(models.Model):
         ]
     )
     password_vip = models.CharField(max_length=100)
-    banner = models.CharField(
-        max_length=100,
-        choices=[
-            ('banner1', 'Banner 1'),
-            ('banner2', 'Banner 2'),
-            ('banner3', 'Banner 3'),
-        ]
-    )
-    sonido_dj = models.CharField(
-        max_length=100,
-        choices=[
-            ('dj1', 'Sonido DJ 1'),
-            ('dj2', 'Sonido DJ 2'),
-            ('dj3', 'Sonido DJ 3'),
-        ]
-    )
+    # 🔁 Relaciones dinámicas
+    banner = models.ForeignKey(Banner, on_delete=models.SET_NULL, null=True, blank=True, related_name='eventos')
+    sonido_dj = models.ForeignKey(SonidoDJ, on_delete=models.SET_NULL, null=True, blank=True, related_name='eventos')
+
     fecha_inicio_evento = models.DateTimeField()
     fecha_fin_evento = models.DateTimeField()
     cooldown = models.FloatField(help_text="Tiempo en minutos para enviar nuevo mensaje")
