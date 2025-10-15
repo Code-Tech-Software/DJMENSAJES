@@ -64,7 +64,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'DJMENSAJES.wsgi.application'
 
-# Channels y Redis Configuración
+# Channels y Redis C
 ASGI_APPLICATION = 'DJMENSAJES.asgi.application'
 
 CHANNEL_LAYERS = {
