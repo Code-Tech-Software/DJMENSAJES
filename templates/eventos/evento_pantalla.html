@@ -1,22 +1,21 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="container text-center mt-5">
+
+<div>
   <h1>{{ evento.nombre_evento }}</h1>
   <p>Tipo: {{ evento.get_tipo_evento_display }}</p>
 
-  <div class="mb-3">
-    <span id="nombreDisplay" class="fw-bold"></span>
-    <span id="vipBadge" class="badge bg-warning text-dark ms-2" style="display:none;">VIP ⭐</span>
-    <button id="cerrarSesion" class="btn btn-sm btn-outline-secondary ms-2" style="display:none;">Cerrar sesión</button>
+  <div>
+    <span id="nombreDisplay"></span>
+    <span id="vipBadge" style="display:none;">VIP ⭐</span>
+    <button id="cerrarSesion" style="display:none;">Cerrar sesión</button>
   </div>
 
-  <div class="mt-4">
-    <button id="btnSaludo" class="btn btn-primary">👋 Enviar saludo</button>
-    <button id="btnCancion" class="btn btn-success">🎵 Pedir canción</button>
+  <div>
+    <button id="btnSaludo">👋 Enviar saludo</button>
+    <button id="btnCancion">🎵 Pedir canción</button>
   </div>
 
-  <div class="mt-4">
-    <button id="btnVIP" class="btn btn-warning">⭐ Acceder como VIP</button>
+  <div>
+    <button id="btnVIP">⭐ Acceder como VIP</button>
   </div>
 </div>
 
@@ -150,4 +149,3 @@
   // Inicializar UI al cargar
   actualizarUI();
 </script>
-{% endblock %}
