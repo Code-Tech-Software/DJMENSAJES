@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>🎧 Panel del DJ - {{ evento.nombre_evento }}</h1>
+<div id="mensajes" style="height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+  <ul id="lista-mensajes"></ul>
+</div>
+
+<script>
+const eventoId = "{{ evento.id }}";
+const ws = new WebSocket(`ws://${window.location.host}/ws/evento/${eventoId}/`);
+
+const lista = document.getElementById('lista-mensajes');
+
+function agregarMensaje(data) {
+  const li = document.createElement('li');
+  li.innerHTML = `<strong>${data.nombre}</strong>: ${data.mensaje}`;
+  if (data.vip) {
+    li.style.background = "#ffefc4";
+    li.style.fontWeight = "bold";
+  }
+  lista.prepend(li);
+}
+
+ws.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+  if (data.type === 'init') {
+    data.mensajes.reverse().forEach(agregarMensaje);
+  } else if (data.type === 'mensaje') {
+    agregarMensaje(data.mensaje);
+  }
+};
+</script>
+{% endblock %}

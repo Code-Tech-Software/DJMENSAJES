@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Editar evento{% endblock %}
+{% block content %}
+<h2>Editar evento: {{ evento.nombre_evento }}</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success">Guardar cambios</button>
+  <a href="{% url 'mis_eventos' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}
