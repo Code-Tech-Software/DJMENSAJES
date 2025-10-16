@@ -1,11 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Mis eventos{% endblock %}
 {% block content %}
-
     <h2>Mis eventos</h2>
-
     <a href="{% url 'crear_evento' %}">➕ Crear nuevo evento</a>
-
     <table>
         <thead>
         <tr>
@@ -33,10 +30,14 @@
                 </td>
                 <td>
                     <a href="{% url 'editar_evento' evento.id %}">✏️ Editar</a>
-                    <button class="btn-eliminar" data-id="{{ evento.id }}" data-nombre="{{ evento.nombre_evento }}">
-                        🗑️ Eliminar
-                    </button>
                     <a href="{% url 'detalle_evento' evento.id %}">🔗 Ver enlaces</a>
+                    
+                    <form action="{% url 'eliminar_evento' evento.id %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('¿Estás seguro de que deseas eliminar este evento?');" class="btn-eliminar">
+                            🗑️ Eliminar
+                        </button>
+                    </form>
                 </td>
 
             </tr>
@@ -47,68 +48,6 @@
         {% endfor %}
         </tbody>
     </table>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const botones = document.querySelectorAll(".btn-eliminar");
-            botones.forEach(boton => {
-                boton.addEventListener("click", function () {
-                    const id = this.dataset.id;
-                    const nombre = this.dataset.nombre;
-
-                    Swal.fire({
-                        title: `¿Eliminar "${nombre}"?`,
-                        text: "Esta acción no se puede deshacer.",
-                        icon: "warning",
-                        showCancelButton: true,
-                        confirmButtonText: "Sí, eliminar",
-                        cancelButtonText: "Cancelar"
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            fetch(`/eventos/${id}/eliminar/`, {
-                                method: "POST",
-                                headers: {
-                                    "X-CSRFToken": getCookie("csrftoken")
-                                }
-                            }).then(response => {
-                                if (response.ok) {
-                                    Swal.fire({
-                                        icon: "success",
-                                        title: "Eliminado",
-                                        text: `"${nombre}" fue eliminado correctamente.`,
-                                        timer: 1500,
-                                        showConfirmButton: false
-                                    });
-                                    document.getElementById(`evento-${id}`).remove();
-                                } else {
-                                    Swal.fire({
-                                        icon: "error",
-                                        title: "Error",
-                                        text: "No se pudo eliminar el evento."
-                                    });
-                                }
-                            });
-                        }
-                    });
-                });
-            });
-
-            // Obtener el token CSRF para eliminar
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== "") {
-                    const cookies = document.cookie.split(";");
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + "=")) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
-        });
-    </script>
+    
 
 {% endblock %}

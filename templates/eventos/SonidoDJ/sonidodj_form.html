@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Editar Sonido{% else %}Crear Sonido{% endif %}{% endblock %}
+
+{% block content %}
+    <h2>{% if object %}Editar Sonido DJ{% else %}Agregar Nuevo Sonido DJ{% endif %}</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar</button>
+        <a href="{% url 'sonidodj_list' %}">Cancelar</a>
+    </form>
+{% endblock %}

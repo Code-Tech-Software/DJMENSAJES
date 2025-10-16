@@ -2,13 +2,15 @@
 {% load static %}
 {% block title %}Inicio{% endblock %}
 {% block content %}
-<div class="text-center">
-  <h1>Bienvenido a DJMENSAJES</h1>
-  <img src="{% static 'img/importancia.jpg' %}" alt="Imagen de bienffvenida" >
-  {% if user.is_authenticated %}
-    <p><a href="{% url 'crear_evento' %}" class="btn btn-primary">Crear nuevo evento</a></p>
-  {% else %}
-    <p><a href="{% url 'login' %}" class="btn btn-primary">Inicia sesión para crear eventos</a></p>
-  {% endif %}
-</div>
+    <div class="text-center">
+        <h1>Bienvenido a DJMENSAJES</h1>
+        <img src="{% static 'img/importancia.jpg' %}" alt="Imagen de bienffvenida">
+        <a href="{% url 'sonidodj_list' %}">Administrar Sonidos DJ</a>
+        <a href="{% url 'banner_list' %}">Administrar Banners</a>
+        {% if user.is_authenticated %}
+            <p><a href="{% url 'crear_evento' %}" class="btn btn-primary">Crear nuevo evento</a></p>
+        {% else %}
+            <p><a href="{% url 'login' %}" class="btn btn-primary">Inicia sesión para crear eventos</a></p>
+        {% endif %}
+    </div>
 {% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Lista de Banners{% endblock %}
+
+{% block content %}
+    <h2>Banners</h2>
+    <a href="{% url 'banner_crear' %}">➕ Agregar Nuevo Banner</a>
+    <hr>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for banner in banners %}
+            <tr>
+                <td>{{ banner.nombre }}</td>
+                <td>{% if banner.estado %}✅ Activo{% else %}❌ Inactivo{% endif %}</td>
+                <td class="actions">
+                    <a href="{% url 'banner_editar' banner.pk %}">✏️ Editar</a>
+                    <form action="{% url 'banner_eliminar' banner.pk %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('¿Estás seguro?')">🗑️ Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No hay banners registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

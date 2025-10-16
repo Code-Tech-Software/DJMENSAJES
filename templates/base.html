@@ -1,47 +1,211 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}DJMENSAJES{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DJMENSAJES{% endblock %}</title>
+    
+    <style>
+        /* --- Reset Básico y Fuentes --- */
+        :root {
+            --primary-color: #2c3e50; /* Azul oscuro */
+            --secondary-color: #3498db; /* Azul brillante */
+            --light-gray: #ecf0f1;
+            --text-color: #34495e;
+            --sidebar-width: 240px;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            transition: margin-left 0.3s ease;
+        }
+
+        /* --- Diseño Principal (Sidebar + Contenido) --- */
+        .sidebar {
+            height: 100%;
+            width: var(--sidebar-width);
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            background-color: var(--primary-color);
+            overflow-x: hidden;
+            padding-top: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* --- Estilos del Sidebar --- */
+        .sidebar-header {
+            padding: 10px 25px;
+            text-align: center;
+        }
+
+        .sidebar-header a {
+            color: white;
+            font-size: 1.8em;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 1.1em;
+            color: #bdc3c7;
+            display: block;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .sidebar-nav li a:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        /* --- Estilos del Topbar (Barra Superior) --- */
+        .topbar {
+            background-color: white;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info form {
+            margin: 0;
+        }
+        
+        .user-info button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .user-info button:hover {
+            background-color: #c0392b;
+        }
+
+        /* --- Botón de Menú (Hamburguesa) --- */
+        .menu-toggle {
+            display: none; /* Oculto en pantallas grandes */
+            font-size: 2em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        /* --- Lógica Responsive --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%); /* Oculta el sidebar fuera de la pantalla */
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block; /* Muestra el botón en pantallas pequeñas */
+            }
+            /* Clase que se añade con JS para mostrar el sidebar */
+            body.sidebar-open .sidebar {
+                transform: translateX(0);
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <nav>
-    <a href="{% url 'home' %}">🎧 DJMENSAJES</a>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'home' %}">🎧 DJMENSAJES</a>
+        </div>
+        <ul class="sidebar-nav">
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'mis_eventos' %}">Mis Eventos</a></li>
+                <li><a href="#">Mi Perfil</a></li>
+                <hr style="border-color: #34495e;">
+                <li><a href="{% url 'sonidodj_list' %}">Admin Sonidos</a></li>
+                <li><a href="{% url 'banner_list' %}">Admin Banners</a></li>
+            {% else %}
+                <li><a href="{% url 'login' %}">Entrar</a></li>
+                <li><a href="{% url 'registro' %}">Registro</a></li>
+            {% endif %}
+        </ul>
+    </aside>
 
-    {% if user.is_authenticated %}
-      <span>👋 Hola, <strong>{{ user.username }}</strong></span>
-      <a href="{% url 'mis_eventos' %}">Mis eventos</a>
-      <form method="post" action="{% url 'logout' %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit">Salir</button>
-      </form>
-    {% else %}
-      <a href="{% url 'login' %}">Entrar</a>
-      <a href="{% url 'registro' %}">Registro</a>
-    {% endif %}
-  </nav>
+    <div class="main-content">
+        <header class="topbar">
+            <button class="menu-toggle" id="menu-toggle">&#9776;</button> <div class="user-info">
+                {% if user.is_authenticated %}
+                    <span>👋 Hola, <strong>{{ user.username }}</strong></span>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit">Salir</button>
+                    </form>
+                {% else %}
+                    <span>¡Bienvenido!</span>
+                {% endif %}
+            </div>
+        </header>
 
-  <main>
-    {% block content %}
-    {% endblock %}
-  </main>
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      {% if messages %}
-        {% for message in messages %}
-          Swal.fire({
-            icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}",
-            title: "{{ message|escapejs }}",
-            showConfirmButton: false,
-            timer: 2000
-          });
-        {% endfor %}
-      {% endif %}
-    });
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Script para las alertas de mensajes de Django
+        document.addEventListener("DOMContentLoaded", function() {
+            {% if messages %}
+                {% for message in messages %}
+                    Swal.fire({
+                        icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}",
+                        title: "{{ message|escapejs }}",
+                        showConfirmButton: false,
+                        timer: 2500,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                {% endfor %}
+            {% endif %}
+
+            // Script para el menú responsive
+            const menuToggle = document.getElementById('menu-toggle');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('sidebar-open');
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>

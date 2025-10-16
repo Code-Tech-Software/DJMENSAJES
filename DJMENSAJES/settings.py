@@ -1,8 +1,8 @@
-
 from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,6 +15,8 @@ ALLOWED_HOSTS = ['*']
 # CAMBIAR POR LA RUTA QUE DA RAILWAY
 CSRF_TRUSTED_ORIGINS = [
     "https://grupoem.up.railway.app",
+    "https://www.grupoem.site",
+    "https://grupoem.site",
 ]
 
 INSTALLED_APPS = [
@@ -78,11 +80,9 @@ CHANNEL_LAYERS = {
     },
 }
 
-
 DATABASES = {
     'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -111,8 +111,6 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",  # Esta línea le indica a Django que busque los archivos estáticos en la carpeta "static"
 ]
 
-
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # recolecta todo lo estatic
 
 STORAGES = {
@@ -131,7 +129,5 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
 
 MEDIA_URL = '/media/'  # URL base para los archivos multimedia

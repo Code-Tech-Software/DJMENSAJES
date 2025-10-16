@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-
 class SonidoDJ(models.Model):
     nombre = models.CharField(max_length=200)
     eslogan = models.TextField(blank=True, null=True)
@@ -43,7 +42,6 @@ class Evento(models.Model):
         ]
     )
     password_vip = models.CharField(max_length=100)
-    # 🔁 Relaciones dinámicas
     banner = models.ForeignKey(Banner, on_delete=models.SET_NULL, null=True, blank=True, related_name='eventos')
     sonido_dj = models.ForeignKey(SonidoDJ, on_delete=models.SET_NULL, null=True, blank=True, related_name='eventos')
 

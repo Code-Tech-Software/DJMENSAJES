@@ -1,9 +1,32 @@
-from django.shortcuts import render, redirect
+# --- Librerías estándar ---
+import io
+import json
+import base64
+import qrcode
+
+# --- Django: Atajos y utilidades ---
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse, reverse_lazy
+from django.http import JsonResponse
+from django.contrib import messages
+
+# --- Django: Autenticación ---
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from .models import Evento
-from .forms import EventoForm
+
+# --- Django: Vistas y decoradores ---
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, CreateView, UpdateView
+
+# --- Django Channels ---
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+# --- Modelos y Formularios locales ---
+from .models import Evento, SonidoDJ, Banner, Mensaje
+from .forms import EventoForm, SonidoDJForm, BannerForm
 
 def home(request):
     return render(request, 'home.html')
@@ -37,10 +60,6 @@ def mis_eventos(request):
     eventos = Evento.objects.filter(usuario=request.user)
     return render(request, 'eventos/mis_eventos.html', {'eventos': eventos})
 
-
-from django.shortcuts import get_object_or_404
-from django.contrib import messages
-
 @login_required
 def editar_evento(request, id):
     evento = get_object_or_404(Evento, id=id, usuario=request.user)
@@ -55,36 +74,9 @@ def editar_evento(request, id):
     return render(request, 'eventos/editar_evento.html', {'form': form, 'evento': evento})
 
 
-from django.http import JsonResponse
-#SE VIENE LO PERRO
-@login_required
-def eliminar_evento(request, id):
-    evento = get_object_or_404(Evento, id=id, usuario=request.user)
-    if request.method == 'POST':
-        evento.delete()
-        return JsonResponse({'ok': True})
-    return JsonResponse({'ok': False}, status=400)
-
-
-
 def pantalla_evento(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     return render(request, 'eventos/evento_pantalla.html', {'evento': evento})
-
-
-import json
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from .models import Evento, Mensaje
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-from .models import Mensaje, Evento
-
 
 @csrf_exempt
 def enviar_mensaje(request, evento_id):
@@ -105,7 +97,6 @@ def enviar_mensaje(request, evento_id):
             vip=vip,
             evento=evento
         )
-
         # Enviar mensaje en tiempo real al grupo WebSocket
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -124,22 +115,15 @@ def enviar_mensaje(request, evento_id):
         )
 
         return JsonResponse({'ok': True, 'msg': 'Mensaje enviado con éxito 🎉'})
-
     return JsonResponse({'ok': False, 'msg': 'Método no permitido'}, status=405)
 
-from django.shortcuts import render, get_object_or_404
-from .models import Evento
+
 
 def panel_dj(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     return render(request, 'eventos/panel_dj.html', {'evento': evento})
 
-import qrcode
-import io
-import base64
-from django.shortcuts import render, get_object_or_404
-from .models import Evento  # Ajusta el import a tu modelo real
-from django.urls import reverse
+
 
 def detalle_evento(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
@@ -160,3 +144,54 @@ def detalle_evento(request, evento_id):
         "qr_base64": qr_base64,
     })
 
+
+@require_POST
+def eliminar_evento(request, evento_id):
+    evento = get_object_or_404(Evento, pk=evento_id)
+    evento.delete()
+    return redirect('mis_eventos')
+
+# Vistas para el modelo SonidoDJ
+class SonidoDJListView(ListView):
+    model = SonidoDJ
+    template_name = 'eventos/SonidoDJ/sonidodj_list.html'
+    context_object_name = 'sonidos'
+
+class SonidoDJCreateView(CreateView):
+    model = SonidoDJ
+    form_class = SonidoDJForm
+    template_name = 'eventos/SonidoDJ/sonidodj_form.html'
+    success_url = reverse_lazy('sonidodj_list')
+
+class SonidoDJUpdateView(UpdateView):
+    model = SonidoDJ
+    form_class = SonidoDJForm
+    template_name = 'eventos/SonidoDJ/sonidodj_form.html'
+    success_url = reverse_lazy('sonidodj_list')
+@require_POST # Solo permite peticiones POST
+def sonidodj_eliminar(request, pk):
+    sonido = get_object_or_404(SonidoDJ, pk=pk)
+    sonido.delete()
+    return redirect('sonidodj_list')
+
+# Vistas para el modelo Banner
+class BannerListView(ListView):
+    model = Banner
+    template_name = 'eventos/Banner/banner_list.html'
+    context_object_name = 'banners'
+
+class BannerCreateView(CreateView):
+    model = Banner
+    form_class = BannerForm
+    template_name = 'eventos/Banner/banner_form.html'
+    success_url = reverse_lazy('banner_list')
+class BannerUpdateView(UpdateView):
+    model = Banner
+    form_class = BannerForm
+    template_name = 'eventos/Banner/banner_form.html'
+    success_url = reverse_lazy('banner_list')
+@require_POST # Solo permite peticiones POST
+def banner_eliminar(request, pk):
+    banner = get_object_or_404(Banner, pk=pk)
+    banner.delete()
+    return redirect('banner_list')
