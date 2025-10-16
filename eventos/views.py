@@ -133,3 +133,30 @@ from .models import Evento
 def panel_dj(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     return render(request, 'eventos/panel_dj.html', {'evento': evento})
+
+import qrcode
+import io
+import base64
+from django.shortcuts import render, get_object_or_404
+from .models import Evento  # Ajusta el import a tu modelo real
+from django.urls import reverse
+
+def detalle_evento(request, evento_id):
+    evento = get_object_or_404(Evento, id=evento_id)
+
+    url_pantalla = request.build_absolute_uri(f"/eventos/evento/{evento.id}/")
+    url_panel_dj = request.build_absolute_uri(f"/eventos/evento/{evento.id}/panel_dj/")
+
+    # Generar el QR con la URL de la pantalla del evento
+    qr = qrcode.make(url_pantalla)
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    return render(request, "eventos/detalle_evento.html", {
+        "evento": evento,
+        "url_pantalla": url_pantalla,
+        "url_panel_dj": url_panel_dj,
+        "qr_base64": qr_base64,
+    })
+

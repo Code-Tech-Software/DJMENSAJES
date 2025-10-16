@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Detalles de {{ evento.nombre_evento }}{% endblock %}
+{% block content %}
+
+<h2>Detalles del evento: {{ evento.nombre_evento }}</h2>
+
+<p><strong>Tipo:</strong> {{ evento.get_tipo_evento_display }}</p>
+<p><strong>Fecha inicio:</strong> {{ evento.fecha_inicio_evento|date:"d/m/Y H:i" }}</p>
+<p><strong>Fecha fin:</strong> {{ evento.fecha_fin_evento|date:"d/m/Y H:i" }}</p>
+
+<hr>
+
+<h3>Accesos</h3>
+<p>
+  <a href="{{ url_pantalla }}" target="_blank">🎥 Ver pantalla del evento</a><br>
+  <a href="{{ url_panel_dj }}" target="_blank">🎧 Ir al panel DJ</a>
+</p>
+
+<h3>Código QR</h3>
+<img src="data:image/png;base64,{{ qr_base64 }}" alt="QR del evento">
+
+<hr>
+<a href="{% url 'mis_eventos' %}">⬅️ Volver a mis eventos</a>
+
+{% endblock %}

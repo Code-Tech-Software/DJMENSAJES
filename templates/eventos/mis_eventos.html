@@ -1,110 +1,114 @@
 {% extends 'base.html' %}
 {% block title %}Mis eventos{% endblock %}
 {% block content %}
-<h2 class="mb-3">Mis eventos</h2>
 
-<a href="{% url 'crear_evento' %}" class="btn btn-primary mb-3">➕ Crear nuevo evento</a>
+    <h2>Mis eventos</h2>
 
-<table class="table table-striped align-middle">
-  <thead class="table-dark">
-    <tr>
-      <th>Nombre</th>
-      <th>Tipo</th>
-      <th>Inicio</th>
-      <th>Fin</th>
-      <th>Estado</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for evento in eventos %}
-      <tr id="evento-{{ evento.id }}">
-        <td>{{ evento.nombre_evento }}</td>
-        <td>{{ evento.get_tipo_evento_display }}</td>
-        <td>{{ evento.fecha_inicio_evento|date:"d/m/Y H:i" }}</td>
-        <td>{{ evento.fecha_fin_evento|date:"d/m/Y H:i" }}</td>
-        <td>
-          {% if evento.estado %}
-            <span class="badge bg-success">Activo</span>
-          {% else %}
-            <span class="badge bg-secondary">Inactivo</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'editar_evento' evento.id %}" class="btn btn-sm btn-warning">✏️ Editar</a>
-          <button class="btn btn-sm btn-danger btn-eliminar" data-id="{{ evento.id }}" data-nombre="{{ evento.nombre_evento }}">
-            🗑️ Eliminar
-          </button>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6" class="text-center text-muted">No tienes eventos creados.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <a href="{% url 'crear_evento' %}">➕ Crear nuevo evento</a>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const botones = document.querySelectorAll(".btn-eliminar");
-    botones.forEach(boton => {
-      boton.addEventListener("click", function() {
-        const id = this.dataset.id;
-        const nombre = this.dataset.nombre;
+    <table>
+        <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Inicio</th>
+            <th>Fin</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for evento in eventos %}
+            <tr id="evento-{{ evento.id }}">
+                <td>{{ evento.nombre_evento }}</td>
+                <td>{{ evento.get_tipo_evento_display }}</td>
+                <td>{{ evento.fecha_inicio_evento|date:"d/m/Y H:i" }}</td>
+                <td>{{ evento.fecha_fin_evento|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if evento.estado %}
+                        Activo
+                    {% else %}
+                        Inactivo
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'editar_evento' evento.id %}">✏️ Editar</a>
+                    <button class="btn-eliminar" data-id="{{ evento.id }}" data-nombre="{{ evento.nombre_evento }}">
+                        🗑️ Eliminar
+                    </button>
+                    <a href="{% url 'detalle_evento' evento.id %}">🔗 Ver enlaces</a>
+                </td>
 
-        Swal.fire({
-          title: `¿Eliminar "${nombre}"?`,
-          text: "Esta acción no se puede deshacer.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#d33",
-          cancelButtonColor: "#3085d6",
-          confirmButtonText: "Sí, eliminar",
-          cancelButtonText: "Cancelar"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/eventos/${id}/eliminar/`, {
-              method: "POST",
-              headers: {
-                "X-CSRFToken": getCookie("csrftoken")
-              }
-            }).then(response => {
-              if (response.ok) {
-                Swal.fire({
-                  icon: "success",
-                  title: "Eliminado",
-                  text: `"${nombre}" fue eliminado correctamente.`,
-                  timer: 1500,
-                  showConfirmButton: false
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6">No tienes eventos creados.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const botones = document.querySelectorAll(".btn-eliminar");
+            botones.forEach(boton => {
+                boton.addEventListener("click", function () {
+                    const id = this.dataset.id;
+                    const nombre = this.dataset.nombre;
+
+                    Swal.fire({
+                        title: `¿Eliminar "${nombre}"?`,
+                        text: "Esta acción no se puede deshacer.",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Sí, eliminar",
+                        cancelButtonText: "Cancelar"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(`/eventos/${id}/eliminar/`, {
+                                method: "POST",
+                                headers: {
+                                    "X-CSRFToken": getCookie("csrftoken")
+                                }
+                            }).then(response => {
+                                if (response.ok) {
+                                    Swal.fire({
+                                        icon: "success",
+                                        title: "Eliminado",
+                                        text: `"${nombre}" fue eliminado correctamente.`,
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                    document.getElementById(`evento-${id}`).remove();
+                                } else {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Error",
+                                        text: "No se pudo eliminar el evento."
+                                    });
+                                }
+                            });
+                        }
+                    });
                 });
-                document.getElementById(`evento-${id}`).remove();
-              } else {
-                Swal.fire({
-                  icon: "error",
-                  title: "Error",
-                  text: "No se pudo eliminar el evento."
-                });
-              }
             });
-          }
-        });
-      });
-    });
 
-    // Función para obtener el token CSRF
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + "=")) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
-    }
-  });
-</script>
+            // Obtener el token CSRF para eliminar
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== "") {
+                    const cookies = document.cookie.split(";");
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+
 {% endblock %}

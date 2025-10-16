@@ -10,6 +10,7 @@ urlpatterns = [
     path('evento/<int:evento_id>/', views.pantalla_evento, name='pantalla_evento'),
     path('evento/<int:evento_id>/enviar/', views.enviar_mensaje, name='enviar_mensaje'),
 
-path('evento/<int:evento_id>/panel_dj/', views.panel_dj, name='panel_dj'),
+    path('evento/<int:evento_id>/panel_dj/', views.panel_dj, name='panel_dj'),
+    path('evento/<int:evento_id>/detalle/', views.detalle_evento, name='detalle_evento'),
 
 ]

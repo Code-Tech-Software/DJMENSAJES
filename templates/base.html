@@ -1,74 +1,47 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}DJMENSAJES{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="{% url 'home' %}">🎧 DJMENSAJES</a>
+  <nav>
+    <a href="{% url 'home' %}">🎧 DJMENSAJES</a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav align-items-center">
-          {% if user.is_authenticated %}
-            <li class="nav-item me-3 text-light">
-              👋 Hola, <strong>{{ user.username }}</strong>
-            </li>
-            <li class="nav-item me-2">
-              <a href="{% url 'mis_eventos' %}" class="btn btn-outline-light btn-sm">Mis eventos</a>
-            </li>
-            <li class="nav-item">
-              <form method="post" action="{% url 'logout' %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">Salir</button>
-              </form>
-            </li>
-          {% else %}
-            <li class="nav-item me-2">
-              <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Entrar</a>
-            </li>
-            <li class="nav-item">
-              <a href="{% url 'registro' %}" class="btn btn-success btn-sm">Registro</a>
-            </li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
+    {% if user.is_authenticated %}
+      <span>👋 Hola, <strong>{{ user.username }}</strong></span>
+      <a href="{% url 'mis_eventos' %}">Mis eventos</a>
+      <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Salir</button>
+      </form>
+    {% else %}
+      <a href="{% url 'login' %}">Entrar</a>
+      <a href="{% url 'registro' %}">Registro</a>
+    {% endif %}
   </nav>
 
-  <div class="container mt-4">
+  <main>
     {% block content %}
     {% endblock %}
-  </div>
+  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-<script>
-  // Mostrar mensajes de Django con SweetAlert2
-  document.addEventListener("DOMContentLoaded", function() {
-    {% if messages %}
-      {% for message in messages %}
-        Swal.fire({
-          icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}",
-          title: "{{ message|escapejs }}",
-          showConfirmButton: false,
-          timer: 2000
-        });
-      {% endfor %}
-    {% endif %}
-  });
-</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      {% if messages %}
+        {% for message in messages %}
+          Swal.fire({
+            icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}",
+            title: "{{ message|escapejs }}",
+            showConfirmButton: false,
+            timer: 2000
+          });
+        {% endfor %}
+      {% endif %}
+    });
+  </script>
 
 </body>
 </html>
