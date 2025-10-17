@@ -26,10 +26,28 @@ from channels.layers import get_channel_layer
 
 # --- Modelos y Formularios locales ---
 from .models import Evento, SonidoDJ, Banner, Mensaje
-from .forms import EventoForm, SonidoDJForm, BannerForm
+from .forms import EventoForm, SonidoDJForm, BannerForm, LoginForm
 
+
+@login_required()
 def home(request):
     return render(request, 'home.html')
+
+
+def iniciar_sesion(request):
+    if request.method == 'POST':
+        form = LoginForm(data=request.POST)
+        if form.is_valid():
+            usuario = form.get_user()
+            login(request, usuario)
+            return redirect('home')
+        else:
+            form.errors.pop('__all__', None)  # Remueve el mensaje de Django
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+    else:
+        form = LoginForm()
+    return render(request, 'login.html', {'form': form})
+
 
 def registro(request):
     if request.method == 'POST':

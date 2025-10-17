@@ -4,6 +4,8 @@ from .views import SonidoDJListView, SonidoDJUpdateView, sonidodj_eliminar, Soni
     BannerListView, BannerUpdateView, banner_eliminar
 
 urlpatterns = [
+
+
     path('nuevo/', views.crear_evento, name='crear_evento'),
     path('mis_eventos/', views.mis_eventos, name='mis_eventos'),
     path('<int:id>/editar/', views.editar_evento, name='editar_evento'),
