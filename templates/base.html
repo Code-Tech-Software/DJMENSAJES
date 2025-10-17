@@ -4,208 +4,353 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DJMENSAJES{% endblock %}</title>
-    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- Reset Básico y Fuentes --- */
         :root {
-            --primary-color: #2c3e50; /* Azul oscuro */
-            --secondary-color: #3498db; /* Azul brillante */
-            --light-gray: #ecf0f1;
-            --text-color: #34495e;
-            --sidebar-width: 240px;
+            --primary-color: #6f42c1;
+            --secondary-color: #6610f2;
+            --dark-color: #343a40;
+            --light-color: #f8f9fa;
+            --sidebar-width: 250px;
+            --navbar-height: 60px;
         }
-
+        
         body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--light-gray);
-            color: var(--text-color);
-            transition: margin-left 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding-top: var(--navbar-height);
         }
-
-        /* --- Diseño Principal (Sidebar + Contenido) --- */
-        .sidebar {
-            height: 100%;
-            width: var(--sidebar-width);
+        
+        /* Navbar styles */
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            height: var(--navbar-height);
             position: fixed;
-            z-index: 1000;
             top: 0;
             left: 0;
-            background-color: var(--primary-color);
-            overflow-x: hidden;
-            padding-top: 20px;
-            transition: transform 0.3s ease;
+            right: 0;
+            z-index: 1030;
         }
-
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 20px;
-            transition: margin-left 0.3s ease;
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
         }
-
-        /* --- Estilos del Sidebar --- */
-        .sidebar-header {
-            padding: 10px 25px;
-            text-align: center;
-        }
-
-        .sidebar-header a {
-            color: white;
-            font-size: 1.8em;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .sidebar-nav {
-            list-style: none;
-            padding: 20px 0;
-            margin: 0;
-        }
-
-        .sidebar-nav li a {
-            padding: 15px 25px;
-            text-decoration: none;
-            font-size: 1.1em;
-            color: #bdc3c7;
-            display: block;
-            transition: background-color 0.2s, color 0.2s;
-        }
-
-        .sidebar-nav li a:hover {
-            background-color: var(--secondary-color);
+        
+        .navbar-toggler {
+            border: none;
             color: white;
         }
-
-        /* --- Estilos del Topbar (Barra Superior) --- */
-        .topbar {
-            background-color: white;
-            padding: 10px 20px;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        
+        .navbar-toggler:focus {
+            box-shadow: none;
         }
         
         .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            color: white;
+            margin-right: 15px;
         }
-
-        .user-info form {
+        
+        .btn-logout {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .btn-logout:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: var(--navbar-height);
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--navbar-height));
+            background-color: white;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            z-index: 1020;
+            overflow-y: auto;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid #eee;
+            background-color: var(--light-color);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
             margin: 0;
         }
         
-        .user-info button {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+        .sidebar-menu li {
+            margin: 0;
         }
-
-        .user-info button:hover {
-            background-color: #c0392b;
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--dark-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
         }
-
-        /* --- Botón de Menú (Hamburguesa) --- */
-        .menu-toggle {
-            display: none; /* Oculto en pantallas grandes */
-            font-size: 2em;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-color);
+        
+        .sidebar-menu a:hover {
+            background-color: rgba(111, 66, 193, 0.1);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
         }
-
-        /* --- Lógica Responsive --- */
-        @media (max-width: 768px) {
+        
+        .sidebar-menu a.active {
+            background-color: rgba(111, 66, 193, 0.15);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
             .sidebar {
-                transform: translateX(-100%); /* Oculta el sidebar fuera de la pantalla */
+                transform: translateX(-100%);
             }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
             .main-content {
                 margin-left: 0;
             }
-            .menu-toggle {
-                display: block; /* Muestra el botón en pantallas pequeñas */
-            }
-            /* Clase que se añade con JS para mostrar el sidebar */
-            body.sidebar-open .sidebar {
-                transform: translateX(0);
-            }
+        }
+        
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1015;
+            display: none;
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        /* Custom card for content */
+        .content-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <a href="{% url 'home' %}">🎧 DJMENSAJES</a>
-        </div>
-        <ul class="sidebar-nav">
-            {% if user.is_authenticated %}
-                <li><a href="{% url 'mis_eventos' %}">Mis Eventos</a></li>
-                <li><a href="#">Mi Perfil</a></li>
-                <hr style="border-color: #34495e;">
-                <li><a href="{% url 'sonidodj_list' %}">Admin Sonidos</a></li>
-                <li><a href="{% url 'banner_list' %}">Admin Banners</a></li>
-            {% else %}
-                <li><a href="{% url 'login' %}">Entrar</a></li>
-                <li><a href="{% url 'registro' %}">Registro</a></li>
-            {% endif %}
-        </ul>
-    </aside>
-
-    <div class="main-content">
-        <header class="topbar">
-            <button class="menu-toggle" id="menu-toggle">&#9776;</button> <div class="user-info">
-                {% if user.is_authenticated %}
-                    <span>👋 Hola, <strong>{{ user.username }}</strong></span>
-                    <form method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button type="submit">Salir</button>
-                    </form>
-                {% else %}
-                    <span>¡Bienvenido!</span>
-                {% endif %}
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid">
+            <!-- Botón para abrir/cerrar sidebar en móviles -->
+            <button class="navbar-toggler me-2" type="button" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-music me-2"></i>GrupoEM
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <span class="user-info nav-link">
+                            <i class="fas fa-user me-1"></i>Bienvenido, <strong>{{ user.username }}</strong>
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-logout btn-sm">
+                                <i class="fas fa-sign-out-alt me-1"></i>Salir
+                            </button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
             </div>
-        </header>
+        </div>
+    </nav>
 
-        <main>
-            {% block content %}
-            {% endblock %}
-        </main>
+    <!-- Overlay para móviles -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5 class="mb-0">Menú de Navegación</h5>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'mis_eventos' %}" data-page="mis_eventos">
+                    <i class="fas fa-calendar-alt"></i> Administrar Eventos
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'sonidodj_list' %}" data-page="sonidodj_list">
+                    <i class="fas fa-volume-up"></i> Sonidos DJ
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'banner_list' %}" data-page="banner_list">
+                    <i class="fas fa-image"></i> Banners
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'registro' %}" data-page="registro">
+                    <i class="fas fa-users"></i> Usuarios Registro
+                </a>
+            </li>
+            <li>
+                <a href="#" data-page="configuracion">
+                    <i class="fas fa-cog"></i> Configuración
+                </a>
+            </li>
+            <li>
+                <a href="#" data-page="ayuda">
+                    <i class="fas fa-question-circle"></i> Ayuda
+                </a>
+            </li>
+        </ul>
     </div>
 
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="content-card">
+            {% block content %}
+            <!-- Aquí irá el contenido específico de cada página -->
+            <h2>Bienvenido al Sistema DJMensajes</h2>
+            <p>Selecciona una opción del menú lateral para comenzar.</p>
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
-        // Script para las alertas de mensajes de Django
-        document.addEventListener("DOMContentLoaded", function() {
+        // Control del sidebar en móviles
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mainContent = document.getElementById('mainContent');
+            
+            // Función para abrir/cerrar sidebar en móviles
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+            }
+            
+            // Eventos para el botón del sidebar
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+            
+            // Cerrar sidebar al hacer clic en un enlace (en móviles)
+            const sidebarLinks = document.querySelectorAll('.sidebar-menu a');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 992) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            // Función para marcar el elemento activo según la URL
+            function setActiveMenuItem() {
+                const currentUrl = window.location.href;
+                const menuItems = document.querySelectorAll('.sidebar-menu a');
+                
+                menuItems.forEach(item => {
+                    // Remover clase active de todos los elementos
+                    item.classList.remove('active');
+                    
+                    // Verificar si la URL actual contiene la URL del enlace
+                    if (currentUrl.includes(item.getAttribute('href'))) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                // Si no hay ningún elemento activo y estamos en la página principal,
+                // marcar el primer elemento como activo
+                const activeItems = document.querySelectorAll('.sidebar-menu a.active');
+                if (activeItems.length === 0 && currentUrl.includes('home')) {
+                    menuItems[0].classList.add('active');
+                }
+            }
+            
+            // Llamar a la función cuando se carga la página
+            setActiveMenuItem();
+            
+            // SweetAlert para mensajes
             {% if messages %}
                 {% for message in messages %}
                     Swal.fire({
                         icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}",
                         title: "{{ message|escapejs }}",
                         showConfirmButton: false,
-                        timer: 2500,
-                        toast: true,
-                        position: 'top-end'
+                        timer: 2000
                     });
                 {% endfor %}
             {% endif %}
-
-            // Script para el menú responsive
-            const menuToggle = document.getElementById('menu-toggle');
-            if (menuToggle) {
-                menuToggle.addEventListener('click', function() {
-                    document.body.classList.toggle('sidebar-open');
-                });
-            }
         });
     </script>
-
 </body>
 </html>
