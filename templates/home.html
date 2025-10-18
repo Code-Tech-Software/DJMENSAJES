@@ -1,23 +1,38 @@
 {% extends 'base.html' %}
-
-{% load static %}
+{% block title %}Lista de Sonidos DJ{% endblock %}
 
 {% block content %}
-  <h1>dwsfxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxds</h1>
-    <br>
-     <h1>dwsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxfds</h1>
-    <br>
-     <h1>dxxxxxxxxxxxxxxxxxxxxxxxwsfds</h1>
-    <br>
-     <h1>dwsfds</h1>
-    <br>
-     <h1>dwsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxfds</h1>
-    <br>
-     <h1>dwsfxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxds</h1>
-    <br> <h1>dwsfds</h1>
-    <br>
-     <h1>dwsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxfds</h1>
-    <br>
-    
-
+    <h2>Sonidos DJ</h2>
+    <a href="{% url 'sonidodj_crear' %}">➕ Agregar Nuevo Sonido</a>
+    <hr>
+    <table>
+        <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Eslogan</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for sonido in sonidos %}
+            <tr>
+                <td>{{ sonido.nombre }}</td>
+                <td>{{ sonido.eslogan }}</td>
+                <td>{% if sonido.estado %}✅ Activo{% else %}❌ Inactivo{% endif %}</td>
+                <td class="actions">
+                    <a href="{% url 'sonidodj_editar' sonido.pk %}">✏️ Editar</a>
+                    <form action="{% url 'sonidodj_eliminar' sonido.pk %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('¿Estás seguro?')">🗑️ Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="3">No hay sonidos registrados.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

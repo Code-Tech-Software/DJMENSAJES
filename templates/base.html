@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSMIT SISTEM</title>
+    <title>GRUPO EM</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-DQvkBjpPgn7RC31MCQoOeC9TI2kdqa4+BSgNMNj8v77fdC77Kj5zpWFTJaaAoMbC" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
@@ -47,61 +47,60 @@
 </style>
 <body>
 
-<header class="navbar bg-light border-bottom position-fixed top-0 w-100 shadow-sm px-3 d-flex justify-content-end align-items-center gap-3"
+<header class="navbar bg-light border-bottom position-fixed top-0 w-100 shadow-sm px-3 d-flex align-items-center gap-3"
         style="height: 65px;z-index: 1;">
+ <!-- Logo solo visible en pantallas pequeñas (móviles) -->
+    <img src="{% static 'img/grupo-em-neg.png' %}" alt="Logo"
+         class="d-block d-md-none" 
+         style="height: 60%; width: auto;">
 
-   <!-- Botón del sidebar ahora en el lado izquierdo -->
-   
-        <div class="menu-btn sidebar-btn mt-2" id="sidebar-btn">
-            <i class='bx bx-menu'></i>
-            <i class='bx bx-x'></i>
-        </div>
+    <div class="menu-btn sidebar-btn mt-2" id="sidebar-btn">
+        <i class='bx bx-menu'></i>
+        <i class='bx bx-x'></i>
+    </div>
 
-    
-
-
-    <!-- Icono pantalla completa -->
     <i id="fullscreenToggle"
-       class="bi bi-arrows-fullscreen fs-5 icon-hover"
+       class="bi bi-arrows-fullscreen fs-5 icon-hover ms-auto"
        style="cursor: pointer;"></i>
 
-    <!-- Icono de recargar con animación de spinner -->
     <i class="bi bi-arrow-clockwise fs-5 icon-hover"
        style="cursor: pointer;"
        id="reloadIcon"></i>
 
 
-    <!-- Usuario con menú -->
     <div class="position-relative user-menu me-5">
         <div class="d-flex align-items-center user-hover" id="userToggle" style="cursor: pointer;">
             {% if user.foto %}
                 <img src="{{ user.foto.url }}" class="rounded-circle me-2 object-fit-cover" alt="Avatar" width="32"
                      height="32">
             {% else %}
-                <img src="{% static 'img/defaltperfil.jpg' %}"
+                <img src="{% static 'img/perfil.png' %}"
                      class="rounded-circle me-2" alt="Avatar" width="32" height="32">
             {% endif %}
             <div>
                 <span class="fw-bold d-block">Hola! {{ user.first_name }}</span>
-                <small class="text-muted">{{ user.rol.nombre|default:"Sin rol" }}</small>
+                <small class="text-muted">{{ user.username|default:"Sin rol" }}</small>
             </div>
         </div>
 
-        <!-- Dropdown -->
         <div class="dropdown-menu-user shadow-sm border rounded bg-white py-2 px-2" id="userDropdown">
             <a href="#" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
                 <i class="bi bi-person"></i> Ver perfil
             </a>
-            <a href="{% url 'logout' %}" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
-                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-            </a>
+       
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                </button>
+            </form>
+
+
         </div>
     </div>
 
-
 </header>
-
-
 
 
 <div class="dark-mode-btn" id="dark-mode-btn">
@@ -114,9 +113,10 @@
         </div>
         <div class="brand">
             <img class="brand-light"
-                 src="https://cdn.shopify.com/s/files/1/0650/9042/0995/files/Logotipo-Osmit-Sombreado.png?height=628&pad_color=fff&v=1655916959&width=1200"
+                 src="{% static 'img/isotipo.png' %}"
+
                  alt="logo">
-            <span>Osmit</span>
+            <span>Grupo EM</span>
         </div>
     </div>
     <div class="menu-container">
