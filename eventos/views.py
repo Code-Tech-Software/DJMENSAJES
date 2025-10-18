@@ -60,6 +60,7 @@ def registro(request):
         form = UserCreationForm()
     return render(request, 'registro.html', {'form': form})
 
+
 @login_required
 def crear_evento(request):
     if request.method == 'POST':
@@ -73,10 +74,12 @@ def crear_evento(request):
         form = EventoForm()
     return render(request, 'eventos/crear_evento.html', {'form': form})
 
+
 @login_required
 def mis_eventos(request):
-    eventos = Evento.objects.filter(usuario=request.user)
+    eventos = Evento.objects.filter(usuario=request.user).order_by('-id')
     return render(request, 'eventos/mis_eventos.html', {'eventos': eventos})
+
 
 @login_required
 def editar_evento(request, id):
@@ -95,6 +98,7 @@ def editar_evento(request, id):
 def pantalla_evento(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     return render(request, 'eventos/evento_pantalla.html', {'evento': evento})
+
 
 @csrf_exempt
 def enviar_mensaje(request, evento_id):
@@ -136,11 +140,9 @@ def enviar_mensaje(request, evento_id):
     return JsonResponse({'ok': False, 'msg': 'Método no permitido'}, status=405)
 
 
-
 def panel_dj(request, evento_id):
     evento = get_object_or_404(Evento, id=evento_id)
     return render(request, 'eventos/panel_dj.html', {'evento': evento})
-
 
 
 def detalle_evento(request, evento_id):
@@ -163,17 +165,21 @@ def detalle_evento(request, evento_id):
     })
 
 
-@require_POST
+@login_required()
 def eliminar_evento(request, evento_id):
     evento = get_object_or_404(Evento, pk=evento_id)
     evento.delete()
+    messages.success(request, "Evento eliminado correctamente.")
     return redirect('mis_eventos')
+
 
 # Vistas para el modelo SonidoDJ
 class SonidoDJListView(ListView):
     model = SonidoDJ
     template_name = 'eventos/SonidoDJ/sonidodj_list.html'
     context_object_name = 'sonidos'
+    ordering = ['-id']
+
 
 class SonidoDJCreateView(CreateView):
     model = SonidoDJ
@@ -181,35 +187,67 @@ class SonidoDJCreateView(CreateView):
     template_name = 'eventos/SonidoDJ/sonidodj_form.html'
     success_url = reverse_lazy('sonidodj_list')
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Sonido creado correctamente.")
+        return response
+
+
 class SonidoDJUpdateView(UpdateView):
     model = SonidoDJ
     form_class = SonidoDJForm
     template_name = 'eventos/SonidoDJ/sonidodj_form.html'
     success_url = reverse_lazy('sonidodj_list')
-@require_POST # Solo permite peticiones POST
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Sonido actualizado correctamente.")
+        return response
+
+
+@login_required()
 def sonidodj_eliminar(request, pk):
     sonido = get_object_or_404(SonidoDJ, pk=pk)
     sonido.delete()
+    messages.success(request, "Sonido eliminado correctamente.")
     return redirect('sonidodj_list')
+
 
 # Vistas para el modelo Banner
 class BannerListView(ListView):
     model = Banner
     template_name = 'eventos/Banner/banner_list.html'
     context_object_name = 'banners'
+    ordering = ['-id']
+
 
 class BannerCreateView(CreateView):
     model = Banner
     form_class = BannerForm
     template_name = 'eventos/Banner/banner_form.html'
     success_url = reverse_lazy('banner_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Banner creado correctamente.")
+        return response
+
+
 class BannerUpdateView(UpdateView):
     model = Banner
     form_class = BannerForm
     template_name = 'eventos/Banner/banner_form.html'
     success_url = reverse_lazy('banner_list')
-@require_POST # Solo permite peticiones POST
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Banenr actualizado correctamente.")
+        return response
+
+
+@login_required()
 def banner_eliminar(request, pk):
     banner = get_object_or_404(Banner, pk=pk)
     banner.delete()
+    messages.success(request, "Banner eliminado correctamente.")
     return redirect('banner_list')

@@ -1,0 +1,164 @@
+:root {
+    --primary-color: #4E73DF;
+    --primary-hover: #3b5cc7;
+
+    --success-color: #1CC88A;
+    --success-hover: #17a673;
+
+    --info-color: #36B9CC;
+    --info-hover: #2c9faf;
+
+    --warning-color: #F6C23E;
+    --warning-hover: #d9a932;
+
+    --danger-color: #E74A3B;
+    --danger-hover: #c0392b;
+
+    --secondary-color: #858796;
+    --secondary-hover: #6c6e7a;
+
+    --light-color: #F8F9FC;
+    --light-hover: #e2e6ea;
+
+    --dark-color: #5A5C69;
+    --dark-hover: #44464f;
+
+    --text-dark: #212529;
+    --text-light: #ffffff;
+}
+
+/* Botones personalizados */
+.btn-custom-primary {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.btn-custom-primary:hover {
+    background-color: var(--primary-hover);
+    color: var(--text-light);
+}
+
+.btn-custom-success {
+    background-color: var(--success-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.btn-custom-success:hover {
+    background-color: var(--success-hover);
+    color: var(--text-light);
+}
+
+.btn-custom-info {
+    background-color: var(--info-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.btn-custom-info:hover {
+    background-color: var(--info-hover);
+    color: var(--text-light);
+}
+
+.btn-custom-warning {
+    background-color: var(--warning-color);
+    color: var(--text-dark);
+    border: none;
+}
+
+.btn-custom-warning:hover {
+    background-color: var(--warning-hover);
+    color: var(--text-dark);
+}
+
+.btn-custom-danger {
+    background-color: var(--danger-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.btn-custom-danger:hover {
+    background-color: var(--danger-hover);
+    color: var(--text-light);
+}
+
+.btn-custom-secondary {
+    background-color: var(--secondary-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.btn-custom-secondary:hover {
+    background-color: var(--secondary-hover);
+    color: var(--text-light);
+}
+
+.btn-custom-light {
+    background-color: var(--light-color);
+    color: var(--text-dark);
+    border: none;
+}
+
+.btn-custom-light:hover {
+    background-color: var(--light-hover);
+    color: var(--text-dark);
+}
+
+.btn-custom-dark {
+    background-color: var(--dark-color);
+    color: var(--text-light);
+    border: none;
+}
+
+.btn-custom-dark:hover {
+    background-color: var(--dark-hover);
+    color: var(--text-light);
+}
+
+
+/*Switch*/
+.form-check-input:checked {
+    background-color: var(--success-color) !important;
+    border-color: var(--success-hover) !important;
+}
+
+
+.bg-custom-success {
+    background-color: var(--success-color)
+}
+
+.bg-custom-danger {
+    background-color: var(--danger-color);
+}
+
+
+.bg-custom-warning {
+    background-color: var(--warning-color);
+}
+
+
+
+
+
+
+
+
+
+
+/*esto es de los card y fondo*/
+body {
+    background: linear-gradient(120deg, #fdfdfd, #e5eef4);
+}
+
+.custom-card {
+    width: 100%;
+    margin: 0;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+
