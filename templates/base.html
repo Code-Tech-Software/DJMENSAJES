@@ -49,9 +49,8 @@
 
 <header class="navbar bg-light border-bottom position-fixed top-0 w-100 shadow-sm px-3 d-flex align-items-center gap-3"
         style="height: 65px;z-index: 1;">
- <!-- Logo solo visible en pantallas pequeñas (móviles) -->
-    <img src="{% static 'img/grupo-em-neg.png' %}" alt="Logo"
-         class="d-block d-md-none" 
+
+    <img src="{% static 'img/grupo-em-neg.png' %}" alt="Logo" id="mobile-logo"
          style="height: 60%; width: auto;">
 
     <div class="menu-btn sidebar-btn mt-2" id="sidebar-btn">
@@ -87,7 +86,7 @@
             <a href="#" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
                 <i class="bi bi-person"></i> Ver perfil
             </a>
-       
+
 
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
@@ -123,58 +122,29 @@
 
         <ul class="menu">
 
-            <li class="menu-item menu-item-static {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                <a href="#" class="menu-link">
+            <li class="menu-item menu-item-static {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <a href="{% url 'home' %}" class="menu-link">
                     <i class='bx bx-home-alt-2'></i>
                     <span>Home</span>
                 </a>
             </li>
 
-
-            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'registrar_entrada' or request.resolver_match.url_name == 'registrar_salida' or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'lista_salidas' or request.resolver_match.url_name == 'lista_cortes' %}active{% endif %}">
+            <!-- EVENTOS -->
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'mis_eventos' %}active{% endif %}">
                 <a href="#" class="menu-link">
                     <i class='bx bx-cube'></i>
-                    <span>Granel</span>
+                    <span>Eventos</span>
                     <i class='bx bx-chevron-down'></i>
                 </a>
                 <ul class="sub-menu">
-                    <li><a href="#" class="sub-menu-link">Registrar Entrada</a></li>
-                    <li><a href="#" class="sub-menu-link">Registrar Salida</a></li>
-
-                </ul>
-            </li>
-
-
-            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'registrar_pedido_produccion' or request.resolver_match.url_name == 'turnos_asignados' or request.resolver_match.url_name == 'lista_productos_granel' or request.resolver_match.url_name == 'lista_productos_terminados' or request.resolver_match.url_name == 'lista_pedidos_produccion' %}active{% endif %}">
-                <a href="#" class="menu-link">
-                    <i class='bx bx-rocket'></i>
-                    <span>Producción</span>
-                    <i class='bx bx-chevron-down'></i>
-                </a>
-                <ul class="sub-menu">
-                    <li><a href="#" class="sub-menu-link">Realizar Pedido</a></li>
-                    <li><a href="#" class="sub-menu-link">Inventario Terminado</a></li>
-                </ul>
-            </li>
-
-
-            <!-- RUTAS -->
-
-            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'listar_vehiculos' or request.resolver_match.url_name == 'listar_rutas' or request.resolver_match.url_name == 'listar_clientes' %}active{% endif %}">
-                <a href="#" class="menu-link">
-                    <i class='bx bx-map'></i>
-                    <span>Rutas</span>
-                    <i class='bx bx-chevron-down'></i>
-                </a>
-                <ul class="sub-menu">
-                    <li><a href="#" class="sub-menu-link">Vehículos</a></li>
+                    <li><a href="{% url 'mis_eventos' %}" class="sub-menu-link">Lista de Eventos</a></li>
                 </ul>
             </li>
 
 
             <!-- ADMINISTRAR -->
 
-            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'listar_turnos' or request.resolver_match.url_name == 'listar_roles' or request.resolver_match.url_name == 'gestionar_usuarios' or request.resolver_match.url_name == 'lista_proveedores' or request.resolver_match.url_name == 'lista_categorias' or request.resolver_match.url_name == 'lista_gramajes' or request.resolver_match.url_name == 'lista_presentaciones' %}active{% endif %}">
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'sonidodj_list' or request.resolver_match.url_name == 'banner_list'  %}active{% endif %}">
                 <a href="#" class="menu-link">
                     <i class='bx bx-wrench'></i>
                     <span>Administrar</span>
@@ -182,31 +152,13 @@
                 </a>
                 <ul class="sub-menu">
 
-                    <li><a href="#" class="sub-menu-link">Turnos</a></li>
-                    <li><a href="#" class="sub-menu-link">Roles</a></li>
+                    <li><a href="{% url 'sonidodj_list' %}" class="sub-menu-link">Colaboradoes</a></li>
+                    <li><a href="{% url 'banner_list' %}" class="sub-menu-link">Banners</a></li>
 
 
                 </ul>
             </li>
 
-
-            <!-- INVENTARIOS -->
-
-            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'listar_productos_granel' or request.resolver_match.url_name == 'listar_productosPT' %}active{% endif %}">
-                <a href="#" class="menu-link">
-                    <i class='bx bx-data'></i>
-                    <span>Inventarios</span>
-                    <i class='bx bx-chevron-down'></i>
-                </a>
-                <ul class="sub-menu">
-
-                    <li><a href="#" class="sub-menu-link">Producto Granel</a>
-                    </li>
-                    <li><a href="#" class="sub-menu-link">Producto Terminado</a>
-                    </li>
-
-                </ul>
-            </li>
 
         </ul>
     </div>

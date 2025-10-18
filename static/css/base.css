@@ -393,7 +393,7 @@ Responsive */
         padding: 2rem;
     }
 }
-@media (max-width:700px) or (max-height:683px){
+@media (max-width:700px), (max-height:683px){
     #menu-btn{
         display: none;
     }
@@ -426,6 +426,17 @@ Responsive */
 
 
 
+/* Logo visible solo en móviles */
+#mobile-logo {
+    display: none; /* oculto por defecto en pantallas grandes */
+}
+
+/* Mostrar el logo solo en móviles o pantallas bajas */
+@media (max-width:700px), (max-height:683px) {
+    #mobile-logo {
+        display: block;
+    }
+}
 
 
 
