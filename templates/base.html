@@ -1,468 +1,283 @@
+{% load static %}
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}DJMENSAJES{% endblock %}</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #6f42c1;
-            --secondary-color: #6610f2;
-            --dark-color: #343a40;
-            --light-color: #f8f9fa;
-            --sidebar-width: 250px;
-            --navbar-height: 60px;
-        }
+    <title>OSMIT SISTEM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-DQvkBjpPgn7RC31MCQoOeC9TI2kdqa4+BSgNMNj8v77fdC77Kj5zpWFTJaaAoMbC" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Notificaciones con Notyf -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.js"></script>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            padding-top: var(--navbar-height);
-        }
 
-        /* Navbar styles */
-        .navbar-custom {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            height: var(--navbar-height);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: white !important;
-        }
-
-        .navbar-toggler {
-            border: none;
-            color: white;
-        }
-
-        .navbar-toggler:focus {
-            box-shadow: none;
-        }
-
-        /* Estilos mejorados para la sección de usuario */
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-welcome {
-            color: white;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .btn-logout-custom {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-logout-custom:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-login-custom {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            color: var(--primary-color);
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-login-custom:hover {
-            background: white;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Dropdown de usuario (opción alternativa) */
-        .user-dropdown .dropdown-toggle {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            border-radius: 20px;
-            padding: 6px 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .user-dropdown .dropdown-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .user-dropdown .dropdown-menu {
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-
-        .user-dropdown .dropdown-item {
-            padding: 8px 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .user-dropdown .dropdown-item:hover {
-            background-color: rgba(111, 66, 193, 0.1);
-        }
-
-        /* Sidebar styles */
-        .sidebar {
-            position: fixed;
-            top: var(--navbar-height);
-            left: 0;
-            width: var(--sidebar-width);
-            height: calc(100vh - var(--navbar-height));
-            background-color: white;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
-            z-index: 1020;
-            overflow-y: auto;
-        }
-
-        .sidebar.collapsed {
-            transform: translateX(-100%);
-        }
-
-        .sidebar-header {
-            padding: 20px 15px;
-            border-bottom: 1px solid #eee;
-            background-color: var(--light-color);
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .sidebar-menu li {
-            margin: 0;
-        }
-
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: var(--dark-color);
-            text-decoration: none;
-            transition: all 0.3s;
-            border-left: 3px solid transparent;
-        }
-
-        .sidebar-menu a:hover {
-            background-color: rgba(111, 66, 193, 0.1);
-            border-left: 3px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .sidebar-menu a.active {
-            background-color: rgba(111, 66, 193, 0.15);
-            border-left: 3px solid var(--primary-color);
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .sidebar-menu i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Main content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 20px;
-            transition: all 0.3s;
-        }
-
-        .main-content.expanded {
-            margin-left: 0;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.show {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .user-welcome {
-                display: none;
-            }
-        }
-
-        /* Overlay for mobile */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1015;
-            display: none;
-        }
-
-        .sidebar-overlay.show {
-            display: block;
-        }
-
-        /* Custom card for content */
-        .content-card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
+<style>
+    .icon-hover:hover,
+    .user-hover:hover {
+        color: gray;
+
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+        transition: background-color 0.2s;
+
+    }
+
+    .dropdown-menu-user {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        min-width: 160px;
+        z-index: 1050;
+    }
+
+    .user-menu:hover .dropdown-menu-user {
+        display: block;
+    }
+
+</style>
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container-fluid">
-        <!-- Botón para abrir/cerrar sidebar en móviles -->
-        <button class="navbar-toggler me-2" type="button" id="sidebarToggle">
-            <i class="fas fa-bars"></i>
-        </button>
 
-        <a class="navbar-brand" href="{% url 'home' %}">
-            <i class="fas fa-music me-2"></i>GrupoEM
-        </a>
+<header class="navbar bg-light border-bottom position-fixed top-0 w-100 shadow-sm px-3 d-flex justify-content-end align-items-center gap-3"
+        style="height: 65px;z-index: 1;">
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileUserMenu">
-            <i class="fas fa-ellipsis-v"></i>
-        </button>
+   <!-- Botón del sidebar ahora en el lado izquierdo -->
+   
+        <div class="menu-btn sidebar-btn mt-2" id="sidebar-btn">
+            <i class='bx bx-menu'></i>
+            <i class='bx bx-x'></i>
+        </div>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+    
 
-                <li class="nav-item dropdown user-dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <div class="user-avatar me-1">
-                            {{ user.username|first|upper }}
-                        </div>
-                        <span class="d-none d-md-inline">{{ user.username }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                                <span class="dropdown-item-text">
-                                    <small>Conectado como</small><br>
-                                    <strong>{{ user.username }}</strong>
-                                </span>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <form method="post" action="{% url 'logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
 
-            </ul>
+    <!-- Icono pantalla completa -->
+    <i id="fullscreenToggle"
+       class="bi bi-arrows-fullscreen fs-5 icon-hover"
+       style="cursor: pointer;"></i>
+
+    <!-- Icono de recargar con animación de spinner -->
+    <i class="bi bi-arrow-clockwise fs-5 icon-hover"
+       style="cursor: pointer;"
+       id="reloadIcon"></i>
+
+
+    <!-- Usuario con menú -->
+    <div class="position-relative user-menu me-5">
+        <div class="d-flex align-items-center user-hover" id="userToggle" style="cursor: pointer;">
+            {% if user.foto %}
+                <img src="{{ user.foto.url }}" class="rounded-circle me-2 object-fit-cover" alt="Avatar" width="32"
+                     height="32">
+            {% else %}
+                <img src="{% static 'img/defaltperfil.jpg' %}"
+                     class="rounded-circle me-2" alt="Avatar" width="32" height="32">
+            {% endif %}
+            <div>
+                <span class="fw-bold d-block">Hola! {{ user.first_name }}</span>
+                <small class="text-muted">{{ user.rol.nombre|default:"Sin rol" }}</small>
+            </div>
+        </div>
+
+        <!-- Dropdown -->
+        <div class="dropdown-menu-user shadow-sm border rounded bg-white py-2 px-2" id="userDropdown">
+            <a href="#" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
+                <i class="bi bi-person"></i> Ver perfil
+            </a>
+            <a href="{% url 'logout' %}" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
+                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            </a>
         </div>
     </div>
-</nav>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="mobileUserMenu">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title">Usuario</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-        <p><strong>{{ user.username }}</strong></p>
-        <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger w-100">
-                <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
-            </button>
-        </form>
-    </div>
+
+</header>
+
+
+
+
+<div class="dark-mode-btn" id="dark-mode-btn">
 </div>
 
-
-<!-- Overlay para móviles -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-<!-- Sidebar -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h5 class="mb-0">Menú de Navegación</h5>
+<div class="sidebar" id="sidebar" style="z-index: 1;">
+    <div class="header">
+        <div class="menu-btn" id="menu-btn">
+            <i class='bx bx-chevron-left'></i>
+        </div>
+        <div class="brand">
+            <img class="brand-light"
+                 src="https://cdn.shopify.com/s/files/1/0650/9042/0995/files/Logotipo-Osmit-Sombreado.png?height=628&pad_color=fff&v=1655916959&width=1200"
+                 alt="logo">
+            <span>Osmit</span>
+        </div>
     </div>
-    <ul class="sidebar-menu">
-        <li>
-            <a href="{% url 'mis_eventos' %}" data-page="mis_eventos">
-                <i class="fas fa-calendar-alt"></i> Administrar Eventos
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'sonidodj_list' %}" data-page="sonidodj_list">
-                <i class="fas fa-volume-up"></i> Sonidos DJ
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'banner_list' %}" data-page="banner_list">
-                <i class="fas fa-image"></i> Banners
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'registro' %}" data-page="registro">
-                <i class="fas fa-users"></i> Usuarios Registro
-            </a>
-        </li>
-        <li>
-            <a href="#" data-page="configuracion">
-                <i class="fas fa-cog"></i> Configuración
-            </a>
-        </li>
-        <li>
-            <a href="#" data-page="ayuda">
-                <i class="fas fa-question-circle"></i> Ayuda
-            </a>
-        </li>
-    </ul>
-</div>
+    <div class="menu-container">
 
-<!-- Main Content -->
-<div class="main-content" id="mainContent">
-    <div class="content-card">
-        {% block content %}
-            <!-- Aquí irá el contenido específico de cada página -->
-            <h2>Bienvenido al Sistema DJMensajes</h2>
-            <p>Selecciona una opción del menú lateral para comenzar.</p>
-        {% endblock %}
+        <ul class="menu">
+
+            <li class="menu-item menu-item-static {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-home-alt-2'></i>
+                    <span>Home</span>
+                </a>
+            </li>
+
+
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'registrar_entrada' or request.resolver_match.url_name == 'registrar_salida' or request.resolver_match.url_name == 'lista_pedidos' or request.resolver_match.url_name == 'lista_salidas' or request.resolver_match.url_name == 'lista_cortes' %}active{% endif %}">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-cube'></i>
+                    <span>Granel</span>
+                    <i class='bx bx-chevron-down'></i>
+                </a>
+                <ul class="sub-menu">
+                    <li><a href="#" class="sub-menu-link">Registrar Entrada</a></li>
+                    <li><a href="#" class="sub-menu-link">Registrar Salida</a></li>
+
+                </ul>
+            </li>
+
+
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'registrar_pedido_produccion' or request.resolver_match.url_name == 'turnos_asignados' or request.resolver_match.url_name == 'lista_productos_granel' or request.resolver_match.url_name == 'lista_productos_terminados' or request.resolver_match.url_name == 'lista_pedidos_produccion' %}active{% endif %}">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-rocket'></i>
+                    <span>Producción</span>
+                    <i class='bx bx-chevron-down'></i>
+                </a>
+                <ul class="sub-menu">
+                    <li><a href="#" class="sub-menu-link">Realizar Pedido</a></li>
+                    <li><a href="#" class="sub-menu-link">Inventario Terminado</a></li>
+                </ul>
+            </li>
+
+
+            <!-- RUTAS -->
+
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'listar_vehiculos' or request.resolver_match.url_name == 'listar_rutas' or request.resolver_match.url_name == 'listar_clientes' %}active{% endif %}">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-map'></i>
+                    <span>Rutas</span>
+                    <i class='bx bx-chevron-down'></i>
+                </a>
+                <ul class="sub-menu">
+                    <li><a href="#" class="sub-menu-link">Vehículos</a></li>
+                </ul>
+            </li>
+
+
+            <!-- ADMINISTRAR -->
+
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'listar_turnos' or request.resolver_match.url_name == 'listar_roles' or request.resolver_match.url_name == 'gestionar_usuarios' or request.resolver_match.url_name == 'lista_proveedores' or request.resolver_match.url_name == 'lista_categorias' or request.resolver_match.url_name == 'lista_gramajes' or request.resolver_match.url_name == 'lista_presentaciones' %}active{% endif %}">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-wrench'></i>
+                    <span>Administrar</span>
+                    <i class='bx bx-chevron-down'></i>
+                </a>
+                <ul class="sub-menu">
+
+                    <li><a href="#" class="sub-menu-link">Turnos</a></li>
+                    <li><a href="#" class="sub-menu-link">Roles</a></li>
+
+
+                </ul>
+            </li>
+
+
+            <!-- INVENTARIOS -->
+
+            <li class="menu-item menu-item-dropdown {% if request.resolver_match.url_name == 'listar_productos_granel' or request.resolver_match.url_name == 'listar_productosPT' %}active{% endif %}">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-data'></i>
+                    <span>Inventarios</span>
+                    <i class='bx bx-chevron-down'></i>
+                </a>
+                <ul class="sub-menu">
+
+                    <li><a href="#" class="sub-menu-link">Producto Granel</a>
+                    </li>
+                    <li><a href="#" class="sub-menu-link">Producto Terminado</a>
+                    </li>
+
+                </ul>
+            </li>
+
+        </ul>
+    </div>
+    <div class="footer">
+        <ul class="menu">
+            <li class="menu-item menu-item-static">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-bell'></i>
+                    <span>Notifications</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-static">
+                <a href="#" class="menu-link">
+                    <i class='bx bx-cog'></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+
     </div>
 </div>
+<main style="margin-top: 50px;">
+    {% block content %}
+        <!-- Contenido específico de cada vista -->
+    {% endblock %}
+</main>
 
-<!-- Bootstrap JS Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="{% static 'js/base.js' %}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YUe2LzesAfftltw+PEaao2tjU/QATaW/rOitAq67e0CT0Zi2VVRL0oC4+gAaeBKu"
+        crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.css" rel="stylesheet">
+
+<!-- Registro de cambios -->
+</body>
+
+
+<style>
+    /* Animación de giro continuo */
+    #reloadIcon.spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 
 <script>
-    // Control del sidebar en móviles
-    document.addEventListener('DOMContentLoaded', function () {
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const mainContent = document.getElementById('mainContent');
+    document.getElementById('reloadIcon').addEventListener('click', function () {
+        // Activar animación infinita
+        this.classList.add('spinning');
 
-        // Función para abrir/cerrar sidebar en móviles
-        function toggleSidebar() {
-            sidebar.classList.toggle('show');
-            sidebarOverlay.classList.toggle('show');
-        }
-
-        // Eventos para el botón del sidebar
-        sidebarToggle.addEventListener('click', toggleSidebar);
-        sidebarOverlay.addEventListener('click', toggleSidebar);
-
-        // Cerrar sidebar al hacer clic en un enlace (en móviles)
-        const sidebarLinks = document.querySelectorAll('.sidebar-menu a');
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', function () {
-                if (window.innerWidth < 992) {
-                    toggleSidebar();
-                }
-            });
-        });
-
-        // Función para marcar el elemento activo según la URL
-        function setActiveMenuItem() {
-            const currentUrl = window.location.href;
-            const menuItems = document.querySelectorAll('.sidebar-menu a');
-
-            menuItems.forEach(item => {
-                // Remover clase active de todos los elementos
-                item.classList.remove('active');
-
-                // Verificar si la URL actual contiene la URL del enlace
-                if (currentUrl.includes(item.getAttribute('href'))) {
-                    item.classList.add('active');
-                }
-            });
-
-            // Si no hay ningún elemento activo y estamos en la página principal,
-            // marcar el primer elemento como activo
-            const activeItems = document.querySelectorAll('.sidebar-menu a.active');
-            if (activeItems.length === 0 && currentUrl.includes('home')) {
-                menuItems[0].classList.add('active');
-            }
-        }
-
-        // Llamar a la función cuando se carga la página
-        setActiveMenuItem();
-
-        // SweetAlert para mensajes
-        {% if messages %}
-            {% for message in messages %}
-                Swal.fire({
-                    icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}
-                        error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}",
-                    title: "{{ message|escapejs }}",
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-            {% endfor %}
-        {% endif %}
+        // Recargar la página después de un pequeño delay para que se vea la animación
+        setTimeout(() => {
+            location.reload();
+        }, 200);
     });
 </script>
-</body>
+
+
 </html>
+
+
+
+
+
