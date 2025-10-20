@@ -1,64 +1,310 @@
-<!DOCTYPE html>
+<!doctype html>
+{% load static %}
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ evento.nombre_evento }}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet" href="{% static 'css/coloresCustom.css' %}">
 
+    <style>
+        :root {
+            --overlay: rgba(0, 0, 0, 0.55);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Montserrat', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            color: #fff;
+        }
+
+        /* Background with dark overlay using the banner image */
+        body {
+            background-image: linear-gradient(var(--overlay), var(--overlay)), url('{{ evento.banner.imagen1.url }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            padding-bottom: 72px; /* space for fixed footer */
+        }
+
+        /* Top bar (title centered) */
+        .top-title {
+            padding-top: 1.25rem;
+            padding-bottom: 0.5rem;
+            text-align: center;
+            text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+        }
+
+        .top-title h1 {
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin: 0;
+            letter-spacing: 0.4px;
+        }
+
+        .top-sub {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* VIP crown (top-right) */
+        .vip-crown {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1050;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .vip-crown .bi {
+            font-size: 1.25rem;
+            color: #f8f9fa;
+        }
+
+        .vip-on .bi {
+            color: #ffd54a;
+        }
+
+        /* Container card with blur glass effect */
+        .card-panel {
+            margin: 1rem auto;
+            max-width: 520px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+            border-radius: 14px;
+            padding: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* Big primary action buttons */
+        .big-action {
+            width: 100%;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 1.1rem 1.2rem;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .big-action + .big-action {
+            margin-top: 0.9rem;
+        }
+
+        /* Small helper row for name + VIP badge */
+        .user-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .vip-badge {
+            background: linear-gradient(90deg, rgba(255, 230, 120, 0.12), rgba(255, 200, 60, 0.06));
+            color: #fff;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 700;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        /* Sticky footer */
+        /* Sticky footer mejorado */
+        .sound-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1040;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65));
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1rem 0; /* Más alto */
+            text-align: center;
+        }
+
+        .footer-link {
+            text-decoration: none;
+            color: #fff;
+            width: 100%;
+            height: 100%;
+        }
+
+        .footer-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            text-decoration: none;
+        }
+
+        .footer-logo {
+            max-height: 60px; /* Tamaño controlado */
+            margin-top: 0.25rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        @media (max-width: 576px) {
+            .footer-logo {
+                max-height: 50px;
+            }
+        }
+
+        /* Responsive tweaks */
+        @media (min-width: 768px) {
+            .top-title h1 {
+                font-size: 1.8rem;
+            }
+
+            .card-panel {
+                margin-top: 2.2rem;
+            }
+
+            .big-action {
+                font-size: 1.125rem;
+                padding: 1.2rem;
+            }
+        }
+
+        /* SweetAlert positioning for mobile */
+        .swal2-popup {
+            margin-top: 4rem !important;
+        }
+
+    </style>
 </head>
-
-<style>
-    body {
-        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ evento.banner.imagen1.url }}');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        font-family: 'Montserrat', sans-serif;
-        color: white; /* Color de texto por defecto */
-    }
-
-    
-
-</style>
-
 <body>
 
-<div>
-    <h1>{{ evento.nombre_evento }}</h1>
-    <p>Tipo: {{ evento.get_tipo_evento_display }}</p>
+<!-- VIP crown button dsfcddddddddddddddddddddddd -->
+<button id="vipBtn" class="vip-crown" aria-label="Acceso VIP" title="Acceso VIP">
+    <i class="bi bi-star-fill"></i>
+</button>
 
-    <div>
-        <span id="nombreDisplay"></span>
-        <span id="vipBadge" style="display:none;">VIP</span>
-        <button id="cerrarSesion" style="display:none;">Cerrar sesión</button>
-    </div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
 
-    <div>
-        <button id="btnSaludo">Enviar saludo</button>
-        <button id="btnCancion">Pedir canción</button>
-    </div>
+            <!-- Title -->
+            <div class="top-title mt-2">
+                <h1>{{ evento.nombre_evento }}</h1>
+                <div class="top-sub">{{ evento.get_tipo_evento_display }}</div>
+            </div>
 
-    <div>
-        <button id="btnVIP">Acceder como VIP</button>
+            <!-- Descripción del propósito de la página -->
+            <div class="text-center text-white px-3 mb-3" style="max-width: 520px; margin: 0 auto;">
+                <p style="font-size: 0.95rem; opacity: 0.9;">
+                    ¡Bienvenido! Aquí puedes <strong>pedir una canción</strong> o <strong>enviar un saludo</strong> al
+                    DJ .<br>
+                    Tu mensaje le aparecerá en tiempo real al DJ.<br>
+                    ¡Siente la conexión con la cabina en vivo!
+                </p>
+            </div>
+
+            <!-- Card panel -->
+            <div class="card-panel">
+
+                <!-- Optional: small logo on the left for large screens -->
+                <div class="d-flex justify-content-center mb-2">
+                    {% if evento.logo %}
+                        <img src="{{ evento.logo.url }}" alt="Logo" style="max-height:56px; border-radius:8px;"
+                             class="d-none d-md-inline-block">
+                    {% endif %}
+                </div>
+
+                <!-- Name + VIP indicator -->
+                <div class="user-row">
+                    <div id="nombreDisplay" aria-live="polite"></div>
+                    <div id="vipBadge" class="vip-badge" style="display:none;">
+                        <i class="bi bi-star-fill"></i>
+                        VIP
+                    </div>
+                    <button id="cerrarSesion" class="btn btn-sm btn-outline-light" style="display:none;">Cerrar</button>
+                </div>
+
+                <!-- Big action buttons (mobile first stacked) -->
+                <div class="mt-3">
+                    <button id="btnSaludo" class="btn btn-primary big-action" aria-label="Enviar saludo">
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-chat-dots-fill fs-4"></i>
+                            <span>Enviar saludo</span>
+                        </div>
+                    </button>
+
+                    <button id="btnCancion" class="btn btn-light text-dark big-action" aria-label="Pedir canción">
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-music-note-list fs-4"></i>
+                            <span>Pedir canción</span>
+                        </div>
+                    </button>
+                </div>
+
+            </div> <!-- /.card-panel -->
+
+        </div>
     </div>
 </div>
 
-
+<!-- Sticky footer with sound name -->
 {% if evento.sonido_dj %}
-    <footer>
-        <a href="https://wa.me/{{ evento.sonido_dj.whatsapp|default:''|cut:'+' }}" target="_blank">
-            {{ evento.sonido_dj.nombre }}
+    <footer class="sound-footer">
+        <a href="https://wa.me/{{ evento.sonido_dj.whatsapp|default:''|cut:'+' }}"
+           target="_blank"
+           class="footer-link d-flex flex-column align-items-center justify-content-center text-center">
+
+            <div class="mb-2 fs-5">
+                Cotizaciones:
+            </div>
+
+            {% if evento.sonido_dj.imagen2 %}
+                <img src="{{ evento.sonido_dj.imagen2.url }}"
+                     alt="Logo {{ evento.sonido_dj.nombre }}"
+                     class="footer-logo img-fluid">
+            {% endif %}
         </a>
     </footer>
 {% endif %}
 
 
-
+<!-- Bootstrap JS bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Manejo de cookies
+    // Configuración global de SweetAlert para móviles
+    const Toast = Swal.mixin({
+        position: 'top',
+        showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+        }
+    });
+
+    /* --- Cookie helpers --- */
     function setCookie(nombre, valor, dias = 7) {
         const fecha = new Date();
         fecha.setTime(fecha.getTime() + (dias * 24 * 60 * 60 * 1000));
@@ -76,40 +322,37 @@
         document.cookie = nombre + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
 
-    // Mostrar nombre y estado VIP
+    /* --- UI elements --- */
+    const nombreDisplay = document.getElementById('nombreDisplay');
+    const vipBadge = document.getElementById('vipBadge');
+    const cerrarBtn = document.getElementById('cerrarSesion');
+    const vipBtn = document.getElementById('vipBtn');
+
     function actualizarUI() {
         const nombre = getCookie('nombre_invitado') || '';
         const vip = getCookie('vip_invitado') === 'true';
 
-        const nombreDisplay = document.getElementById('nombreDisplay');
-        const vipBadge = document.getElementById('vipBadge');
-        const cerrarBtn = document.getElementById('cerrarSesion');
-
-        if (nombre) {
-            nombreDisplay.textContent = nombre;
-            cerrarBtn.style.display = 'inline-block';
-        } else {
-            nombreDisplay.textContent = '';
-            cerrarBtn.style.display = 'none';
-        }
+        nombreDisplay.textContent = nombre ? nombre : '';
+        if (nombre) cerrarBtn.style.display = 'inline-block'; else cerrarBtn.style.display = 'none';
 
         if (vip) {
-            vipBadge.style.display = 'inline-block';
+            vipBadge.style.display = 'inline-flex';
+            vipBtn.classList.add('vip-on');
         } else {
             vipBadge.style.display = 'none';
+            vipBtn.classList.remove('vip-on');
         }
     }
 
-    // Pedir nombre una vez
     async function pedirNombre() {
         let nombre = getCookie('nombre_invitado');
         if (!nombre) {
-            const {value} = await Swal.fire({
+            const {value} = await Toast.fire({
                 title: '¿Cuál es tu nombre?',
                 input: 'text',
                 inputPlaceholder: 'Tu nombre o deja en blanco',
                 showCancelButton: false,
-                confirmButtonText: 'Guardar'
+                confirmButtonText: 'Guardar',
             });
             nombre = value || 'Anónimo';
             setCookie('nombre_invitado', nombre, 7);
@@ -118,11 +361,9 @@
         return nombre;
     }
 
-    // Manejo VIP
-    let esVIP = getCookie('vip_invitado') === 'true';
-
-    document.getElementById('btnVIP').addEventListener('click', async () => {
-        const {value: pass} = await Swal.fire({
+    // VIP flow (prompt password)
+    vipBtn.addEventListener('click', async () => {
+        const {value: pass} = await Toast.fire({
             title: 'Acceso VIP',
             input: 'password',
             inputLabel: 'Contraseña VIP',
@@ -131,29 +372,27 @@
         });
 
         if (pass === '{{ evento.password_vip }}') {
-            esVIP = true;
             setCookie('vip_invitado', 'true', 7);
-            Swal.fire('Bienvenido 🎧', 'Modo VIP activado', 'success');
+            Toast.fire('Bienvenido', 'Modo VIP activado', 'success');
             actualizarUI();
         } else if (pass) {
-            Swal.fire('Error', 'Contraseña incorrecta', 'error');
+            Toast.fire('Error', 'Contraseña incorrecta', 'error');
         }
     });
 
-    // Cerrar sesión invitado
-    document.getElementById('cerrarSesion').addEventListener('click', () => {
+    // Cerrar sesión (nombre + VIP)
+    cerrarBtn.addEventListener('click', () => {
         borrarCookie('nombre_invitado');
         borrarCookie('vip_invitado');
-        esVIP = false;
         actualizarUI();
-        Swal.fire('Cerraste sesión', 'Ahora puedes ingresar con otro nombre', 'info');
+        Toast.fire('Cerraste sesión', 'Ahora puedes ingresar con otro nombre', 'info');
     });
 
-    // Enviar mensaje
+    // Send message (saludo or cancion)
     async function enviarMensaje(tipo) {
         const nombre = await pedirNombre();
 
-        const {value: mensaje} = await Swal.fire({
+        const {value: mensaje} = await Toast.fire({
             title: tipo === 'saludo' ? 'Enviar saludo' : 'Pedir canción',
             input: 'textarea',
             inputPlaceholder: tipo === 'saludo' ? 'Escribe tu saludo...' : '¿Qué canción quieres escuchar?',
@@ -163,20 +402,36 @@
 
         if (!mensaje) return;
 
-        const response = await fetch("{% url 'enviar_mensaje' evento.id %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({nombre, tipo, mensaje, vip: esVIP})
+        const vip = getCookie('vip_invitado') === 'true';
+
+        // Mostrar alerta de carga
+        Toast.fire({
+            title: 'Enviando...',
+            text: 'Por favor espera',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
 
-        const data = await response.json();
-        if (data.ok) {
-            Swal.fire('Enviado 🎉', data.msg, 'success');
-        } else {
-            Swal.fire('Error', data.msg, 'error');
+        try {
+            const response = await fetch("{% url 'enviar_mensaje' evento.id %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({nombre, tipo, mensaje, vip})
+            });
+
+            const data = await response.json();
+            Swal.close();
+            if (data.ok) Toast.fire('Enviado', data.msg, 'success');
+            else Toast.fire('Error', data.msg, 'error');
+        } catch (err) {
+            Swal.close();
+            Toast.fire('Error', 'No fue posible enviar. Intenta de nuevo.', 'error');
         }
     }
 
@@ -184,7 +439,10 @@
     document.getElementById('btnCancion').addEventListener('click', () => enviarMensaje('cancion'));
 
     // Inicializar UI al cargar
-    actualizarUI();
+    document.addEventListener('DOMContentLoaded', () => {
+        actualizarUI();
+    });
+
 </script>
 </body>
 </html>

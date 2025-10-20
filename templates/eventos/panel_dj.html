@@ -1,32 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del DJ - {{ evento.nombre_evento }}</title>
 
-<h1>🎧 Panel del DJ - {{ evento.nombre_evento }}</h1>
-<div id="mensajes" style="height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
-  <ul id="lista-mensajes"></ul>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #6f42c1;
+            --secondary-color: #20c997;
+            --vip-color: #ffc107;
+            --light-bg: #f8f9fa;
+            --dark-bg: #212529;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .event-header {
+            background: linear-gradient(135deg, var(--primary-color), #8e6bd8);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 500px;
+            overflow-y: auto;
+        }
+
+        .message-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .message-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .vip-message {
+            border-left-color: var(--vip-color);
+            background-color: #fff9e6;
+        }
+
+        .message-type {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .type-saludo {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+        }
+
+        .type-cancion {
+            background-color: #e8f5e9;
+            color: #198754;
+        }
+
+        .check-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .check-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .check-btn.checked {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .check-btn.unchecked {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #dee2e6;
+        }
+
+        /* Scrollbar personalizado */
+        .message-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .message-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .message-container::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .message-container::-webkit-scrollbar-thumb:hover {
+            background: #5a36a5;
+        }
+
+        @media (max-width: 768px) {
+            .message-container {
+                height: 400px;
+            }
+
+            .message-card {
+                padding: 12px !important;
+            }
+        }
+
+        /* Posición y estilo del botón de pantalla completa */
+        .fullscreen-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1050; /* Por encima de otros elementos */
+            width: 45px;
+            height: 45px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="event-header p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-1">{{ evento.nombre_evento }}</h1>
+                        <p class="mb-0 opacity-75">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            {{ evento.tipo_evento|title }} •
+                            <span id="event-status" class="badge bg-light text-dark">Activo</span>
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="badge bg-light text-dark p-2">
+                            <i class="fas fa-headphones me-1"></i>Panel DJ
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="message-container p-3">
+                <div id="lista-mensajes">
+                    <!-- Los mensajes se cargarán aquí -->
+                    <div class="empty-state">
+                        <i class="fas fa-comments"></i>
+                        <h5>No hay mensajes aún</h5>
+                        <p class="mb-0">Los mensajes aparecerán aquí cuando los invitados los envíen.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center text-muted small">
+                <div>
+                    <i class="fas fa-info-circle me-1"></i>
+                    Haz clic en el check para marcar los mensajes como atendidos
+                </div>
+                <div id="message-counter" class="badge bg-secondary">0 mensajes</div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<button class="btn   rounded-circle fullscreen-toggle" id="fullscreenToggle" title="Pantalla completa">
+    <i class="fas fa-expand"></i>
+</button>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+
 <script>
-const eventoId = "{{ evento.id }}";
-const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
-const ws = new WebSocket(`${ws_scheme}://${window.location.host}/ws/evento/${eventoId}/`);
+    const eventoId = "{{ evento.id }}";
+    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${ws_scheme}://${window.location.host}/ws/evento/${eventoId}/`);
 
-const lista = document.getElementById('lista-mensajes');
+    const lista = document.getElementById('lista-mensajes');
+    const messageCounter = document.getElementById('message-counter');
 
-function agregarMensaje(data) {
-  const li = document.createElement('li');
-  li.innerHTML = `<strong>${data.nombre}</strong>: ${data.mensaje}`;
-  if (data.vip) {
-    li.style.background = "#ffefc4";
-    li.style.fontWeight = "bold";
-  }
-  lista.prepend(li);
-}
+    /* ---------------- localStorage helpers ---------------- */
+    function getLocalAttended() {
+        // devuelve array de ids como strings
+        return JSON.parse(localStorage.getItem('attended_' + eventoId) || '[]');
+    }
 
-ws.onmessage = (e) => {
-  const data = JSON.parse(e.data);
-  if (data.type === 'init') {
-    data.mensajes.reverse().forEach(agregarMensaje);
-  } else if (data.type === 'mensaje') {
-    agregarMensaje(data.mensaje);
-  }
-};
+    function saveLocalAttended(arr) {
+        localStorage.setItem('attended_' + eventoId, JSON.stringify(arr));
+    }
+
+    /* ---------------- contador ---------------- */
+    function updateMessageCounter() {
+        const totalMessages = document.querySelectorAll('.message-card').length;
+        const checkedMessages = document.querySelectorAll('.check-btn.checked').length;
+        messageCounter.textContent = `${checkedMessages}/${totalMessages} atendidos`;
+    }
+
+    /* ---------------- toggle que persiste en localStorage ----------------
+       Usa solo localStorage: no cambia la BD ni envía petición al servidor.
+       Si más adelante quieres propagar esto al servidor, puedo agregar ws.send/fetch.
+    */
+    function toggleMessageStateLocal(messageId, button) {
+        const willBeChecked = !button.classList.contains('checked');
+
+        // UI (optimista)
+        button.classList.toggle('checked', willBeChecked);
+        button.classList.toggle('unchecked', !willBeChecked);
+        const icon = button.querySelector('i');
+        icon.className = willBeChecked ? 'fas fa-check' : 'far fa-check-circle';
+
+        // actualizar storage
+        let arr = getLocalAttended();
+        messageId = String(messageId);
+        if (willBeChecked) {
+            if (!arr.includes(messageId)) arr.push(messageId);
+        } else {
+            arr = arr.filter(id => id !== messageId);
+        }
+        saveLocalAttended(arr);
+
+        updateMessageCounter();
+    }
+
+    /* ---------------- crear/agregar mensaje al DOM ---------------- */
+    function agregarMensaje(data) {
+        // Eliminar el estado vacío si existe
+        const emptyState = lista.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+
+        // Crear elemento de mensaje
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message-card mb-3 p-3 ${data.vip ? 'vip-message' : ''}`;
+        messageDiv.setAttribute('data-message-id', data.id);
+
+        // Determinar ícono y clase según el tipo
+        let typeIcon, typeClass;
+        if (data.tipo === 'saludo') {
+            typeIcon = 'fas fa-comment';
+            typeClass = 'type-saludo';
+        } else {
+            typeIcon = 'fas fa-music';
+            typeClass = 'type-cancion';
+        }
+
+        // Determinar clase VIP
+        const vipBadge = data.vip ?
+            `<span class="badge bg-warning ms-2"><i class="fas fa-crown me-1"></i>VIP</span>` : '';
+
+        // Chequear localStorage para ver si ya fue marcado
+        const localArr = getLocalAttended();
+        const isAttended = localArr.includes(String(data.id));
+
+        // Crear el contenido HTML del mensaje
+        messageDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="message-content">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="fw-bold">${data.nombre}</span>
+                            ${vipBadge}
+                        </div>
+                        <div>
+                            <span class="message-type ${typeClass}">
+                                <i class="${typeIcon} me-1"></i>${data.tipo}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="mb-0">${data.mensaje}</p>
+                </div>
+                <div class="ms-3">
+                    <div class="check-btn ${isAttended ? 'checked' : 'unchecked'}"
+                         onclick="toggleMessageStateLocal('${data.id}', this)">
+                        <i class="${isAttended ? 'fas fa-check' : 'far fa-check-circle'}"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Agregar el mensaje al principio de la lista
+        lista.prepend(messageDiv);
+
+        // Actualizar contador
+        updateMessageCounter();
+    }
+
+    /* ---------------- WebSocket: recibir mensajes e init ---------------- */
+    ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'init') {
+            // el servidor envía un array de mensajes en data.mensajes
+            // invertimos para mostrar los más recientes arriba (como tenías)
+            data.mensajes.reverse().forEach(agregarMensaje);
+        } else if (data.type === 'mensaje') {
+            agregarMensaje(data.mensaje);
+        }
+        // NOTA: si tu servidor envía actualizaciones tipo 'mensaje_actualizado'
+        // para sincronizar estado, podríamos manejarlo aquí y actualizar localStorage
+    };
+
+    ws.onopen = () => {
+        // opcional: console.log('WS abierto');
+    };
+    ws.onclose = () => {
+        // opcional: console.log('WS cerrado');
+    };
+
+    // Inicializar el contador (si no hay mensajes)
+    updateMessageCounter();
 </script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const fullscreenToggle = document.getElementById('fullscreenToggle');
+        const icon = fullscreenToggle.querySelector('i');
+
+        // Función para alternar pantalla completa
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Entrar en pantalla completa
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+            } else {
+                // Salir de pantalla completa
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // Cambiar icono cuando cambia el estado de pantalla completa
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+
+        function updateFullscreenIcon() {
+            if (document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement) {
+                icon.className = 'fas fa-compress';
+            } else {
+                icon.className = 'fas fa-expand';
+            }
+        }
+
+        // Asignar el evento al botón
+        fullscreenToggle.addEventListener('click', toggleFullscreen);
+
+        // También permitir activar pantalla completa con la tecla F11
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
