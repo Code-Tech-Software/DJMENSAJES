@@ -105,7 +105,8 @@
             width: 100%;
             font-weight: 700;
             font-size: 1.05rem;
-            padding: 1.1rem 1.2rem;
+            
+            padding: 1.3rem 1.2rem; /* <-- Primer numero es el ancho de los btones*/
             border-radius: 14px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
         }
@@ -194,12 +195,75 @@
         .swal2-popup {
             margin-top: 4rem !important;
         }
+        
+        
+        /* --- Botones estilizados con brillo y gradiente --- */
+.btn-glow-primary {
+    background: linear-gradient(135deg, #007bff, #00c6ff);
+    color: #fff;
+    border: none;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-glow-primary::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: rgba(255,255,255,0.25);
+    transform: skewX(-25deg);
+    transition: all 0.5s ease;
+}
+
+.btn-glow-primary:hover::after {
+    left: 125%;
+}
+
+.btn-glow-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 16px rgba(0, 195, 255, 0.6);
+}
+
+/* Variante para “Pedir canción” */
+.btn-glow-music {
+    background: linear-gradient(135deg, #ff6b6b, #f8b400);
+    color: #fff;
+    border: none;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-glow-music::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: rgba(255,255,255,0.25);
+    transform: skewX(-25deg);
+    transition: all 0.5s ease;
+}
+
+.btn-glow-music:hover::after {
+    left: 125%;
+}
+
+.btn-glow-music:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 16px rgba(255, 171, 64, 0.6);
+}
 
     </style>
 </head>
 <body>
 
-<!-- VIP crown button dsfcddddddddddddddddddddddd -->
+<!-- VIP crown button  -->
 <button id="vipBtn" class="vip-crown" aria-label="Acceso VIP" title="Acceso VIP">
     <i class="bi bi-star-fill"></i>
 </button>
@@ -246,21 +310,22 @@
                 </div>
 
                 <!-- Big action buttons (mobile first stacked) -->
-                <div class="mt-3">
-                    <button id="btnSaludo" class="btn btn-primary big-action" aria-label="Enviar saludo">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-chat-dots-fill fs-4"></i>
-                            <span>Enviar saludo</span>
-                        </div>
-                    </button>
+              <!-- Big action buttons (más atractivos y modernos) -->
+<div class="mt-3">
+    <button id="btnSaludo" class="btn btn-glow-primary big-action" aria-label="Enviar saludo">
+        <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-chat-dots-fill fs-4"></i>
+            <span>Enviar saludo</span>
+        </div>
+    </button>
 
-                    <button id="btnCancion" class="btn btn-light text-dark big-action" aria-label="Pedir canción">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-music-note-list fs-4"></i>
-                            <span>Pedir canción</span>
-                        </div>
-                    </button>
-                </div>
+    <button id="btnCancion" class="btn btn-glow-music big-action" aria-label="Pedir canción">
+        <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-music-note-list fs-4"></i>
+            <span>Pedir canción</span>
+        </div>
+    </button>
+</div>
 
             </div> <!-- /.card-panel -->
 
