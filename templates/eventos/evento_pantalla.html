@@ -1,162 +1,190 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ evento.nombre_evento }}</title>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ evento.nombre_evento }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
 </head>
+
+<style>
+    body {
+        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ evento.banner.imagen1.url }}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        font-family: 'Montserrat', sans-serif;
+        color: white; /* Color de texto por defecto */
+    }
+
+    
+
+</style>
 
 <body>
 
 <div>
-  <h1>{{ evento.nombre_evento }}</h1>
-  <p>Tipo: {{ evento.get_tipo_evento_display }}</p>
+    <h1>{{ evento.nombre_evento }}</h1>
+    <p>Tipo: {{ evento.get_tipo_evento_display }}</p>
 
-  <div>
-    <span id="nombreDisplay"></span>
-    <span id="vipBadge" style="display:none;">VIP ⭐</span>
-    <button id="cerrarSesion" style="display:none;">Cerrar sesión</button>
-  </div>
+    <div>
+        <span id="nombreDisplay"></span>
+        <span id="vipBadge" style="display:none;">VIP</span>
+        <button id="cerrarSesion" style="display:none;">Cerrar sesión</button>
+    </div>
 
-  <div>
-    <button id="btnSaludo">👋 Enviar saludo</button>
-    <button id="btnCancion">🎵 Pedir canción</button>
-  </div>
+    <div>
+        <button id="btnSaludo">Enviar saludo</button>
+        <button id="btnCancion">Pedir canción</button>
+    </div>
 
-  <div>
-    <button id="btnVIP">⭐ Acceder como VIP</button>
-  </div>
+    <div>
+        <button id="btnVIP">Acceder como VIP</button>
+    </div>
 </div>
 
+
+{% if evento.sonido_dj %}
+    <footer>
+        <a href="https://wa.me/{{ evento.sonido_dj.whatsapp|default:''|cut:'+' }}" target="_blank">
+            {{ evento.sonido_dj.nombre }}
+        </a>
+    </footer>
+{% endif %}
+
+
+
+
 <script>
-  // Manejo de cookies
-  function setCookie(nombre, valor, dias=7) {
-    const fecha = new Date();
-    fecha.setTime(fecha.getTime() + (dias*24*60*60*1000));
-    document.cookie = nombre + "=" + encodeURIComponent(valor) + "; expires=" + fecha.toUTCString() + "; path=/";
-  }
-
-  function getCookie(nombre) {
-    const valor = `; ${document.cookie}`;
-    const partes = valor.split(`; ${nombre}=`);
-    if (partes.length === 2) return decodeURIComponent(partes.pop().split(';').shift());
-    return null;
-  }
-
-  function borrarCookie(nombre) {
-    document.cookie = nombre + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  }
-
-  // Mostrar nombre y estado VIP
-  function actualizarUI() {
-    const nombre = getCookie('nombre_invitado') || '';
-    const vip = getCookie('vip_invitado') === 'true';
-
-    const nombreDisplay = document.getElementById('nombreDisplay');
-    const vipBadge = document.getElementById('vipBadge');
-    const cerrarBtn = document.getElementById('cerrarSesion');
-
-    if(nombre) {
-      nombreDisplay.textContent = nombre;
-      cerrarBtn.style.display = 'inline-block';
-    } else {
-      nombreDisplay.textContent = '';
-      cerrarBtn.style.display = 'none';
+    // Manejo de cookies
+    function setCookie(nombre, valor, dias = 7) {
+        const fecha = new Date();
+        fecha.setTime(fecha.getTime() + (dias * 24 * 60 * 60 * 1000));
+        document.cookie = nombre + "=" + encodeURIComponent(valor) + "; expires=" + fecha.toUTCString() + "; path=/";
     }
 
-    if(vip) {
-      vipBadge.style.display = 'inline-block';
-    } else {
-      vipBadge.style.display = 'none';
+    function getCookie(nombre) {
+        const valor = `; ${document.cookie}`;
+        const partes = valor.split(`; ${nombre}=`);
+        if (partes.length === 2) return decodeURIComponent(partes.pop().split(';').shift());
+        return null;
     }
-  }
 
-  // Pedir nombre una vez
-  async function pedirNombre() {
-    let nombre = getCookie('nombre_invitado');
-    if (!nombre) {
-      const { value } = await Swal.fire({
-        title: '¿Cuál es tu nombre?',
-        input: 'text',
-        inputPlaceholder: 'Tu nombre o deja en blanco',
-        showCancelButton: false,
-        confirmButtonText: 'Guardar'
-      });
-      nombre = value || 'Anónimo';
-      setCookie('nombre_invitado', nombre, 7);
+    function borrarCookie(nombre) {
+        document.cookie = nombre + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
+
+    // Mostrar nombre y estado VIP
+    function actualizarUI() {
+        const nombre = getCookie('nombre_invitado') || '';
+        const vip = getCookie('vip_invitado') === 'true';
+
+        const nombreDisplay = document.getElementById('nombreDisplay');
+        const vipBadge = document.getElementById('vipBadge');
+        const cerrarBtn = document.getElementById('cerrarSesion');
+
+        if (nombre) {
+            nombreDisplay.textContent = nombre;
+            cerrarBtn.style.display = 'inline-block';
+        } else {
+            nombreDisplay.textContent = '';
+            cerrarBtn.style.display = 'none';
+        }
+
+        if (vip) {
+            vipBadge.style.display = 'inline-block';
+        } else {
+            vipBadge.style.display = 'none';
+        }
+    }
+
+    // Pedir nombre una vez
+    async function pedirNombre() {
+        let nombre = getCookie('nombre_invitado');
+        if (!nombre) {
+            const {value} = await Swal.fire({
+                title: '¿Cuál es tu nombre?',
+                input: 'text',
+                inputPlaceholder: 'Tu nombre o deja en blanco',
+                showCancelButton: false,
+                confirmButtonText: 'Guardar'
+            });
+            nombre = value || 'Anónimo';
+            setCookie('nombre_invitado', nombre, 7);
+        }
+        actualizarUI();
+        return nombre;
+    }
+
+    // Manejo VIP
+    let esVIP = getCookie('vip_invitado') === 'true';
+
+    document.getElementById('btnVIP').addEventListener('click', async () => {
+        const {value: pass} = await Swal.fire({
+            title: 'Acceso VIP',
+            input: 'password',
+            inputLabel: 'Contraseña VIP',
+            showCancelButton: true,
+            confirmButtonText: 'Entrar'
+        });
+
+        if (pass === '{{ evento.password_vip }}') {
+            esVIP = true;
+            setCookie('vip_invitado', 'true', 7);
+            Swal.fire('Bienvenido 🎧', 'Modo VIP activado', 'success');
+            actualizarUI();
+        } else if (pass) {
+            Swal.fire('Error', 'Contraseña incorrecta', 'error');
+        }
+    });
+
+    // Cerrar sesión invitado
+    document.getElementById('cerrarSesion').addEventListener('click', () => {
+        borrarCookie('nombre_invitado');
+        borrarCookie('vip_invitado');
+        esVIP = false;
+        actualizarUI();
+        Swal.fire('Cerraste sesión', 'Ahora puedes ingresar con otro nombre', 'info');
+    });
+
+    // Enviar mensaje
+    async function enviarMensaje(tipo) {
+        const nombre = await pedirNombre();
+
+        const {value: mensaje} = await Swal.fire({
+            title: tipo === 'saludo' ? 'Enviar saludo' : 'Pedir canción',
+            input: 'textarea',
+            inputPlaceholder: tipo === 'saludo' ? 'Escribe tu saludo...' : '¿Qué canción quieres escuchar?',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+        });
+
+        if (!mensaje) return;
+
+        const response = await fetch("{% url 'enviar_mensaje' evento.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({nombre, tipo, mensaje, vip: esVIP})
+        });
+
+        const data = await response.json();
+        if (data.ok) {
+            Swal.fire('Enviado 🎉', data.msg, 'success');
+        } else {
+            Swal.fire('Error', data.msg, 'error');
+        }
+    }
+
+    document.getElementById('btnSaludo').addEventListener('click', () => enviarMensaje('saludo'));
+    document.getElementById('btnCancion').addEventListener('click', () => enviarMensaje('cancion'));
+
+    // Inicializar UI al cargar
     actualizarUI();
-    return nombre;
-  }
-
-  // Manejo VIP
-  let esVIP = getCookie('vip_invitado') === 'true';
-
-  document.getElementById('btnVIP').addEventListener('click', async () => {
-    const { value: pass } = await Swal.fire({
-      title: 'Acceso VIP',
-      input: 'password',
-      inputLabel: 'Contraseña VIP',
-      showCancelButton: true,
-      confirmButtonText: 'Entrar'
-    });
-
-    if(pass === '{{ evento.password_vip }}') {
-      esVIP = true;
-      setCookie('vip_invitado', 'true', 7);
-      Swal.fire('Bienvenido 🎧', 'Modo VIP activado', 'success');
-      actualizarUI();
-    } else if(pass) {
-      Swal.fire('Error', 'Contraseña incorrecta ❌', 'error');
-    }
-  });
-
-  // Cerrar sesión invitado
-  document.getElementById('cerrarSesion').addEventListener('click', () => {
-    borrarCookie('nombre_invitado');
-    borrarCookie('vip_invitado');
-    esVIP = false;
-    actualizarUI();
-    Swal.fire('Cerraste sesión', 'Ahora puedes ingresar con otro nombre', 'info');
-  });
-
-  // Enviar mensaje
-  async function enviarMensaje(tipo) {
-    const nombre = await pedirNombre();
-
-    const { value: mensaje } = await Swal.fire({
-      title: tipo === 'saludo' ? 'Enviar saludo 👋' : 'Pedir canción 🎵',
-      input: 'textarea',
-      inputPlaceholder: tipo === 'saludo' ? 'Escribe tu saludo...' : '¿Qué canción quieres escuchar?',
-      showCancelButton: true,
-      confirmButtonText: 'Enviar',
-    });
-
-    if(!mensaje) return;
-
-    const response = await fetch("{% url 'enviar_mensaje' evento.id %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      body: JSON.stringify({ nombre, tipo, mensaje, vip: esVIP })
-    });
-
-    const data = await response.json();
-    if(data.ok) {
-      Swal.fire('Enviado 🎉', data.msg, 'success');
-    } else {
-      Swal.fire('Error', data.msg, 'error');
-    }
-  }
-
-  document.getElementById('btnSaludo').addEventListener('click', () => enviarMensaje('saludo'));
-  document.getElementById('btnCancion').addEventListener('click', () => enviarMensaje('cancion'));
-
-  // Inicializar UI al cargar
-  actualizarUI();
 </script>
 </body>
 </html>

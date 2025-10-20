@@ -1,5 +1,4 @@
-{% extends 'base.html' %}
-{% block content %}
+
 <h1>🎧 Panel del DJ - {{ evento.nombre_evento }}</h1>
 <div id="mensajes" style="height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
   <ul id="lista-mensajes"></ul>
@@ -31,4 +30,3 @@ ws.onmessage = (e) => {
   }
 };
 </script>
-{% endblock %}

@@ -1,13 +1,42 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{% if object %}Editar Banner{% else %}Crear Banner{% endif %}{% endblock %}
 
 {% block content %}
-    <h2>{% if object %}Editar Banner{% else %}Agregar Nuevo Banner{% endif %}</h2>
+    <link rel="stylesheet" href="{% static 'css/coloresCustom.css' %}">
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-        <a href="{% url 'banner_list' %}">Cancelar</a>
-    </form>
+    <div class="section-title">
+        <span class="fw-bold text-dark">Gestión de Banners</span>
+        <span class="mx-2 text-dark">|</span>
+        <span class="text-secondary">{% if object %}Editar Banner{% else %}Crear Banner{% endif %}</span>
+    </div>
+
+    <div class="custom-card mt-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                {% for field in form %}
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="text-danger small">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4 d-flex flex-column flex-sm-row gap-2">
+                <button type="submit" class="btn btn-custom-success">
+                    <i class="bi bi-image me-1"></i>
+                    {% if object %}Guardar Cambios{% else %}Guardar Banner{% endif %}
+                </button>
+                <a href="{% url 'banner_list' %}" class="btn btn-custom-secondary">
+                    <i class="bi bi-arrow-return-left me-1"></i>
+                    Volver al listado
+                </a>
+            </div>
+        </form>
+    </div>
 {% endblock %}
