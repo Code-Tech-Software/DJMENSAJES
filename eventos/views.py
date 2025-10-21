@@ -100,6 +100,10 @@ def pantalla_evento(request, evento_id):
     return render(request, 'eventos/evento_pantalla.html', {'evento': evento})
 
 
+from django.utils import timezone
+from datetime import timedelta
+
+
 @csrf_exempt
 def enviar_mensaje(request, evento_id):
     if request.method == 'POST':
@@ -111,6 +115,33 @@ def enviar_mensaje(request, evento_id):
 
         evento = get_object_or_404(Evento, id=evento_id)
 
+        # Verificar cooldown (solo para no VIP)
+        if not vip:
+            # Obtener la IP del usuario para identificar sesiones
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+
+            # Buscar el último mensaje de esta IP
+            ultimo_mensaje = Mensaje.objects.filter(
+                evento=evento,
+                nombre=nombre  # También filtramos por nombre por seguridad
+            ).order_by('-fecha_creacion').first()
+
+            if ultimo_mensaje:
+                tiempo_transcurrido = timezone.now() - ultimo_mensaje.fecha_creacion
+                cooldown_minutos = evento.cooldown
+                tiempo_restante = (cooldown_minutos * 60) - tiempo_transcurrido.total_seconds()
+
+                if tiempo_restante > 0:
+                    return JsonResponse({
+                        'ok': False,
+                        'msg': f'Debes esperar {int(tiempo_restante // 60)}:{int(tiempo_restante % 60):02d} minutos para enviar otro mensaje',
+                        'cooldown_restante': tiempo_restante
+                    })
+
         # Guardar mensaje en la BD
         msg = Mensaje.objects.create(
             nombre=nombre,
@@ -119,6 +150,7 @@ def enviar_mensaje(request, evento_id):
             vip=vip,
             evento=evento
         )
+
         # Enviar mensaje en tiempo real al grupo WebSocket
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -136,8 +168,11 @@ def enviar_mensaje(request, evento_id):
             }
         )
 
-        return JsonResponse({'ok': True, 'msg': 'Mensaje enviado con éxito'})
-    return JsonResponse({'ok': False, 'msg': 'Método no permitido'}, status=405)
+        return JsonResponse({
+            'ok': True,
+            'msg': 'Mensaje enviado correctamente',
+            'cooldown': evento.cooldown * 60  # Enviar cooldown en segundos
+        })
 
 
 def panel_dj(request, evento_id):

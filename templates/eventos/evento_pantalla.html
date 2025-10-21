@@ -281,6 +281,37 @@
             }
         }
 
+        /* Estilos para el contador de cooldown */
+        .cooldown-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .cooldown-text {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .cooldown-timer {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Estilos para botones desactivados */
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
 
     </style>
 </head>
@@ -333,7 +364,6 @@
                     <button id="cerrarSesion" class="btn btn-sm btn-outline-light" style="display:none;">Cerrar</button>
                 </div>
 
-                <!-- Big action buttons (mobile first stacked) -->
                 <!-- Big action buttons (más atractivos y modernos) -->
                 <div class="mt-3">
                     <button id="btnSaludo" class="btn btn-glow-primary big-action" aria-label="Enviar saludo">
@@ -349,6 +379,12 @@
                             <span>Pedir canción</span>
                         </div>
                     </button>
+                </div>
+
+                <!-- Contador de cooldown -->
+                <div id="cooldownContainer" class="cooldown-container" style="display: none;">
+                    <div class="cooldown-text">Tiempo restante para enviar otro mensaje:</div>
+                    <div id="cooldownTimer" class="cooldown-timer">00:00</div>
                 </div>
 
             </div> <!-- /.card-panel -->
@@ -478,10 +514,96 @@
         Toast.fire('Cerraste sesión', 'Ahora puedes ingresar de nuevo', 'info');
     });
 
-    // Send message (saludo or cancion)
+    // Variables globales para el cooldown
+    let cooldownTimer = null;
+    let cooldownTimeLeft = 0;
+
+    // Elementos del cooldown
+    const cooldownContainer = document.getElementById('cooldownContainer');
+    const cooldownTimerDisplay = document.getElementById('cooldownTimer');
+
+    // Función para formatear el tiempo
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Función para iniciar el cooldown
+    function startCooldown(seconds) {
+        cooldownTimeLeft = seconds;
+
+        // Mostrar contador
+        cooldownContainer.style.display = 'block';
+        cooldownTimerDisplay.textContent = formatTime(cooldownTimeLeft);
+
+        // Desactivar botones
+        document.getElementById('btnSaludo').classList.add('btn-disabled');
+        document.getElementById('btnCancion').classList.add('btn-disabled');
+
+        // Iniciar contador
+        cooldownTimer = setInterval(() => {
+            cooldownTimeLeft--;
+            cooldownTimerDisplay.textContent = formatTime(cooldownTimeLeft);
+
+            if (cooldownTimeLeft <= 0) {
+                clearCooldown();
+            }
+        }, 1000);
+    }
+
+    // Función para limpiar el cooldown
+    function clearCooldown() {
+        if (cooldownTimer) {
+            clearInterval(cooldownTimer);
+            cooldownTimer = null;
+        }
+
+        // Ocultar contador
+        cooldownContainer.style.display = 'none';
+
+        // Reactivar botones
+        document.getElementById('btnSaludo').classList.remove('btn-disabled');
+        document.getElementById('btnCancion').classList.remove('btn-disabled');
+    }
+
+    // Función para verificar si hay cooldown activo al cargar la página
+    function checkExistingCooldown() {
+        const lastCooldown = getCookie('last_cooldown_end');
+        if (lastCooldown) {
+            const now = Math.floor(Date.now() / 1000);
+            const timeDiff = parseInt(lastCooldown) - now;
+
+            if (timeDiff > 0) {
+                startCooldown(timeDiff);
+            }
+        }
+    }
+
+    // Modificar la función enviarMensaje para manejar el cooldown
     async function enviarMensaje(tipo) {
         const nombre = await pedirNombre();
+        const vip = getCookie('vip_invitado') === 'true';
 
+        // Si es VIP, no aplicar cooldown
+        if (vip) {
+            // Continuar con el envío normal sin cooldown
+            await enviarMensajeSinCooldown(nombre, tipo, vip);
+            return;
+        }
+
+        // Si no es VIP y hay cooldown activo, mostrar mensaje
+        if (cooldownTimer) {
+            Toast.fire('Espera', `Debes esperar ${formatTime(cooldownTimeLeft)} para enviar otro mensaje`, 'warning');
+            return;
+        }
+
+        // Enviar mensaje
+        await enviarMensajeSinCooldown(nombre, tipo, vip);
+    }
+
+    // Función separada para el envío del mensaje
+    async function enviarMensajeSinCooldown(nombre, tipo, vip) {
         const {value: mensaje} = await Toast.fire({
             title: tipo === 'saludo' ? 'Enviar saludo' : 'Pedir canción',
             input: 'textarea',
@@ -491,8 +613,6 @@
         });
 
         if (!mensaje) return;
-
-        const vip = getCookie('vip_invitado') === 'true';
 
         // Mostrar alerta de carga
         Toast.fire({
@@ -517,14 +637,50 @@
 
             const data = await response.json();
             Swal.close();
-            if (data.ok) Toast.fire('Enviado', data.msg, 'success');
-            else Toast.fire('Error', data.msg, 'error');
+
+            if (data.ok) {
+                Toast.fire('Enviado', data.msg, 'success');
+
+                // Iniciar cooldown si no es VIP y el servidor devuelve cooldown
+                if (!vip && data.cooldown) {
+                    startCooldown(data.cooldown);
+
+                    // Guardar en cookie para persistencia
+                    const endTime = Math.floor(Date.now() / 1000) + data.cooldown;
+                    setCookie('last_cooldown_end', endTime.toString(), 1); // 1 día
+                }
+            } else {
+                // Si hay cooldown desde el servidor (por si acaso)
+                if (data.cooldown_restante) {
+                    startCooldown(Math.ceil(data.cooldown_restante));
+                    const endTime = Math.floor(Date.now() / 1000) + Math.ceil(data.cooldown_restante);
+                    setCookie('last_cooldown_end', endTime.toString(), 1);
+                }
+                Toast.fire('Error', data.msg, 'error');
+            }
         } catch (err) {
             Swal.close();
             Toast.fire('Error', 'No fue posible enviar. Intenta de nuevo.', 'error');
         }
     }
 
+    // Modificar la inicialización para verificar cooldown existente
+    document.addEventListener('DOMContentLoaded', () => {
+        actualizarUI();
+        checkExistingCooldown();
+    });
+
+    // Limpiar cooldown al cerrar sesión (modificar la función existente)
+    cerrarBtn.addEventListener('click', () => {
+        borrarCookie('nombre_invitado');
+        borrarCookie('vip_invitado');
+        //borrarCookie('last_cooldown_end'); // Limpiar cooldown
+        //clearCooldown(); // Limpiar timer activo
+        actualizarUI();
+        Toast.fire('Cerraste sesión', 'Ahora puedes ingresar de nuevo', 'info');
+    });
+
+    // Modificar los event listeners para usar la nueva función
     document.getElementById('btnSaludo').addEventListener('click', () => enviarMensaje('saludo'));
     document.getElementById('btnCancion').addEventListener('click', () => enviarMensaje('cancion'));
 
