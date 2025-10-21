@@ -1,14 +1,12 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Evento, SonidoDJ, Banner
+from django.utils import timezone
 
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-
-
-
 
 
 class EventoForm(forms.ModelForm):
@@ -33,6 +31,14 @@ class EventoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(EventoForm, self).__init__(*args, **kwargs)
 
+        # Ajuste de formato para mostrar correctamente los datetime-local
+        for field_name in ['fecha_inicio_evento', 'fecha_fin_evento']:
+            if self.instance and getattr(self.instance, field_name):
+                value = getattr(self.instance, field_name)
+                if timezone.is_aware(value):
+                    value = timezone.localtime(value)
+                self.initial[field_name] = value.strftime('%Y-%m-%dT%H:%M')
+
 
 class SonidoDJForm(forms.ModelForm):
     class Meta:
@@ -49,8 +55,8 @@ class SonidoDJForm(forms.ModelForm):
             'estado',
         ]
         labels = {
-            'imagen1': 'Logo',
-            'imagen2': 'Foto de fondo',
+            'imagen1': 'Logo Oscuro',
+            'imagen2': 'Logo Claro',
         }
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del DJ o Sonido'}),
@@ -63,7 +69,6 @@ class SonidoDJForm(forms.ModelForm):
             'imagen2': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
 
 
 class BannerForm(forms.ModelForm):

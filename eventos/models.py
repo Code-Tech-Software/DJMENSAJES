@@ -38,6 +38,7 @@ class Evento(models.Model):
             ('boda', 'Boda'),
             ('quinse', 'Quince Años'),
             ('cumple', 'Cumpleaños'),
+            ('fiesta', 'Fiesta'),
             ('otro', 'Otro'),
         ]
     )

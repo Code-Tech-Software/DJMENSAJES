@@ -102,9 +102,9 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 TIME_ZONE = 'America/Mexico_City'
 LANGUAGE_CODE = 'es'
-USE_I18N = True  # Activar internacionalización
-USE_L10N = True  # Activar localización
-USE_TZ = True  # Activar soporte para zonas horarias
+USE_I18N = True  #
+USE_L10N = True  #
+USE_TZ = True  #
 
 STATIC_URL = 'static/'
 

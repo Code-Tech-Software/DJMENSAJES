@@ -136,7 +136,7 @@ def enviar_mensaje(request, evento_id):
             }
         )
 
-        return JsonResponse({'ok': True, 'msg': 'Mensaje enviado con éxito 🎉'})
+        return JsonResponse({'ok': True, 'msg': 'Mensaje enviado con éxito'})
     return JsonResponse({'ok': False, 'msg': 'Método no permitido'}, status=405)
 
 
