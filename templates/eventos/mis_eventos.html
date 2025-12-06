@@ -64,10 +64,7 @@
                             </div>
                         </td>
                     </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted">No tienes eventos creados.</td>
-                    </tr>
+              
                 {% endfor %}
                 </tbody>
             </table>
@@ -151,7 +148,7 @@
                 ],
                 language: {
                     "decimal": "",
-                    "emptyTable": "No hay eventos disponibles",
+                    "emptyTable": "No hay eventos creados",
                     "info": "Mostrando _START_ a _END_ de _TOTAL_ eventos",
                     "infoEmpty": "Mostrando 0 a 0 de 0 eventos",
                     "infoFiltered": "(filtrado de _MAX_ eventos totales)",

@@ -26,8 +26,9 @@ from channels.layers import get_channel_layer
 
 # --- Modelos y Formularios locales ---
 from .models import Evento, SonidoDJ, Banner, Mensaje
-from .forms import EventoForm, SonidoDJForm, BannerForm, LoginForm
+from .forms import EventoForm, SonidoDJForm, BannerForm, LoginForm, EditarPerfilForm, CustomPasswordChangeForm
 
+from django.contrib.auth import update_session_auth_hash
 
 @login_required()
 def home(request):
@@ -49,6 +50,7 @@ def iniciar_sesion(request):
     return render(request, 'login.html', {'form': form})
 
 
+@login_required
 def registro(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -209,11 +211,15 @@ def eliminar_evento(request, evento_id):
 
 
 # Vistas para el modelo SonidoDJ
-class SonidoDJListView(ListView):
-    model = SonidoDJ
-    template_name = 'eventos/SonidoDJ/sonidodj_list.html'
-    context_object_name = 'sonidos'
-    ordering = ['-id']
+
+
+@login_required
+def sonidodj_list(request):
+    sonidos = SonidoDJ.objects.all().order_by('-id')
+    return render(request, 'eventos/SonidoDJ/sonidodj_list.html', {
+        'sonidos': sonidos
+    })
+
 
 
 class SonidoDJCreateView(CreateView):
@@ -228,6 +234,7 @@ class SonidoDJCreateView(CreateView):
         return response
 
 
+
 class SonidoDJUpdateView(UpdateView):
     model = SonidoDJ
     form_class = SonidoDJForm
@@ -240,7 +247,7 @@ class SonidoDJUpdateView(UpdateView):
         return response
 
 
-@login_required()
+
 def sonidodj_eliminar(request, pk):
     sonido = get_object_or_404(SonidoDJ, pk=pk)
     sonido.delete()
@@ -249,11 +256,13 @@ def sonidodj_eliminar(request, pk):
 
 
 # Vistas para el modelo Banner
+
 class BannerListView(ListView):
     model = Banner
     template_name = 'eventos/Banner/banner_list.html'
     context_object_name = 'banners'
     ordering = ['-id']
+
 
 
 class BannerCreateView(CreateView):
@@ -266,6 +275,7 @@ class BannerCreateView(CreateView):
         response = super().form_valid(form)
         messages.success(self.request, "Banner creado correctamente.")
         return response
+
 
 
 class BannerUpdateView(UpdateView):
@@ -286,3 +296,91 @@ def banner_eliminar(request, pk):
     banner.delete()
     messages.success(request, "Banner eliminado correctamente.")
     return redirect('banner_list')
+
+
+#calendario
+
+from django.http import JsonResponse
+from .models import Evento
+@login_required()
+def calendario_eventos(request):
+    return render(request, "home.html")
+
+def api_eventos(request):
+    eventos = Evento.objects.select_related("sonido_dj").all()
+
+    data = []
+    for evento in eventos:
+        data.append({
+            "id": evento.id,
+            "title": evento.nombre_evento,
+            "start": evento.fecha_inicio_evento.isoformat(),
+            "end": evento.fecha_fin_evento.isoformat(),
+            "tipo": evento.tipo_evento,
+            "dj": evento.sonido_dj.nombre if evento.sonido_dj else "Sin DJ asignado",
+            "estado": evento.estado,
+        })
+
+    return JsonResponse(data, safe=False)
+
+from django.http import JsonResponse, HttpResponseForbidden
+@login_required
+@require_POST
+def toggle_evento(request, pk):
+    evento = get_object_or_404(Evento, pk=pk)
+    # solo propietario o staff puede cambiar estado
+    if evento.usuario != request.user and not request.user.is_staff:
+        return HttpResponseForbidden('No tienes permiso para cambiar este evento.')
+
+    # Si mandan 'estado' en POST lo respetamos, si no simplemente alternamos
+    estado_post = request.POST.get('estado')
+    if estado_post is None:
+        evento.estado = not evento.estado
+    else:
+        evento.estado = str(estado_post).lower() in ['1', 'true', 'on', 'yes']
+    evento.save()
+
+    return JsonResponse({'success': True, 'estado': evento.estado})
+
+
+
+@login_required
+def ver_perfil(request):
+    return render(request, 'Usuario/perfil.html')
+
+@login_required
+def editar_perfil(request):
+    if request.method == 'POST':
+        form = EditarPerfilForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado exitosamente.")  # esto para las notificaciones
+            return redirect('ver_perfil')
+
+    else:
+        form = EditarPerfilForm(instance=request.user)
+    return render(request, 'Usuario/editar_perfil.html', {'form': form})
+
+@login_required
+def cambiar_contrasena(request):
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Contraseña actualizada.")  # esto para las notificaciones
+            return redirect('ver_perfil')
+        else:
+            for field in form.errors:
+                for error in form.errors[field]:
+                    if "muy corta" in error or "too short" in error:
+                        messages.error(request, "Usa al menos 3 caracteres.")  # <- Aquí la personalizas
+                    elif field == 'old_password':
+                        messages.error(request, "La contraseña actual ingresada es incorrecta.")
+                    elif "no coinciden" in error or "do not match" in error:
+                        messages.error(request, "Las contraseñas nuevas no coinciden.")
+                    else:
+                        messages.error(request, f"{form.fields[field].label}: {error}")
+    else:
+        form = CustomPasswordChangeForm(user=request.user)
+    return render(request, 'Usuario/cambiar_contrasena.html', {'form': form})

@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Perfil de {{ user.username }}</title>
+        <link rel="stylesheet" href="{% static 'css/coloresCustom.css' %}">
+        <style>
+
+
+            body {
+                background: linear-gradient(120deg, #fdfdfd, #e5eef4);
+            }
+
+            .profile-wrapper {
+                max-width: 100%;
+                margin: 1rem auto;
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+                width: 100%;
+            }
+
+            .profile-header {
+                display: flex;
+                align-items: center;
+                gap: 2rem;
+                border-bottom: 1px solid #e9ecef;
+                padding-bottom: 1rem;
+            }
+
+            .profile-header img {
+                width: 120px;
+                height: 120px;
+                object-fit: cover;
+                border-radius: 50%;
+                border: 4px solid #dee2e6;
+            }
+
+            .profile-header h2 {
+                margin: 0;
+            }
+
+            .info-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 1.5rem;
+                margin-top: 2rem;
+            }
+
+            .info-item {
+                padding: 1rem;
+                background-color: #f8f9fa;
+                border-left: 4px solid #ffc107;
+                border-radius: 0.5rem;
+            }
+
+            .info-item strong {
+                display: block;
+                color: #343a40;
+                margin-bottom: 0.5rem;
+            }
+
+            .actions {
+                margin-top: 2rem;
+                text-align: right;
+            }
+
+            .actions a {
+                margin-left: 0.5rem;
+            }
+
+            @media (max-width: 768px) {
+                .profile-header {
+                    flex-direction: column;
+                    text-align: center;
+                }
+
+                .actions {
+                    text-align: center;
+                }
+            }
+        </style>
+    </head>
+    <body>
+
+    <div class="section-title">
+        <span class="fw-bold text-dark">Perfil</span>
+        <span class="mx-2 text-dark">|</span>
+        <span class="text-secondary">Información</span>
+    </div>
+
+    <div class="profile-wrapper">
+        <div class="profile-header">
+            {% if user.foto %}
+                <img src="{{ user.foto.url }}" alt="Foto de perfil">
+            {% else %}
+                <img src="{% static 'img/perfil.png' %}" alt="Foto de perfil">
+            {% endif %}
+            <div>
+                <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+                <p class="mb-0">GRUPO EM</p>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <strong>Nombre de usuario</strong>
+                {{ user.username }}
+            </div>
+            <div class="info-item">
+                <strong>Email</strong>
+                {{ user.email }}
+            </div>
+            <div class="info-item">
+                <strong>Teléfono</strong>
+                {{ user.telefono|default:"No registrado" }}
+            </div>
+            
+            <!-- 
+            <div class="info-item">
+                <strong>Dirección</strong>
+                {{ user.direccion|default:"No registrada" }}
+            </div>
+            <div class="info-item">
+                <strong>Rol</strong>
+                {{ user.rol.nombre|default:"Sin rol asignado" }}
+            </div>
+            
+            
+            <div class="info-item">
+                <strong>Área</strong>
+                Empaque y control de calidad
+            </div>
+            <div class="info-item">
+                <strong>Antigüedad</strong>
+                3 años en la empresa
+            </div>
+            -->
+            <div class="info-item">
+                <strong>Ubicación de planta</strong>
+                Jiquilpan de Juárez, Mich
+            </div>
+
+
+        </div>
+
+        <div class="actions">
+            <a href="{% url 'editar_perfil' %}" class="btn btn-custom-info btn-sm"><i
+                    class="bi bi-pencil-square me-1"></i> Editar Perfil</a>
+            <a href="{% url 'cambiar_contrasena' %}" class="btn btn-custom-secondary btn-sm"> <i
+                    class="bi bi-key me-1"></i> Cambiar Contraseña</a>
+        </div>
+
+
+    </div>
+
+
+    <!-- Notyf JS Notificacones -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.css" rel="stylesheet">
+
+    {% if messages %}
+        <script>
+            const notyf = new Notyf({
+                duration: 3000,
+                position: {x: 'right', y: 'bottom'},
+                dismissible: true,
+                types: [
+                    {
+                        type: 'Success',
+                    },
+                    {
+                        type: 'Error',
+               
+                    }
+                ]
+            });
+
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    notyf.success("{{ message }}");
+                {% elif message.tags == 'error' %}
+                    notyf.error("{{ message }}");
+                {% endif %}
+            {% endfor %}
+        </script>
+    {% endif %}
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    </body>
+    </html>
+{% endblock %}

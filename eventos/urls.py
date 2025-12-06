@@ -1,10 +1,10 @@
 from django.urls import path
 from . import views
-from .views import SonidoDJListView, SonidoDJUpdateView, sonidodj_eliminar, SonidoDJCreateView, BannerCreateView, \
-    BannerListView, BannerUpdateView, banner_eliminar
+from .views import SonidoDJUpdateView, sonidodj_eliminar, SonidoDJCreateView, BannerCreateView, \
+    BannerListView, BannerUpdateView, banner_eliminar, api_eventos, calendario_eventos, ver_perfil, editar_perfil, \
+    cambiar_contrasena
 
 urlpatterns = [
-
 
     path('nuevo/', views.crear_evento, name='crear_evento'),
     path('mis_eventos/', views.mis_eventos, name='mis_eventos'),
@@ -19,7 +19,8 @@ urlpatterns = [
     path('evento/<int:evento_id>/detalle/', views.detalle_evento, name='detalle_evento'),
 
     # URLs para SonidoDJ
-    path('sonidos/', SonidoDJListView.as_view(), name='sonidodj_list'),
+    # path('sonidos/', SonidoDJListView.as_view(), name='sonidodj_list'),
+    path('sonidos/', views.sonidodj_list, name='sonidodj_list'),
     path('sonidos/nuevo/', SonidoDJCreateView.as_view(), name='sonidodj_crear'),
     path('sonidos/editar/<int:pk>/', SonidoDJUpdateView.as_view(), name='sonidodj_editar'),
     # ✅ URL MODIFICADA PARA APUNTAR A LA FUNCIÓN
@@ -29,7 +30,18 @@ urlpatterns = [
     path('banners/', BannerListView.as_view(), name='banner_list'),
     path('banners/nuevo/', BannerCreateView.as_view(), name='banner_crear'),
     path('banners/editar/<int:pk>/', BannerUpdateView.as_view(), name='banner_editar'),
-    # ✅ URL MODIFICADA PARA APUNTAR A LA FUNCIÓN
     path('banners/eliminar/<int:pk>/', banner_eliminar, name='banner_eliminar'),
+
+
+    #CALENDARIO
+    path("calendario/", calendario_eventos, name="calendario_eventos"),
+
+    path("api/eventos/", api_eventos, name="api_eventos"),
+
+    path('eventos/<int:pk>/toggle/', views.toggle_evento, name='toggle_evento'),
+
+    path('perfil/', ver_perfil, name='ver_perfil'),
+    path('perfil/editar/', editar_perfil, name='editar_perfil'),
+    path('perfil/cambiar_contrasena/', cambiar_contrasena, name='cambiar_contrasena'),
 
 ]

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/coloresCustom.css' %}">
+
+    <script>
+        // Quitar el foco automático al primer campo
+        window.onload = function () {
+            document.activeElement.blur();
+        };
+    </script>
+    
+<style>
+
+    .custom-card form .form-group {
+        margin-bottom: 15px;
+    }
+
+  
+</style>
+
+<div class="section-title">
+    <span class="fw-bold text-dark">Perfil</span>
+    <span class="mx-2 text-dark">|</span>
+    <span class="text-secondary">Cambiar Contraseña</span>
+</div>
+<br>
+
+<div class="custom-card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-group">
+            {{ form.old_password.label_tag }}
+            {{ form.old_password }}
+          
+        </div>
+        <div class="form-group">
+            {{ form.new_password1.label_tag }}
+            {{ form.new_password1 }}
+          
+        </div>
+        <div class="form-group">
+            {{ form.new_password2.label_tag }}
+            {{ form.new_password2 }}
+        
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-custom-success btn-sm me-2">
+                <i class="bi bi-key me-1"></i>Actualizar Contraseña
+            </button>
+            <a href="{% url 'ver_perfil' %}" class="btn btn-custom-secondary btn-sm">
+                <i class="bi bi-arrow-return-left me-1"></i>Volver al perfil
+            </a>
+        </div>
+    </form>
+</div>
+     <!-- Notyf JS Notificacones -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.css" rel="stylesheet">
+
+    {% if messages %}
+        <script>
+            const notyf = new Notyf({
+                duration: 6000,
+                position: {x: 'right', y: 'bottom'},
+                dismissible: true,
+                types: [
+                    {
+                        type: 'Success',
+                    },
+                    {
+                        type: 'Error',
+               
+                    }
+                ]
+            });
+
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    notyf.success("{{ message }}");
+                {% elif message.tags == 'error' %}
+                    notyf.error("{{ message }}");
+                {% endif %}
+            {% endfor %}
+        </script>
+    {% endif %}
+    
+{% endblock %}

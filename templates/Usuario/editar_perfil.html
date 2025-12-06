@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/coloresCustom.css' %}">
+    <style>
+
+        .custom-card form {
+            margin-bottom: 20px;
+        }
+
+    </style>
+    
+    <div class="section-title ">
+        <span class="fw-bold text-dark">Perfil</span>
+        <span class="mx-2 text-dark">|</span>
+        <span class="text-secondary">Editar Perfil</span>
+    </div>
+    
+    <br>
+    <div class="custom-card">
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <!-- Columna izquierda: campos de texto -->
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        {{ form.first_name.label_tag }} {{ form.first_name }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.last_name.label_tag }} {{ form.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.email.label_tag }} {{ form.email }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.telefono.label_tag }} {{ form.telefono }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.direccion.label_tag }} {{ form.direccion }}
+                    </div>
+                </div>
+
+                <!-- Columna derecha: imagen -->
+                <div class="col-md-4 text-center">
+                    <label for="id_foto" class="form-label fw-bold">Foto de perfil</label><br>
+                    {% if user.foto %}
+                        <img id="preview" src="{{ user.foto.url }}" alt="Foto actual"
+                             class="img-thumbnail rounded-circle mb-2"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img id="preview" src="{% static 'img/defaltperfil.jpg' %}" alt="Sin imagen"
+                             class="img-thumbnail rounded-circle mb-2"
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    {{ form.foto }}
+                </div>
+
+
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-custom-success btn-sm me-2"><i class="bi bi-floppy me-1"></i>Guardar
+                    cambios
+                </button>
+                <a href="{% url 'ver_perfil' %}" class="btn btn-custom-secondary btn-sm"><i
+                        class="bi bi-arrow-return-left me-1"></i>Volver al perfil</a>
+            </div>
+
+
+        </form>
+
+    
+        <script>
+            const input = document.getElementById('id_foto');
+            const preview = document.getElementById('preview');
+
+            input.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    preview.src = URL.createObjectURL(file);
+                }
+            });
+        </script>
+</div>
+{% endblock %}

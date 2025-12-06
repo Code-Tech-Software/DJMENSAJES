@@ -83,10 +83,9 @@
         </div>
 
         <div class="dropdown-menu-user shadow-sm border rounded bg-white py-2 px-2" id="userDropdown">
-            <a href="#" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
+            <a href="{% url 'ver_perfil' %}" class="dropdown-item d-flex align-items-center gap-2 text-dark py-1">
                 <i class="bi bi-person"></i> Ver perfil
             </a>
-
 
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
@@ -100,6 +99,9 @@
     </div>
 
 </header>
+
+
+
 
 
 <div class="dark-mode-btn" id="dark-mode-btn">

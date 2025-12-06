@@ -1,5 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+
+
+class Usuario(AbstractUser):
+    telefono = models.CharField(max_length=15,blank=True, null=True)
+    direccion = models.TextField(blank=True, null=True)
+    foto = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True)
+
+    def __str__(self):
+        return self.first_name + " " + self.last_name
 
 
 class SonidoDJ(models.Model):
@@ -30,7 +39,7 @@ class Banner(models.Model):
 
 
 class Evento(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='eventos')
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='eventos')
     nombre_evento = models.CharField(max_length=200)
     tipo_evento = models.CharField(
         max_length=50,
