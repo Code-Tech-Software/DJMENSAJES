@@ -1,0 +1,65 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Banners{% endblock %}
+{% block head %}
+<style>
+    .banner-card__media { display: grid; grid-template-columns: 1fr 2.2fr; gap: 8px; padding: 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    .banner-card__media .m { border-radius: 10px; overflow: hidden; background: var(--surface-3); display: grid; place-items: center; color: var(--text-3); position: relative; }
+    .banner-card__media .m img { width: 100%; height: 100%; object-fit: cover; }
+    .banner-card__media .m small { position: absolute; left: 6px; bottom: 6px; font-size: 10px; font-weight: 700; color: #fff; background: rgba(0,0,0,.55); padding: 1px 6px; border-radius: 6px; }
+    .banner-card__media .m--v { aspect-ratio: 9 / 16; }
+    .banner-card__media .col { display: grid; gap: 8px; grid-template-rows: 1fr 1fr; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Administración</div>
+        <h1>Banners</h1>
+        <p>Fondos para la pantalla de invitados (celular), el proyector y la portada de la invitación.</p>
+    </div>
+    <div class="page-head__actions"><button class="btn btn--primary" data-modal="{% url 'banners:crear' %}"><i class="ri-image-add-line"></i>Nuevo banner</button></div>
+</div>
+
+<form class="toolbar" data-autosubmit data-target="#resultados">
+    <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar banner"></div>
+    <select class="input" name="categoria"><option value="">Todas las categorías</option>{% for v, n in categorias %}<option value="{{ v }}" {% if categoria == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+</form>
+
+<div id="resultados">
+    {% if banners %}
+    <div class="grid grid-auto reveal">
+        {% for b in banners %}
+        <article class="card card--hover" style="overflow:hidden;{% if not b.estado %}opacity:.6{% endif %}">
+            <div class="banner-card__media">
+                <div class="m m--v">{% if b.fondo_movil %}<img src="{{ b.fondo_movil.url }}" alt="" loading="lazy">{% else %}<i class="ri-smartphone-line"></i>{% endif %}<small>Celular</small></div>
+                <div class="col">
+                    <div class="m">{% if b.fondo_pantalla %}<img src="{{ b.fondo_pantalla.url }}" alt="" loading="lazy">{% else %}<i class="ri-tv-2-line"></i>{% endif %}<small>Proyector</small></div>
+                    <div class="m">{% if b.portada %}<img src="{{ b.portada.url }}" alt="" loading="lazy">{% else %}<i class="ri-mail-open-line"></i>{% endif %}<small>Invitación</small></div>
+                </div>
+            </div>
+            <div class="card__body" style="padding:14px 16px">
+                <div class="row between">
+                    <div style="min-width:0"><div class="strong truncate">{{ b.nombre }}</div>
+                        <div class="row mt-1" style="gap:6px"><span class="chip chip--info">{{ b.get_categoria_display }}</span>{% if b.colaborador %}<span class="chip chip--live truncate" style="max-width:150px">{{ b.colaborador }}</span>{% endif %}{% if not b.estado %}<span class="chip chip--muted">Inactivo</span>{% endif %}</div></div>
+                    <div class="dropdown">
+                        <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ri-more-2-fill"></i></button>
+                        <div class="dropdown__menu">
+                            <button class="menu-item" data-modal="{% url 'banners:editar' b.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
+                            <button class="menu-item menu-item--danger" data-post="{% url 'banners:eliminar' b.pk %}" data-danger data-confirm="¿Eliminar el banner “{{ b.nombre }}”?" data-confirm-text="{% if b.n_eventos %}{{ b.n_eventos }} evento(s) lo usan y quedarán sin fondo.{% else %}Ningún evento lo usa.{% endif %}"><i class="ri-delete-bin-6-line"></i>Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+                <p class="xsmall muted mt-1">Usado en {{ b.n_eventos }} evento{{ b.n_eventos|pluralize }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        {% url 'banners:crear' as url_crear %}
+        {% include 'components/vacio.html' with icono='ri-image-2-line' titulo='Sin banners' texto='Sube fondos para darle personalidad a las pantallas y las invitaciones de cada evento.' boton_url=url_crear boton_modal=True boton_texto='Subir banner' boton_icono='ri-image-add-line' %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

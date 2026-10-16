@@ -1,0 +1,12 @@
+<div class="empty">
+    <div class="empty__art"><i class="{{ icono|default:'ri-inbox-2-line' }}"></i></div>
+    <h3>{{ titulo }}</h3>
+    {% if texto %}<p>{{ texto }}</p>{% endif %}
+    {% if boton_url %}
+        {% if boton_modal %}
+        <button class="btn btn--primary" data-modal="{{ boton_url }}"><i class="{{ boton_icono|default:'ri-add-line' }}"></i>{{ boton_texto }}</button>
+        {% else %}
+        <a class="btn btn--primary" href="{{ boton_url }}"><i class="{{ boton_icono|default:'ri-add-line' }}"></i>{{ boton_texto }}</a>
+        {% endif %}
+    {% endif %}
+</div>

@@ -1,0 +1,21 @@
+{% load ui %}
+{% for e in recordatorios %}
+<a class="feed-item tone-warning" href="{{ e.get_absolute_url }}">
+    <span class="feed-item__icon"><i class="ri-alarm-warning-line"></i></span>
+    <div><div class="feed-item__text"><strong>{{ e.nombre_evento }}</strong> comienza {{ e.dias_restantes|dias_texto|lower }} a las {{ e.fecha_inicio_evento|date:"H:i" }} h</div>
+        <div class="feed-item__time">Recordatorio</div></div>
+</a>
+{% endfor %}
+{% for a in actividad %}
+<a class="feed-item {{ a.tono }}" href="{{ a.url }}" {% if vistas_en and a.fecha <= vistas_en %}style="opacity:.65"{% endif %}>
+    <span class="feed-item__icon"><i class="{{ a.icono }}"></i></span>
+    <div><div class="feed-item__text">{{ a.texto|safe }}</div><div class="feed-item__time">{{ a.fecha|hace }}</div></div>
+</a>
+{% empty %}
+{% if not recordatorios %}
+<div class="empty" style="padding:24px 0">
+    <div class="empty__art" style="width:56px;height:56px;font-size:24px"><i class="ri-notification-off-line"></i></div>
+    <p class="small">Todo tranquilo por ahora.</p>
+</div>
+{% endif %}
+{% endfor %}

@@ -1,0 +1,60 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}En vivo{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>En vivo</div>
+        <h1>Centro en vivo</h1>
+        <p>Eventos en curso y de los próximos días, con acceso directo a sus pantallas.</p>
+    </div>
+</div>
+
+<h3 class="row mb-2" style="font-size:15px"><span class="chip chip--live chip--dot is-pulse">Ahora</span> En curso</h3>
+{% if en_curso %}
+<div class="grid grid-auto mb-3 reveal">
+    {% for e in en_curso %}
+    <div class="live-tile tone-live tipo-{{ e.tipo_evento }}">
+        <div class="live-tile__head"><span class="ico-square"><i class="{{ e.icono }}"></i></span>
+            <div class="grow" style="min-width:0"><h3 class="truncate">{{ e.nombre_evento }}</h3><p>{{ e.fecha_inicio_evento|date:"H:i" }} – {{ e.fecha_fin_evento|date:"H:i" }} h{% if e.lugar %} · {{ e.lugar }}{% endif %}</p></div></div>
+        <div class="row"><span class="chip chip--live">{{ e.n_mensajes }} mensajes</span>{% if e.n_pendientes %}<span class="chip chip--warning">{{ e.n_pendientes }} pendientes</span>{% endif %}{% if not e.estado %}<span class="chip chip--muted">Pausado</span>{% endif %}</div>
+        <div class="live-tile__actions">
+            <a class="btn btn--sm btn--dark grow" href="{{ e.url_dj }}" target="_blank"><i class="ri-headphone-line"></i>DJ</a>
+            <a class="btn btn--sm btn--live grow" href="{{ e.url_pantalla }}" target="_blank"><i class="ri-tv-2-line"></i>Proyector</a>
+            <a class="btn btn--sm" href="{{ e.get_absolute_url }}" aria-label="Detalle"><i class="ri-arrow-right-up-line"></i></a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card mb-3">{% include 'components/vacio.html' with icono='ri-broadcast-line' titulo='Ningún evento en curso' texto='Cuando un evento esté sucediendo aparecerá aquí con sus accesos rápidos.' %}</div>
+{% endif %}
+
+<div class="grid grid-sidebar">
+    <div class="card">
+        <div class="card__head"><div><h3>Próximos 3 días</h3><p>Prepara pantallas y enlaces con anticipación</p></div></div>
+        <div class="list mt-2">
+            {% for e in siguientes %}
+            <div class="list-item tipo-{{ e.tipo_evento }}">
+                <div class="date-block"><small>{{ e.fecha_inicio_evento|date:"D" }}</small><strong>{{ e.fecha_inicio_evento|date:"d" }}</strong></div>
+                <div class="list-item__body"><a class="list-item__title" href="{{ e.get_absolute_url }}">{{ e.nombre_evento }}</a><div class="list-item__sub">{{ e.fecha_inicio_evento|date:"H:i" }} h{% if e.colaborador %} · {{ e.colaborador }}{% endif %}</div></div>
+                <button class="icon-btn icon-btn--sm" data-copy="{{ e.url_dj }}" data-copy-msg="Enlace del DJ copiado" data-tip="Copiar enlace DJ"><i class="ri-headphone-line"></i></button>
+                <button class="icon-btn icon-btn--sm" data-copy="{{ e.url_invitados }}" data-tip="Copiar enlace invitados"><i class="ri-link"></i></button>
+                <a class="icon-btn icon-btn--sm" href="{{ e.url_pantalla }}" target="_blank" data-tip="Pantalla QR"><i class="ri-qr-code-line"></i></a>
+            </div>
+            {% empty %}<p class="muted small" style="padding:4px 20px 20px">No hay eventos en los próximos 3 días.</p>{% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card__head"><div><h3>Últimos mensajes</h3><p>De los eventos en curso</p></div></div>
+        <div class="card__body">
+            {% for m in recientes %}
+            <div class="feed-item {% if m.vip %}tone-gold{% elif m.tipo == 'cancion' %}tone-warning{% endif %}">
+                <span class="feed-item__icon"><i class="{% if m.tipo == 'cancion' %}ri-music-2-line{% else %}ri-chat-heart-line{% endif %}"></i></span>
+                <div><div class="feed-item__text"><strong>{{ m.nombre }}</strong>: {{ m.mensaje|truncatechars:80 }}</div><div class="feed-item__time">{{ m.evento.nombre_evento }} · {{ m.fecha_creacion|hace }}</div></div>
+            </div>
+            {% empty %}<p class="muted small">Sin mensajes por ahora.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

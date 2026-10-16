@@ -1,0 +1,34 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.nombre icono="ri-image-2-line" %}
+    {% campo form.categoria icono="ri-price-tag-3-line" %}
+    {% campo form.colaborador icono="ri-store-2-line" %}
+    {% campo form.estado %}
+    {% campo form.descripcion clase="span-2" %}
+</div>
+
+<div class="form-section mt-3">
+    <div class="form-section__title"><i class="ri-gallery-line"></i>Imágenes <small>· sube al menos una; las demás se completan con la que tengas</small></div>
+    <div class="grid grid-3" style="gap:14px">
+        {% for field in form %}{% if field.name == 'fondo_movil' or field.name == 'fondo_pantalla' or field.name == 'portada' %}
+        <div class="field {% if field.errors %}field--error{% endif %}">
+            <span class="field__label">
+                {% if field.name == 'fondo_movil' %}<i class="ri-smartphone-line text-brand"></i>{% elif field.name == 'fondo_pantalla' %}<i class="ri-tv-2-line text-brand"></i>{% else %}<i class="ri-mail-open-line text-brand"></i>{% endif %}
+                {{ field.label|capfirst }}
+            </span>
+            <div class="dropzone dropzone--tall">
+                <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*">
+                <div class="dropzone__preview" style="{% if field.name == 'fondo_movil' %}width:70px;height:120px{% endif %}">
+                    {% if field.value and field.value.url %}<img src="{{ field.value.url }}" alt="">{% else %}<i class="ri-image-add-line"></i>{% endif %}
+                </div>
+                <div class="dropzone__text"><strong>{% if field.value %}Cambiar{% else %}Elegir imagen{% endif %}</strong><small>{{ field.help_text }}</small></div>
+                {% if field.value %}<label class="dropzone__clear"><input type="checkbox" name="{{ field.html_name }}-clear"> Quitar</label>{% endif %}
+            </div>
+            {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+        </div>
+        {% endif %}{% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Calendario{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Calendario</div>
+        <h1 id="cal-titulo">Calendario</h1>
+        <p>Haz clic en un día para registrar un evento, o en un evento para ver su resumen.</p>
+    </div>
+    <div class="page-head__actions">
+        <div class="row">
+            <button class="icon-btn icon-btn--bordered" id="cal-prev" aria-label="Anterior"><i class="ri-arrow-left-s-line"></i></button>
+            <button class="btn" id="cal-hoy">Hoy</button>
+            <button class="icon-btn icon-btn--bordered" id="cal-next" aria-label="Siguiente"><i class="ri-arrow-right-s-line"></i></button>
+        </div>
+        <div class="segmented" id="cal-vistas">
+            <button data-vista="dayGridMonth" aria-pressed="true">Mes</button>
+            <button data-vista="timeGridWeek" aria-pressed="false">Semana</button>
+            <button data-vista="listMonth" aria-pressed="false">Agenda</button>
+        </div>
+        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ri-add-line"></i>Nuevo</button>
+    </div>
+</div>
+
+<div class="row row-wrap mb-3" id="cal-filtros">
+    {% for v, n in tipos %}<button class="cal-filter tipo-{{ v }}" data-tipo="{{ v }}">{{ n }}</button>{% endfor %}
+</div>
+
+<div class="card card--pad">
+    <div id="calendario"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/es.global.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const ocultos = new Set();
+        const titulo = document.getElementById('cal-titulo');
+        const movil = window.matchMedia('(max-width: 760px)').matches;
+        const cal = new FullCalendar.Calendar(document.getElementById('calendario'), {
+            locale: 'es',
+            firstDay: 1,
+            headerToolbar: false,
+            initialView: movil ? 'listMonth' : 'dayGridMonth',
+            height: 'auto',
+            dayMaxEvents: 3,
+            nowIndicator: true,
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+            slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+            events: { url: "{% url 'eventos:api_calendario' %}", failure: () => EM.toast('No se pudieron cargar los eventos', 'error') },
+            eventDidMount: info => { if (ocultos.has(info.event.extendedProps.tipo)) info.el.style.display = 'none'; },
+            eventClick: info => { info.jsEvent.preventDefault(); EM.modal.open(info.event.extendedProps.url); },
+            dateClick: info => EM.modal.open(`{% url 'eventos:crear' %}?fecha=${info.dateStr}`),
+            datesSet: () => {
+                titulo.textContent = cal.view.title.charAt(0).toUpperCase() + cal.view.title.slice(1);
+                document.querySelectorAll('[data-vista]').forEach(b => b.setAttribute('aria-pressed', b.dataset.vista === cal.view.type));
+            },
+        });
+        cal.render();
+
+        document.getElementById('cal-prev').onclick = () => cal.prev();
+        document.getElementById('cal-next').onclick = () => cal.next();
+        document.getElementById('cal-hoy').onclick = () => cal.today();
+        document.getElementById('cal-vistas').addEventListener('click', e => {
+            const b = e.target.closest('[data-vista]');
+            if (b) cal.changeView(b.dataset.vista);
+        });
+        document.getElementById('cal-filtros').addEventListener('click', e => {
+            const b = e.target.closest('[data-tipo]');
+            if (!b) return;
+            const t = b.dataset.tipo;
+            ocultos.has(t) ? ocultos.delete(t) : ocultos.add(t);
+            b.classList.toggle('is-off', ocultos.has(t));
+            cal.getEvents().forEach(ev => ev.setProp('display', ocultos.has(ev.extendedProps.tipo) ? 'none' : 'auto'));
+        });
+        document.addEventListener('em:saved', () => cal.refetchEvents());
+    });
+</script>
+{% endblock %}

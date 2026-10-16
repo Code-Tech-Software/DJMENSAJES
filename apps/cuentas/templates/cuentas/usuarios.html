@@ -1,0 +1,78 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Equipo{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Administración</div>
+        <h1>Equipo</h1>
+        <p>Usuarios con acceso al panel, su rol y la sub-agencia a la que pertenecen.</p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn btn--primary" data-modal="{% url 'cuentas:usuario_crear' %}"><i class="ri-user-add-line"></i>Nuevo integrante</button>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-3 reveal">
+    <div class="card stat"><div class="stat__top"><span class="stat__label">Total</span><span class="stat__icon"><i class="ri-group-line"></i></span></div><div class="stat__value">{{ total }}</div></div>
+    <div class="card stat tone-live"><div class="stat__top"><span class="stat__label">Administradores</span><span class="stat__icon"><i class="ri-shield-star-line"></i></span></div><div class="stat__value">{{ conteo|get:'admin'|default:0 }}</div></div>
+    <div class="card stat"><div class="stat__top"><span class="stat__label">Coordinadores</span><span class="stat__icon"><i class="ri-compass-3-line"></i></span></div><div class="stat__value">{{ conteo|get:'coordinador'|default:0 }}</div></div>
+    <div class="card stat tone-success"><div class="stat__top"><span class="stat__label">Colaboradores</span><span class="stat__icon"><i class="ri-store-2-line"></i></span></div><div class="stat__value">{{ conteo|get:'colaborador'|default:0 }}</div></div>
+</div>
+
+<form class="toolbar" data-autosubmit data-target="#resultados">
+    <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, usuario o correo"></div>
+    <select class="input" name="rol">
+        <option value="">Todos los roles</option>
+        {% for valor, nombre in roles %}<option value="{{ valor }}" {% if rol == valor %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+</form>
+
+<div id="resultados">
+    <div class="card">
+        {% if usuarios %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Integrante</th><th>Rol</th><th class="hide-mobile">Sub-agencia</th><th class="hide-mobile">Eventos</th><th class="hide-mobile">Último acceso</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                {% for u in usuarios %}
+                <tr {% if not u.is_active %}style="opacity:.6"{% endif %}>
+                    <td><div class="cell-user">{% avatar u %}<div><div class="t-title">{{ u }}{% if u == user %} <span class="chip chip--muted">Tú</span>{% endif %}</div><div class="t-sub">@{{ u.username }}{% if u.cargo %} · {{ u.cargo }}{% endif %}</div></div></div></td>
+                    <td>
+                        {% if u.rol == 'admin' or u.is_superuser %}<span class="chip chip--live"><i class="ri-shield-star-line"></i>{{ u.rol_visible }}</span>
+                        {% elif u.rol == 'coordinador' %}<span class="chip chip--info"><i class="ri-compass-3-line"></i>{{ u.rol_visible }}</span>
+                        {% else %}<span class="chip chip--success"><i class="ri-store-2-line"></i>{{ u.rol_visible }}</span>{% endif %}
+                    </td>
+                    <td class="hide-mobile">{% if u.colaborador %}<a class="text-brand strong small" href="{{ u.colaborador.get_absolute_url }}">{{ u.colaborador }}</a>{% else %}<span class="t-muted">Equipo central</span>{% endif %}</td>
+                    <td class="hide-mobile"><span class="strong">{{ u.n_eventos }}</span></td>
+                    <td class="hide-mobile t-muted">{{ u.last_login|hace|default:"Nunca" }}</td>
+                    <td>{% if u.is_active %}<span class="chip chip--success chip--dot">Activo</span>{% else %}<span class="chip chip--muted chip--dot">Inactivo</span>{% endif %}</td>
+                    <td class="t-actions">
+                        <div class="dropdown" style="display:inline-block">
+                            <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ri-more-2-fill"></i></button>
+                            <div class="dropdown__menu">
+                                <button class="menu-item" data-modal="{% url 'cuentas:usuario_editar' u.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
+                                <button class="menu-item" data-modal="{% url 'cuentas:usuario_contrasena' u.pk %}"><i class="ri-key-2-line"></i>Restablecer contraseña</button>
+                                {% if u != user %}
+                                <div class="menu-sep"></div>
+                                <button class="menu-item {% if u.is_active %}menu-item--danger{% endif %}" data-post="{% url 'cuentas:usuario_activar' u.pk %}"
+                                        data-confirm="{% if u.is_active %}¿Desactivar a {{ u }}?{% else %}¿Reactivar a {{ u }}?{% endif %}"
+                                        data-confirm-text="{% if u.is_active %}No podrá iniciar sesión hasta que lo reactives.{% else %}Podrá volver a iniciar sesión.{% endif %}"
+                                        {% if u.is_active %}data-danger data-confirm-button="Desactivar"{% endif %}>
+                                    <i class="{% if u.is_active %}ri-user-forbid-line{% else %}ri-user-follow-line{% endif %}"></i>{% if u.is_active %}Desactivar{% else %}Reactivar{% endif %}
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% include 'components/vacio.html' with icono='ri-user-search-line' titulo='Sin resultados' texto='Ningún integrante coincide con tu búsqueda.' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

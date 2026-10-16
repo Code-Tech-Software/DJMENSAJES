@@ -1,0 +1,39 @@
+{% load ui %}
+<div class="modal__dialog modal__dialog--lg tipo-{{ evento.tipo_evento }}" role="dialog" aria-modal="true" aria-labelledby="vr-titulo" style="overflow:hidden">
+    <div class="hero" style="border-radius:0;min-height:170px;box-shadow:none">
+        {% with portada=evento.imagen_portada %}{% if portada %}<img class="hero__bg" src="{{ portada.url }}" alt="">{% endif %}{% endwith %}
+        <div class="hero__content" style="padding:22px 24px">
+            <div>
+                <div class="row row-wrap">
+                    <span class="chip"><i class="{{ evento.icono }}"></i>{{ evento.tipo_corto }}</span>
+                    <span class="chip chip--dot">{{ evento.estado_temporal_display }}</span>
+                    {% if evento.etapa != 'confirmado' %}<span class="chip">{{ evento.get_etapa_display }}</span>{% endif %}
+                </div>
+                <h1 id="vr-titulo" style="font-size:28px">{{ evento.nombre_evento }}</h1>
+                <div class="hero__meta">
+                    <span><i class="ri-time-line"></i>{{ evento.fecha_inicio_evento|date:"D j M · H:i" }} – {{ evento.fecha_fin_evento|date:"H:i" }} h</span>
+                    {% if evento.lugar %}<span><i class="ri-map-pin-2-line"></i>{{ evento.lugar }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar" style="position:absolute;top:12px;right:12px;z-index:2;color:#fff;background:rgba(0,0,0,.25)"><i class="ri-close-line"></i></button>
+    </div>
+    <div class="modal__body">
+        <div class="grid grid-3" style="gap:12px">
+            <div class="card stat" style="padding:14px"><div class="stat__label">Invitados</div><div class="stat__value" style="font-size:22px">{{ rsvp.pases_confirmados|default:0 }}<small> / {{ rsvp.pases|default:0 }}</small></div><div class="stat__meta">pases confirmados</div></div>
+            <div class="card stat tone-live" style="padding:14px"><div class="stat__label">Mensajes</div><div class="stat__value" style="font-size:22px">{{ n_mensajes }}</div><div class="stat__meta">saludos y canciones</div></div>
+            <div class="card stat tone-warning" style="padding:14px"><div class="stat__label">Saldo</div><div class="stat__value" style="font-size:22px">{{ evento.saldo|moneda }}</div><div class="stat__meta">de {{ evento.precio_total|moneda }}</div></div>
+        </div>
+        <dl class="dl mt-3">
+            <div><dt><i class="ri-store-2-line"></i>Agencia</dt><dd>{{ evento.colaborador|default:"Sin asignar" }}</dd></div>
+            <div><dt><i class="ri-user-star-line"></i>Cliente</dt><dd>{{ evento.cliente_nombre|default:"—" }}</dd></div>
+            <div><dt><i class="ri-broadcast-line"></i>Interacción</dt><dd>{% if evento.estado %}<span class="text-success">Activa</span>{% else %}<span class="muted">Pausada</span>{% endif %}</dd></div>
+        </dl>
+    </div>
+    <div class="modal__footer" style="flex-wrap:wrap">
+        <a class="btn btn--ghost" href="{{ evento.url_dj }}" target="_blank"><i class="ri-headphone-line"></i>Panel DJ</a>
+        <a class="btn btn--ghost" href="{{ evento.url_pantalla }}" target="_blank"><i class="ri-qr-code-line"></i>Pantalla QR</a>
+        <button class="btn" data-modal="{% url 'eventos:editar' evento.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
+        <a class="btn btn--primary" href="{{ evento.get_absolute_url }}"><i class="ri-arrow-right-up-line"></i>Abrir evento</a>
+    </div>
+</div>

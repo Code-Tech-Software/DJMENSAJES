@@ -1,0 +1,78 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Colaboradores{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Administración</div>
+        <h1>Colaboradores</h1>
+        <p>Sub-agencias y proveedores aliados: su marca se aplica a las pantallas de sus eventos. <span class="muted">{{ activos }} activos de {{ total }}.</span></p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn btn--primary" data-modal="{% url 'colaboradores:crear' %}"><i class="ri-add-line"></i>Nuevo colaborador</button>
+    </div>
+</div>
+
+<form class="toolbar" data-autosubmit data-target="#resultados">
+    <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, ciudad o contacto"></div>
+    <select class="input" name="tipo"><option value="">Todos los giros</option>{% for v, n in tipos %}<option value="{{ v }}" {% if tipo == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+    <select class="input" name="estado"><option value="">Activos e inactivos</option><option value="1" {% if estado == '1' %}selected{% endif %}>Activos</option><option value="0" {% if estado == '0' %}selected{% endif %}>Inactivos</option></select>
+</form>
+
+<div id="resultados">
+    {% if colaboradores %}
+    <div class="grid grid-auto reveal">
+        {% for c in colaboradores %}
+        <article class="card card--hover" style="overflow:hidden;{% if not c.estado %}opacity:.65{% endif %}">
+            <div style="height:6px;background:{{ c.color_marca }}"></div>
+            <div class="card__body">
+                <div class="row" style="align-items:flex-start;gap:14px">
+                    <a href="{{ c.get_absolute_url }}" class="logo-tile logo-tile--dark" style="width:64px;height:64px;flex-shrink:0">
+                        {% if c.logo %}<img src="{{ c.logo.url }}" alt="">{% else %}<span class="strong" style="color:#fff;font-size:20px">{{ c.iniciales }}</span>{% endif %}
+                    </a>
+                    <div class="grow" style="min-width:0">
+                        <a href="{{ c.get_absolute_url }}" class="strong truncate" style="display:block;font-size:16px">{{ c.nombre }}</a>
+                        <div class="row row-wrap mt-1" style="gap:6px">
+                            <span class="chip chip--info"><i class="{{ c.icono }}"></i>{{ c.get_tipo_display }}</span>
+                            {% if not c.estado %}<span class="chip chip--muted">Inactivo</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ri-more-2-fill"></i></button>
+                        <div class="dropdown__menu">
+                            <a class="menu-item" href="{{ c.get_absolute_url }}"><i class="ri-eye-line"></i>Ver perfil</a>
+                            <button class="menu-item" data-modal="{% url 'colaboradores:editar' c.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
+                            <div class="menu-sep"></div>
+                            <button class="menu-item menu-item--danger" data-post="{% url 'colaboradores:eliminar' c.pk %}" data-danger data-confirm="¿Eliminar a {{ c.nombre }}?" data-confirm-text="Sus {{ c.n_eventos }} evento(s) se conservarán sin agencia y sus usuarios quedarán sin sub-agencia."><i class="ri-delete-bin-6-line"></i>Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+                {% if c.eslogan %}<p class="small text-2 mt-2" style="font-style:italic">“{{ c.eslogan|truncatechars:90 }}”</p>{% endif %}
+                <div class="ev-card__meta mt-2">
+                    {% if c.ciudad %}<span><i class="ri-map-pin-line"></i>{{ c.ciudad }}</span>{% endif %}
+                    {% if c.responsable %}<span><i class="ri-user-3-line"></i>{{ c.responsable }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="card__foot row between">
+                <div class="row small" style="gap:14px">
+                    <span data-tip="Eventos totales"><i class="ri-calendar-event-line muted"></i> <strong>{{ c.n_eventos }}</strong></span>
+                    <span data-tip="Próximos"><i class="ri-calendar-schedule-line muted"></i> <strong>{{ c.n_proximos }}</strong></span>
+                    <span data-tip="Usuarios"><i class="ri-group-line muted"></i> <strong>{{ c.n_usuarios }}</strong></span>
+                </div>
+                <div class="social-links">
+                    {% if c.whatsapp_url %}<a href="{{ c.whatsapp_url }}" target="_blank" aria-label="WhatsApp"><i class="ri-whatsapp-line"></i></a>{% endif %}
+                    {% if c.instagram %}<a href="{{ c.instagram }}" target="_blank" aria-label="Instagram"><i class="ri-instagram-line"></i></a>{% endif %}
+                    {% if c.facebook %}<a href="{{ c.facebook }}" target="_blank" aria-label="Facebook"><i class="ri-facebook-circle-line"></i></a>{% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        {% url 'colaboradores:crear' as url_crear %}
+        {% include 'components/vacio.html' with icono='ri-team-line' titulo='Sin colaboradores' texto='Registra tus sub-agencias para asignarles eventos, usuarios y su propia marca en pantallas.' boton_url=url_crear boton_modal=True boton_texto='Registrar colaborador' %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

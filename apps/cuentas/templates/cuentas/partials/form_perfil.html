@@ -1,0 +1,13 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.foto clase="span-2" %}
+    {% campo form.first_name icono="ri-user-3-line" %}
+    {% campo form.last_name %}
+    {% campo form.email icono="ri-mail-line" %}
+    {% campo form.telefono icono="ri-phone-line" %}
+    {% campo form.cargo icono="ri-briefcase-4-line" clase="span-2" %}
+    {% campo form.direccion clase="span-2" %}
+</div>
+{% endblock %}

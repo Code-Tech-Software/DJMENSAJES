@@ -1,0 +1,85 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Entrada · {{ evento.nombre_evento }}{% endblock %}
+{% block head %}
+<style>
+    .ci-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-top: 1px solid var(--border); transition: background .2s; }
+    .ci-item:first-child { border-top: 0; }
+    .ci-item.is-in { background: color-mix(in srgb, var(--success) 7%, transparent); }
+    .ci-btn { min-width: 132px; }
+    .ci-item.is-in .ci-btn { --btn-bg: var(--success-soft); --btn-fg: var(--success); --btn-bd: transparent; box-shadow: none; }
+    .ci-counter { font-size: 40px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{{ evento.get_absolute_url }}">{{ evento.nombre_evento }}</a><i class="ri-arrow-right-s-line"></i>Entrada</div>
+        <h1>Registro de entrada</h1>
+        <p>Busca al invitado o escanea su pase QR con la cámara del celular.</p>
+    </div>
+    <div class="page-head__actions"><a class="btn" href="{% url 'invitaciones:panel' evento.pk %}"><i class="ri-mail-open-line"></i>Invitación</a></div>
+</div>
+
+<div class="grid grid-3 mb-3">
+    <div class="card card--pad row"><span class="stat__icon tone-success"><i class="ri-door-open-line"></i></span><div><div class="ci-counter" id="c-llegaron">{{ resumen.llegaron|default:0 }}</div><div class="small muted">invitaciones registradas</div></div></div>
+    <div class="card card--pad row"><span class="stat__icon"><i class="ri-group-line"></i></span><div><div class="ci-counter"><span id="c-pases">{{ resumen.pases_llegaron|default:0 }}</span><small class="muted" style="font-size:18px"> / {{ resumen.pases_confirmados|default:0 }}</small></div><div class="small muted">personas dentro / confirmadas</div></div></div>
+    <div class="card card--pad row"><span class="stat__icon tone-live"><i class="ri-qr-scan-2-line"></i></span><div class="small text-2">Al escanear el pase con la cámara se abre la ficha del invitado para registrarlo en un toque.</div></div>
+</div>
+
+<div class="card">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border)">
+        <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" id="ci-buscar" placeholder="Buscar invitado o mesa…" autofocus></div>
+    </div>
+    <div id="ci-lista">
+        {% for i in invitados %}
+        <div class="ci-item {% if i.check_in_en %}is-in{% endif %}" data-nombre="{{ i.nombre|lower }} {{ i.mesa|lower }}">
+            {% if i.check_in_en %}<span class="avatar" style="background:var(--success-soft);color:var(--success)"><i class="ri-check-line"></i></span>{% else %}<span class="avatar">{{ i.nombre|iniciales }}</span>{% endif %}
+            <div class="grow" style="min-width:0">
+                <div class="strong truncate">{{ i.nombre }}</div>
+                <div class="small muted">{% if i.estado == 'confirmado' %}{{ i.pases_confirmados }} pase{{ i.pases_confirmados|pluralize }}{% else %}{{ i.pases }} pase{{ i.pases|pluralize }} · sin confirmar{% endif %}{% if i.mesa %} · Mesa {{ i.mesa }}{% endif %}</div>
+            </div>
+            <button class="btn ci-btn {% if not i.check_in_en %}btn--primary{% endif %}" data-checkin="{% url 'invitaciones:checkin_marcar' i.pk %}">
+                {% if i.check_in_en %}<i class="ri-check-double-line"></i>{{ i.check_in_en|time:"H:i" }}{% else %}<i class="ri-login-box-line"></i>Registrar{% endif %}
+            </button>
+        </div>
+        {% empty %}
+        {% include 'components/vacio.html' with icono='ri-user-heart-line' titulo='Sin invitados' texto='Agrega invitados desde el panel de la invitación.' %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (() => {
+        const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        document.getElementById('ci-buscar').addEventListener('input', e => {
+            const q = norm(e.target.value.trim());
+            document.querySelectorAll('.ci-item').forEach(it => { it.hidden = q && !norm(it.dataset.nombre).includes(q); });
+        });
+        document.getElementById('ci-lista').addEventListener('click', async e => {
+            const btn = e.target.closest('[data-checkin]');
+            if (!btn) return;
+            const item = btn.closest('.ci-item');
+            const deshacer = item.classList.contains('is-in');
+            if (deshacer && !(await EM.confirm({ title: '¿Deshacer el registro de entrada?', confirmText: 'Deshacer' }))) return;
+            btn.classList.add('is-loading');
+            try {
+                const datos = new FormData();
+                if (deshacer) datos.append('deshacer', '1');
+                const r = await EM.post(btn.dataset.checkin, datos);
+                item.classList.toggle('is-in', r.llego);
+                btn.classList.toggle('btn--primary', !r.llego);
+                btn.innerHTML = r.llego ? `<i class="ri-check-double-line"></i>${r.hora}` : '<i class="ri-login-box-line"></i>Registrar';
+                const av = item.querySelector('.avatar');
+                if (r.llego) { av.style.cssText = 'background:var(--success-soft);color:var(--success)'; av.innerHTML = '<i class="ri-check-line"></i>'; }
+                document.getElementById('c-llegaron').textContent = r.llegaron;
+                document.getElementById('c-pases').textContent = r.pases_llegaron;
+                if (r.llego) EM.toast('Entrada registrada');
+            } catch (err) { EM.toast('No se pudo registrar.', 'error'); }
+            finally { btn.classList.remove('is-loading'); }
+        });
+    })();
+</script>
+{% endblock %}

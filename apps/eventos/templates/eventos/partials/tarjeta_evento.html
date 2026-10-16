@@ -1,0 +1,54 @@
+{% load ui %}
+<article class="card card--hover ev-card tipo-{{ e.tipo_evento }}">
+    <a href="{{ e.get_absolute_url }}" class="ev-card__cover" aria-label="{{ e.nombre_evento }}">
+        {% with portada=e.imagen_portada %}
+        {% if portada %}<img src="{{ portada.url }}" alt="" loading="lazy">{% else %}<span class="pattern"><i class="{{ e.icono }}"></i></span>{% endif %}
+        {% endwith %}
+        <div class="ev-card__badges">
+            <span class="chip"><i class="{{ e.icono }}"></i>{{ e.tipo_corto }}</span>
+        </div>
+        <div class="date-block ev-card__date"><small>{{ e.fecha_inicio_evento|date:"M" }}</small><strong>{{ e.fecha_inicio_evento|date:"d" }}</strong></div>
+    </a>
+    <div class="ev-card__menu dropdown">
+        <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones" style="background:rgba(255,255,255,.9);color:#0e1726"><i class="ri-more-2-fill"></i></button>
+        <div class="dropdown__menu">
+            <a class="menu-item" href="{{ e.get_absolute_url }}"><i class="ri-eye-line"></i>Ver detalle</a>
+            <button class="menu-item" data-modal="{% url 'eventos:editar' e.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
+            <a class="menu-item" href="{% url 'invitaciones:panel' e.pk %}"><i class="ri-mail-open-line"></i>Invitación e invitados</a>
+            <div class="menu-sep"></div>
+            <a class="menu-item" href="{{ e.url_pantalla }}" target="_blank"><i class="ri-qr-code-line"></i>Pantalla QR</a>
+            <a class="menu-item" href="{{ e.url_dj }}" target="_blank"><i class="ri-headphone-line"></i>Panel DJ</a>
+            <button class="menu-item" data-copy="{{ e.url_invitados }}"><i class="ri-link"></i>Copiar enlace invitados</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item" data-post="{% url 'eventos:duplicar' e.pk %}" data-confirm="¿Duplicar este evento?" data-confirm-text="Se copiarán los datos y el itinerario como una nueva cotización."><i class="ri-file-copy-line"></i>Duplicar</button>
+            {% if ve_todo or e.creado_por_id == user.pk %}
+            <button class="menu-item menu-item--danger" data-post="{% url 'eventos:eliminar' e.pk %}" data-danger data-confirm="¿Eliminar “{{ e.nombre_evento }}”?" data-confirm-text="Se eliminarán también sus invitados, mensajes y pagos. Esta acción no se puede deshacer."><i class="ri-delete-bin-6-line"></i>Eliminar</button>
+            {% endif %}
+        </div>
+    </div>
+    <div class="ev-card__body">
+        <div class="row between" style="align-items:flex-start">
+            <a href="{{ e.get_absolute_url }}" class="ev-card__title">{{ e.nombre_evento }}</a>
+        </div>
+        <div class="ev-card__meta">
+            <span><i class="ri-time-line"></i>{{ e.fecha_inicio_evento|date:"D j M · H:i" }} h</span>
+            {% if e.lugar %}<span class="truncate"><i class="ri-map-pin-2-line"></i>{{ e.lugar }}</span>{% endif %}
+            {% if e.colaborador %}<span class="truncate"><i class="ri-store-2-line"></i>{{ e.colaborador }}</span>{% endif %}
+        </div>
+        {% if e.n_invitados %}
+        <div>
+            <div class="row between xsmall muted mb-1" style="margin-bottom:5px"><span>Confirmados</span><strong class="text-2">{{ e.pases_confirmados|default:0 }} / {{ e.pases|default:0 }} pases</strong></div>
+            <div class="progress progress--sm progress--success"><span data-width="{{ e.pases_confirmados|default:0|porcentaje:e.pases }}"></span></div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="ev-card__foot">
+        <span class="chip estado-{{ e.estado_temporal }} chip--dot {% if e.estado_temporal == 'en_curso' %}is-pulse{% endif %}">
+            {% if e.estado_temporal == 'proximo' %}{{ e.dias_restantes|dias_texto }}{% else %}{{ e.estado_temporal_display }}{% endif %}
+        </span>
+        <div class="row" style="gap:6px">
+            {% if e.etapa == 'cotizacion' %}<span class="chip chip--warning">Cotización</span>{% endif %}
+            {% if not e.estado %}<span class="chip chip--muted" data-tip="Interacción en vivo pausada"><i class="ri-pause-circle-line"></i></span>{% endif %}
+        </div>
+    </div>
+</article>

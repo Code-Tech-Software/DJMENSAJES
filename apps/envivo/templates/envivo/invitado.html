@@ -1,0 +1,382 @@
+{% load static l10n %}<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="theme-color" content="#070b14">
+    <title>{{ evento.nombre_evento }} · En vivo</title>
+    <meta property="og:title" content="{{ evento.tipo_corto }} de {{ evento.nombre_evento }} · ¡Pide tu canción!">
+    <meta property="og:description" content="Manda un saludo o pide tu canción favorita. Llega directo al DJ.">
+    <link rel="icon" type="image/png" href="{% static 'img/isotipo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/envivo-invitado.css' %}">
+    <style>:root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; }</style>
+</head>
+<body class="{% if es_vip %}es-vip-activo{% endif %}">
+{% if banner and banner.imagen_movil %}
+<div class="fondo"><img src="{{ banner.imagen_movil.url }}" alt=""></div>
+{% else %}
+<div class="fondo fondo--sin-imagen"></div>
+{% endif %}
+
+<div class="app-inv">
+    <div class="barra">
+        <span class="en-vivo {% if not evento.estado %}pausa{% endif %}" id="en-vivo">{% if evento.estado %}EN VIVO{% else %}EN PAUSA{% endif %}</span>
+        {% if evento.password_vip %}
+        <button class="corona {% if es_vip %}es-vip{% endif %}" id="btn-vip" aria-label="Acceso VIP"><i class="ri-vip-crown-2-fill"></i></button>
+        {% endif %}
+    </div>
+
+    <header class="cabecera">
+        <small>{{ evento.tipo_corto }}</small>
+        <h1>{{ evento.nombre_evento }}</h1>
+        <p>{% if evento.mensaje_bienvenida %}{{ evento.mensaje_bienvenida }}{% else %}Pide tu canción favorita o manda un saludo especial. ¡Llega al instante al DJ!{% endif %}</p>
+        <button class="saludo-nombre" id="btn-nombre">
+            <span id="texto-nombre">{% if nombre %}Hola, {{ nombre }}{% else %}¿Cómo te llamas?{% endif %}</span>
+            <span class="vip-etiqueta"><i class="ri-vip-crown-2-fill" style="background:none;width:auto;height:auto"></i>VIP</span>
+            <i class="ri-pencil-line"></i>
+        </button>
+    </header>
+
+    <section class="acciones-inv">
+        <div class="aviso-inv" id="aviso-pausa">
+            <i class="ri-pause-circle-line" style="font-size:42px;color:#f5a524"></i>
+            <strong>El DJ está en pausa</strong>
+            <p>En un momento volverá a recibir saludos y canciones. Esta pantalla se actualiza sola.</p>
+        </div>
+        <div class="aviso-inv" id="aviso-espera">
+            <div class="anillo" id="anillo"><span id="reloj">00:00</span></div>
+            <strong>¡Mensaje enviado!</strong>
+            <p>Podrás enviar otro cuando termine el tiempo.{% if evento.password_vip %} ¿Eres VIP? Toca la corona.{% endif %}</p>
+        </div>
+        {% if evento.permitir_canciones %}
+        <button class="accion accion--cancion" data-abrir="hoja-cancion">
+            <span class="accion__icono"><i class="ri-music-2-fill"></i></span>
+            <span><strong>Pedir canción</strong><small>El DJ la recibe al instante</small></span>
+            <i class="ri-arrow-right-up-line"></i>
+        </button>
+        {% endif %}
+        {% if evento.permitir_saludos %}
+        <button class="accion accion--saludo" data-abrir="hoja-saludo">
+            <span class="accion__icono"><i class="ri-chat-heart-fill"></i></span>
+            <span><strong>Enviar saludo</strong><small>{% if evento.moderar_pantalla %}Puede aparecer en la pantalla{% else %}Aparece en la pantalla del evento{% endif %}</small></span>
+            <i class="ri-arrow-right-up-line"></i>
+        </button>
+        {% endif %}
+    </section>
+
+    <section class="mios" id="mios" {% if not mis_mensajes %}hidden{% endif %}>
+        <h2><i class="ri-history-line"></i>Mis mensajes</h2>
+        <div id="lista-mios"></div>
+    </section>
+
+    <footer class="pie-inv">
+        {% if colaborador %}
+        <div class="pie-inv__marca">
+            {% if colaborador.logo_pie %}<img src="{{ colaborador.logo_pie.url }}" alt="{{ colaborador.nombre }}">{% else %}<strong>{{ colaborador.nombre }}</strong>{% endif %}
+        </div>
+        {% if colaborador.eslogan %}<p class="pie-inv__eslogan">{{ colaborador.eslogan }}</p>{% endif %}
+        {% if colaborador.whatsapp_url %}
+        <a class="cotizar" href="{{ colaborador.whatsapp_url }}?text={{ 'Hola, vi su servicio en el evento '|urlencode }}{{ evento.nombre_evento|urlencode }}{{ ' y me gustaría cotizar.'|urlencode }}" target="_blank" rel="noopener"><i class="ri-whatsapp-line"></i>Cotiza tu evento</a>
+        {% endif %}
+        <div class="redes">
+            {% if colaborador.instagram %}<a href="{{ colaborador.instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="ri-instagram-line"></i></a>{% endif %}
+            {% if colaborador.facebook %}<a href="{{ colaborador.facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="ri-facebook-circle-fill"></i></a>{% endif %}
+            {% if colaborador.tiktok %}<a href="{{ colaborador.tiktok }}" target="_blank" rel="noopener" aria-label="TikTok"><i class="ri-tiktok-fill"></i></a>{% endif %}
+        </div>
+        {% endif %}
+        <p class="creditos">Experiencia en vivo por Grupo EM</p>
+    </footer>
+</div>
+
+{# ---------------- Hojas inferiores ---------------- #}
+<div class="hoja-fondo" id="hoja-fondo"></div>
+
+<div class="hoja" id="hoja-cancion" role="dialog" aria-modal="true" aria-labelledby="t-cancion" style="--grad:linear-gradient(120deg,#ff7a3d,#ff3d7f 60%,#c13dff);--sombra:rgba(255,61,127,.6)">
+    <div class="hoja__asa"></div>
+    <div class="hoja__titulo"><i class="ri-music-2-fill"></i><div><h2 id="t-cancion">Pide tu canción</h2><p>Escribe el título y, si quieres, el artista.</p></div></div>
+    <form data-tipo="cancion">
+        <div class="error-inv"></div>
+        <div class="campo-inv"><label>Tu nombre</label><input name="nombre" maxlength="60" placeholder="Ej. Mesa 5 o Sofía" autocomplete="given-name"></div>
+        <div class="campo-inv"><label>Canción *</label><input name="mensaje" maxlength="200" required placeholder="Ej. Payaso de Rodeo"></div>
+        <div class="campo-inv"><label>Artista</label><input name="artista" maxlength="120" placeholder="Ej. Caballo Dorado"></div>
+        <button type="submit" class="boton-inv"><i class="ri-send-plane-fill"></i>Enviar al DJ</button>
+    </form>
+</div>
+
+<div class="hoja" id="hoja-saludo" role="dialog" aria-modal="true" aria-labelledby="t-saludo" style="--grad:linear-gradient(120deg,#00b4ff,#3d6bff 55%,#7c4dff);--sombra:rgba(61,107,255,.6)">
+    <div class="hoja__asa"></div>
+    <div class="hoja__titulo"><i class="ri-chat-heart-fill"></i><div><h2 id="t-saludo">Envía un saludo</h2><p>El DJ lo leerá o lo mostrará en pantalla.</p></div></div>
+    <form data-tipo="saludo">
+        <div class="error-inv"></div>
+        <div class="campo-inv"><label>Tu nombre</label><input name="nombre" maxlength="60" placeholder="¿Quién lo envía?" autocomplete="given-name"></div>
+        <div class="campo-inv"><label>Para</label><input name="destinatario" maxlength="120" placeholder="Ej. Los novios, la quinceañera…"></div>
+        <div class="campo-inv">
+            <label>Mensaje *</label>
+            <textarea name="mensaje" maxlength="280" required placeholder="Escribe tu saludo…"></textarea>
+            <div class="row-sug"><div class="sugerencias">
+                <button type="button">¡Felicidades! 🎉</button><button type="button">¡Los queremos mucho! ❤️</button>
+                <button type="button">¡Que viva la fiesta! 🥳</button><button type="button">¡Salud! 🥂</button>
+            </div></div>
+            <div class="contador-car"><span data-car>0</span>/280</div>
+        </div>
+        <button type="submit" class="boton-inv"><i class="ri-send-plane-fill"></i>Enviar saludo</button>
+    </form>
+</div>
+
+<div class="hoja" id="hoja-nombre" role="dialog" aria-modal="true" aria-labelledby="t-nombre">
+    <div class="hoja__asa"></div>
+    <div class="hoja__titulo"><i class="ri-user-smile-fill"></i><div><h2 id="t-nombre">¿Cómo te llamas?</h2><p>Así sabrá el DJ quién pidió cada canción.</p></div></div>
+    <form id="form-nombre">
+        <div class="campo-inv"><input name="nombre" maxlength="60" placeholder="Tu nombre o tu mesa"></div>
+        <button type="submit" class="boton-inv"><i class="ri-check-line"></i>Guardar</button>
+    </form>
+</div>
+
+{% if evento.password_vip %}
+<div class="hoja" id="hoja-vip" role="dialog" aria-modal="true" aria-labelledby="t-vip">
+    <div class="hoja__asa"></div>
+    <div class="hoja__titulo"><i class="ri-vip-crown-2-fill" style="background:linear-gradient(135deg,#ffe08a,#ffb84a);color:#1b1300"></i><div><h2 id="t-vip">Acceso VIP</h2><p>Los VIP envían sin tiempo de espera y destacan en el panel del DJ.</p></div></div>
+    {% if es_vip %}
+    <p style="text-align:center;padding:12px 0 6px;color:#ffe08a;font-weight:700">Ya eres VIP en este evento 👑</p>
+    {% else %}
+    <form id="form-vip">
+        <div class="error-inv"></div>
+        <div class="campo-inv"><label>Contraseña VIP</label><input name="password" type="password" maxlength="100" autocomplete="off" placeholder="La que te compartieron los anfitriones"></div>
+        <button type="submit" class="boton-inv boton-inv--oro"><i class="ri-vip-crown-2-fill"></i>Entrar como VIP</button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="aviso-flotante" id="aviso-flotante"><i class="ri-checkbox-circle-fill"></i><span></span></div>
+
+{{ mis_mensajes|json_script:"datos-mios" }}
+<script src="{% static 'js/envivo.js' %}"></script>
+<script>
+    (() => {
+        const URLS = {
+            enviar: "{% url 'envivo:enviar' evento.codigo %}",
+            vip: "{% url 'envivo:vip' evento.codigo %}",
+            nombre: "{% url 'envivo:nombre' evento.codigo %}",
+            mios: "{% url 'envivo:mis_mensajes' evento.codigo %}",
+            ws: "/ws/envivo/{{ evento.codigo }}/",
+        };
+        const estado = {
+            nombre: "{{ nombre|escapejs }}",
+            activo: {{ evento.estado|yesno:"true,false" }},
+            espera: {{ espera|unlocalize }},
+            esperaTotal: {{ espera_total|unlocalize }} || 1,
+            mios: JSON.parse(document.getElementById('datos-mios').textContent),
+        };
+        const $ = s => document.querySelector(s);
+        const ESTATUS = { pendiente: ['Enviado', ''], atendido: ['', 'estatus--atendido'], descartado: ['Recibido', ''] };
+
+        /* ---------- Avisos ---------- */
+        let tAviso;
+        function avisar(texto, error = false) {
+            const el = $('#aviso-flotante');
+            el.classList.toggle('error', error);
+            el.querySelector('i').className = error ? 'ri-error-warning-fill' : 'ri-checkbox-circle-fill';
+            el.querySelector('span').textContent = texto;
+            el.classList.add('visible');
+            clearTimeout(tAviso);
+            tAviso = setTimeout(() => el.classList.remove('visible'), 3800);
+            if (navigator.vibrate) navigator.vibrate(error ? [60, 40, 60] : 40);
+        }
+
+        /* ---------- Hojas ---------- */
+        const fondo = $('#hoja-fondo');
+        let abierta = null;
+        function abrir(id) {
+            cerrar();
+            abierta = document.getElementById(id);
+            if (!abierta) return;
+            abierta.querySelectorAll('input[name=nombre]').forEach(i => { if (!i.value) i.value = estado.nombre; });
+            fondo.classList.add('abierta');
+            abierta.classList.add('abierta');
+            const foco = abierta.querySelector(estado.nombre ? 'input[name=mensaje], textarea, input[name=password]' : 'input');
+            setTimeout(() => foco && foco.focus(), 320);
+        }
+        function cerrar() {
+            if (!abierta) return;
+            abierta.classList.remove('abierta');
+            fondo.classList.remove('abierta');
+            abierta.querySelectorAll('.error-inv').forEach(e => e.classList.remove('visible'));
+            abierta = null;
+        }
+        fondo.addEventListener('click', cerrar);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+        document.querySelectorAll('[data-abrir]').forEach(b => b.addEventListener('click', () => abrir(b.dataset.abrir)));
+        $('#btn-nombre').addEventListener('click', () => abrir('hoja-nombre'));
+        $('#btn-vip')?.addEventListener('click', () => abrir('hoja-vip'));
+
+        // Deslizar hacia abajo para cerrar
+        document.querySelectorAll('.hoja').forEach(h => {
+            let y0 = null;
+            h.addEventListener('touchstart', e => { if (h.scrollTop <= 0) y0 = e.touches[0].clientY; }, { passive: true });
+            h.addEventListener('touchend', e => { if (y0 !== null && e.changedTouches[0].clientY - y0 > 90) cerrar(); y0 = null; });
+        });
+
+        /* ---------- Sugerencias y contador ---------- */
+        const area = document.querySelector('#hoja-saludo textarea');
+        const car = document.querySelector('[data-car]');
+        if (area) {
+            area.addEventListener('input', () => { car.textContent = area.value.length; });
+            document.querySelectorAll('.sugerencias button').forEach(b => b.addEventListener('click', () => {
+                area.value = (area.value ? area.value.trim() + ' ' : '') + b.textContent;
+                area.dispatchEvent(new Event('input'));
+                area.focus();
+            }));
+        }
+
+        /* ---------- Nombre ---------- */
+        function pintarNombre() {
+            $('#texto-nombre').textContent = estado.nombre ? `Hola, ${estado.nombre}` : '¿Cómo te llamas?';
+        }
+        $('#form-nombre').addEventListener('submit', async e => {
+            e.preventDefault();
+            const nombre = e.target.nombre.value.trim();
+            estado.nombre = nombre;
+            pintarNombre();
+            cerrar();
+            await EnVivo.enviarJSON(URLS.nombre, { nombre });
+            if (nombre) avisar(`¡Listo, ${nombre}!`);
+        });
+
+        /* ---------- VIP ---------- */
+        $('#form-vip')?.addEventListener('submit', async e => {
+            e.preventDefault();
+            const form = e.target;
+            const err = form.querySelector('.error-inv');
+            const r = await EnVivo.enviarJSON(URLS.vip, { password: form.password.value });
+            if (r.ok) {
+                document.body.classList.add('es-vip-activo');
+                $('#btn-vip').classList.add('es-vip');
+                cerrar();
+                avisar(r.msg);
+                terminarEspera();
+                setTimeout(() => location.reload(), 1600);
+            } else {
+                err.textContent = r.msg;
+                err.classList.add('visible');
+                form.password.select();
+            }
+        });
+
+        /* ---------- Espera entre mensajes ---------- */
+        let timer = null;
+        function iniciarEspera(seg) {
+            if (!seg || document.body.classList.contains('es-vip-activo')) return;
+            estado.espera = seg;
+            const total = Math.max(seg, estado.esperaTotal);
+            $('#aviso-espera').classList.add('visible');
+            document.querySelectorAll('.accion').forEach(b => b.setAttribute('disabled', ''));
+            clearInterval(timer);
+            const pintar = () => {
+                $('#reloj').textContent = EnVivo.tiempo(estado.espera);
+                $('#anillo').style.setProperty('--p', (estado.espera / total) * 100);
+            };
+            pintar();
+            timer = setInterval(() => { estado.espera -= 1; pintar(); if (estado.espera <= 0) terminarEspera(); }, 1000);
+        }
+        function terminarEspera() {
+            clearInterval(timer);
+            estado.espera = 0;
+            $('#aviso-espera').classList.remove('visible');
+            if (estado.activo) document.querySelectorAll('.accion').forEach(b => b.removeAttribute('disabled'));
+        }
+        function pintarActivo() {
+            $('#en-vivo').textContent = estado.activo ? 'EN VIVO' : 'EN PAUSA';
+            $('#en-vivo').classList.toggle('pausa', !estado.activo);
+            $('#aviso-pausa').classList.toggle('visible', !estado.activo);
+            document.querySelectorAll('.accion').forEach(b => b.toggleAttribute('disabled', !estado.activo || estado.espera > 0));
+        }
+
+        /* ---------- Mis mensajes ---------- */
+        function pintarMios() {
+            const lista = $('#lista-mios');
+            $('#mios').hidden = !estado.mios.length;
+            lista.innerHTML = estado.mios.map(m => {
+                const [texto, clase] = ESTATUS[m.estatus] || ESTATUS.pendiente;
+                const etiqueta = m.estatus === 'atendido' ? (m.tipo === 'cancion' ? '¡Ya sonó! 🎶' : '¡Leído! 💌') : texto;
+                return `<div class="mio" data-id="${m.id}">
+                    <span class="mio__icono"><i class="${m.tipo === 'cancion' ? 'ri-music-2-line' : 'ri-chat-heart-line'}"></i></span>
+                    <div class="mio__texto"><strong>${EnVivo.escapar(m.mensaje)}</strong><small>${m.tipo === 'cancion' ? (m.artista ? EnVivo.escapar(m.artista) : 'Canción') : (m.destinatario ? 'Para ' + EnVivo.escapar(m.destinatario) : 'Saludo')} · ${m.hora}</small></div>
+                    <span class="estatus ${clase}">${etiqueta}</span></div>`;
+            }).join('');
+        }
+
+        /* ---------- Envío ---------- */
+        document.querySelectorAll('form[data-tipo]').forEach(form => form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const boton = form.querySelector('[type=submit]');
+            const err = form.querySelector('.error-inv');
+            const datos = Object.fromEntries(new FormData(form));
+            datos.tipo = form.dataset.tipo;
+            if (!datos.mensaje.trim()) { err.textContent = 'Escribe tu mensaje.'; err.classList.add('visible'); return; }
+            boton.disabled = true;
+            try {
+                const r = await EnVivo.enviarJSON(URLS.enviar, datos);
+                if (r.ok) {
+                    estado.nombre = datos.nombre.trim() || estado.nombre;
+                    pintarNombre();
+                    estado.mios.unshift(r.mensaje);
+                    pintarMios();
+                    form.reset();
+                    if (car) car.textContent = 0;
+                    cerrar();
+                    avisar(r.msg);
+                    iniciarEspera(r.espera);
+                } else {
+                    if (r.espera) { cerrar(); iniciarEspera(r.espera); avisar(r.msg, true); }
+                    else { err.textContent = r.msg; err.classList.add('visible'); }
+                }
+            } catch (ex) {
+                err.textContent = 'Sin conexión. Revisa tu internet e intenta de nuevo.';
+                err.classList.add('visible');
+            } finally { boton.disabled = false; }
+        }));
+
+        /* ---------- Tiempo real ---------- */
+        async function sincronizar() {
+            try {
+                const r = await (await fetch(URLS.mios, { credentials: 'same-origin' })).json();
+                estado.mios = r.mensajes;
+                estado.activo = r.activo;
+                pintarMios(); pintarActivo();
+                if (r.espera > 0) iniciarEspera(r.espera);
+            } catch (e) { /* sin conexión */ }
+        }
+        EnVivo.conexion(URLS.ws, {
+            alCambiarEstado: (ok, reconexion) => {
+                $('#en-vivo').classList.toggle('desconectado', !ok);
+                if (ok && reconexion) sincronizar();
+            },
+            alMensaje: datos => {
+                if (datos.tipo === 'estado') {
+                    const m = estado.mios.find(x => x.id === datos.id);
+                    if (!m || m.estatus === datos.estatus) return;
+                    m.estatus = datos.estatus;
+                    pintarMios();
+                    if (datos.estatus === 'atendido') {
+                        const el = document.querySelector(`.mio[data-id="${m.id}"]`);
+                        el && el.classList.add('recien-atendido');
+                        avisar(m.tipo === 'cancion' ? `¡El DJ puso tu canción: ${m.mensaje}! 🎶` : '¡El DJ leyó tu saludo! 💌');
+                    }
+                }
+                if (datos.tipo === 'config') { estado.activo = datos.activo; pintarActivo(); }
+            },
+        });
+
+        pintarMios();
+        pintarActivo();
+        if (estado.espera > 0) iniciarEspera(estado.espera);
+    })();
+</script>
+</body>
+</html>

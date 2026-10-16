@@ -1,0 +1,26 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="field {% if form.tipo.errors %}field--error{% endif %}">
+    <span class="field__label">¿Qué parte del evento es?<span class="req">*</span></span>
+    <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(118px,1fr))">
+        {% for radio in form.tipo %}
+        <label class="tile">{{ radio.tag }}
+            <span class="tile__body"><span class="tile-icono-svg">{% include 'invitaciones/iconos_lugar.html' with tipo=radio.data.value %}</span>{{ radio.choice_label }}</span>
+        </label>
+        {% endfor %}
+    </div>
+</div>
+<div class="form-grid mt-3">
+    {% campo form.lugar icono="ri-building-line" clase="span-2" %}
+    {% campo form.titulo icono="ri-text" clase="span-2" %}
+    {% campo form.fecha icono="ri-calendar-line" %}
+    {% campo form.hora icono="ri-time-line" %}
+    {% campo form.direccion icono="ri-map-pin-line" clase="span-2" %}
+    {% campo form.url_mapa icono="ri-map-2-line" clase="span-2" %}
+    {% campo form.notas icono="ri-information-line" clase="span-2" %}
+    {% campo form.foto clase="span-2" %}
+</div>
+<div class="alert mt-3"><i class="ri-lightbulb-flash-line"></i>
+    <div>Si no pegas el enlace de Google Maps, el botón “Cómo llegar” buscará el lugar y la dirección automáticamente.</div></div>
+{% endblock %}

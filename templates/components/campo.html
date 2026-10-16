@@ -1,0 +1,64 @@
+{% if tipo == 'switch' %}
+<div class="field {{ clase }}" data-field="{{ field.name }}">
+    <label class="switch-row" for="{{ field.id_for_label }}">
+        <span class="switch-row__text">
+            <strong>{{ field.label }}</strong>
+            {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+        </span>
+        <span class="switch">{{ field }}<span class="switch__track"></span></span>
+    </label>
+    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+</div>
+{% elif tipo == 'archivo' %}
+<div class="field {{ clase }} {% if field.errors %}field--error{% endif %}" data-field="{{ field.name }}">
+    <span class="field__label">{{ field.label }}{% if not field.field.required %}<span class="opt">Opcional</span>{% endif %}</span>
+    <div class="dropzone">
+        <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*">
+        <div class="dropzone__preview {% if oscuro %}is-dark{% endif %}">
+            {% if archivo_url %}<img src="{{ archivo_url }}" alt="">{% else %}<i class="ri-image-add-line"></i>{% endif %}
+        </div>
+        <div class="dropzone__text">
+            <strong>{% if archivo_url %}Cambiar imagen{% else %}Arrastra o elige una imagen{% endif %}</strong>
+            <small>{{ field.help_text|default:"PNG, JPG o WEBP" }}</small>
+        </div>
+        {% if archivo_url and not field.field.required %}
+        <label class="dropzone__clear"><input type="checkbox" name="{{ field.html_name }}-clear"> Quitar</label>
+        {% endif %}
+    </div>
+    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+</div>
+{% elif tipo == 'color' %}
+<div class="field {{ clase }} {% if field.errors %}field--error{% endif %}" data-field="{{ field.name }}">
+    <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    <div class="color-field">
+        <input type="color" value="{{ field.value|default:'#0098DA' }}" aria-label="Selector de color">
+        <div class="grow">{{ field }}</div>
+    </div>
+    <div class="color-swatches">
+        <button data-swatch="#0098DA" style="background:#0098DA" aria-label="Azul"></button>
+        <button data-swatch="#2A5BD7" style="background:#2A5BD7" aria-label="Índigo"></button>
+        <button data-swatch="#7C5CFF" style="background:#7C5CFF" aria-label="Violeta"></button>
+        <button data-swatch="#D43FE6" style="background:#D43FE6" aria-label="Fucsia"></button>
+        <button data-swatch="#F0436B" style="background:#F0436B" aria-label="Rosa"></button>
+        <button data-swatch="#F08C00" style="background:#F08C00" aria-label="Ámbar"></button>
+        <button data-swatch="#10A37F" style="background:#10A37F" aria-label="Esmeralda"></button>
+        <button data-swatch="#B08D57" style="background:#B08D57" aria-label="Dorado"></button>
+        <button data-swatch="#7A9471" style="background:#7A9471" aria-label="Salvia"></button>
+        <button data-swatch="#0E1726" style="background:#0E1726" aria-label="Negro"></button>
+    </div>
+    {% if field.help_text %}<small class="field__help">{{ field.help_text }}</small>{% endif %}
+    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+</div>
+{% else %}
+<div class="field {{ clase }} {% if field.errors %}field--error{% endif %}" data-field="{{ field.name }}">
+    <label class="field__label" for="{{ field.id_for_label }}">
+        {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% elif opcional %}<span class="opt">Opcional</span>{% endif %}
+    </label>
+    <div class="field__control {% if icono %}has-icon{% endif %}">
+        {% if icono %}<i class="{{ icono }} field__icon"></i>{% endif %}
+        {{ field }}
+    </div>
+    {% if field.help_text %}<small class="field__help">{{ field.help_text }}</small>{% endif %}
+    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+</div>
+{% endif %}

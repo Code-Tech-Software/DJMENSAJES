@@ -1,0 +1,298 @@
+{% extends 'layouts/app.html' %}
+{% load static ui %}
+{% block title %}Editor · {{ evento.nombre_evento }}{% endblock %}
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Great+Vibes&family=Pinyon+Script&family=Playfair+Display:ital,wght@1,500&family=Syne:wght@800&family=Unbounded:wght@800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/editor.css' %}">
+<script>
+    // Recuerda si la vista previa estaba oculta, antes de pintar la página (sin parpadeo)
+    try { if (localStorage.getItem('em-editor-vista') === 'oculta') document.documentElement.classList.add('editor-sin-vista'); } catch (e) {}
+</script>
+{% endblock %}
+{% block content_class %}content--editor{% endblock %}
+
+{% block content %}
+<div class="editor" id="editor" data-plantilla="{{ invitacion.plantilla }}">
+
+    {# ---------------- Barra superior del editor ---------------- #}
+    <header class="editor__barra">
+        <div class="editor__titulo">
+            <div class="breadcrumb"><a href="{% url 'invitaciones:indice' %}">Invitaciones</a><i class="ri-arrow-right-s-line"></i><a href="{% url 'invitaciones:panel' evento.pk %}">{{ evento.nombre_evento }}</a></div>
+            <h1>Diseña tu invitación</h1>
+        </div>
+        <div class="editor__acciones">
+            <span class="guardado" id="estado-guardado" data-estado="ok"><i class="ri-cloud-line"></i><span>Todo guardado</span></span>
+            <span class="chip {% if invitacion.publicada %}chip--success{% else %}chip--warning{% endif %} chip--dot" id="chip-publicada">{% if invitacion.publicada %}Publicada{% else %}Borrador{% endif %}</span>
+            <a class="btn btn--sm btn--ghost hide-mobile" href="{% url 'invitaciones:panel' evento.pk %}"><i class="ri-user-heart-line"></i>Invitados</a>
+            <a class="btn btn--sm" href="{{ url_publica }}" target="_blank"><i class="ri-external-link-line"></i><span class="hide-mobile">Abrir</span></a>
+            <button type="button" class="btn btn--sm btn--soft" id="alternar-vista" aria-pressed="true">
+                <i class="ri-smartphone-line"></i><span>Vista previa</span>
+            </button>
+        </div>
+    </header>
+
+    {# ---------------- Secciones ---------------- #}
+    <nav class="editor__nav scroll-thin" id="editor-nav" aria-label="Secciones del editor">
+        <button type="button" data-ir="diseno" class="is-active"><i class="ri-palette-line"></i><span><strong>Estilo</strong><small>Plantilla, color y letra</small></span></button>
+        <button type="button" data-ir="portada"><i class="ri-image-line"></i><span><strong>Portada</strong><small>Nombres, foto y sobre</small></span></button>
+        <button type="button" data-ir="mensaje"><i class="ri-quill-pen-line"></i><span><strong>Mensaje</strong><small>Frase, aviso y hashtag</small></span></button>
+        <button type="button" data-ir="lugares"><i class="ri-map-pin-2-line"></i><span><strong>Lugares</strong><small>Dónde y a qué hora</small></span><em class="nav-num" data-contador="lugares" {% if not ubicaciones %}hidden{% endif %}>{{ ubicaciones|length }}</em></button>
+        <button type="button" data-ir="personas"><i class="ri-hearts-line"></i><span><strong>Personas</strong><small>Padres y padrinos</small></span><em class="nav-num" data-contador="personas" {% if not menciones %}hidden{% endif %}>{{ menciones|length }}</em></button>
+        <button type="button" data-ir="galeria"><i class="ri-gallery-line"></i><span><strong>Galería</strong><small>Fotos del evento</small></span><em class="nav-num" data-contador="galeria" {% if not fotos %}hidden{% endif %}>{{ fotos|length }}</em></button>
+        <button type="button" data-ir="detalles"><i class="ri-gift-2-line"></i><span><strong>Detalles</strong><small>Vestimenta, regalos y más</small></span></button>
+        <button type="button" data-ir="confirmacion"><i class="ri-checkbox-circle-line"></i><span><strong>Confirmación</strong><small>Respuestas y publicación</small></span></button>
+    </nav>
+
+    {# ---------------- Hoja de edición ---------------- #}
+    <form id="form-editor" class="editor__form scroll-thin" method="post" action="{% url 'invitaciones:guardar' evento.pk %}" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="editor__hoja">
+
+            {# Estilo #}
+            <section class="paso" data-paso="diseno">
+                <div class="paso__titulo"><span class="paso__num">1</span><div><h2>Estilo</h2><p>Elige la plantilla, el color y la letra de los nombres.</p></div></div>
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Plantilla</h3>
+                    <div class="plantillas-editor">
+                        {% for p in plantillas %}
+                        <label class="plantilla-card">
+                            <input type="radio" name="plantilla" value="{{ p.valor }}" {% if invitacion.plantilla == p.valor %}checked{% endif %}>
+                            <span class="mini mini--{{ p.valor }}" aria-hidden="true">
+                                <i class="mini__marco"></i><i class="mini__foto"></i><i class="mini__nombres"></i><i class="mini__linea"></i><i class="mini__linea mini__linea--corta"></i>
+                            </span>
+                            <span class="plantilla-card__texto"><strong>{{ p.nombre }}</strong><small>{{ p.descripcion }}</small></span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Color principal</h3>
+                    <div class="row row-wrap" style="gap:14px">
+                        <div class="paleta" id="paleta"></div>
+                        <div class="color-field">
+                            <input type="color" id="selector-color" value="{{ invitacion.color_principal }}" aria-label="Elegir otro color">
+                            <input type="text" name="color_principal" value="{{ invitacion.color_principal }}" maxlength="7" class="input" style="max-width:120px" aria-label="Código de color">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Letra de los nombres</h3>
+                    <div class="tipografias">
+                        {% for radio in form.tipografia %}
+                        <label class="tipo-card">{{ radio.tag }}
+                            <span class="tipo-card__muestra muestra--{{ radio.data.value }}" data-muestra>{{ invitacion.nombres_visibles }}</span>
+                            <small>{{ radio.choice_label }}</small>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            {# Portada #}
+            <section class="paso" data-paso="portada" hidden>
+                <div class="paso__titulo"><span class="paso__num">2</span><div><h2>Portada</h2><p>Lo primero que verán al abrir el sobre.</p></div></div>
+                <div class="bloque">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label class="field__label" for="id_nombres">Nombres destacados<span class="opt">Opcional</span></label>
+                            <input type="text" name="nombres" id="id_nombres" maxlength="150" value="{{ invitacion.nombres }}" placeholder="{{ evento.nombre_evento }}">
+                            <small class="field__help">Ej. “Ana & Luis”. Vacío = nombre del evento.</small>
+                        </div>
+                        <div class="field">
+                            <label class="field__label" for="id_titulo">Encabezado<span class="opt">Opcional</span></label>
+                            <input type="text" name="titulo" id="id_titulo" maxlength="120" value="{{ invitacion.titulo }}" placeholder="{{ titulo_sugerido }}">
+                            <small class="field__help">Vacío = “{{ titulo_sugerido }}”.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Foto de portada</h3>
+                    {% campo form.portada %}
+                </div>
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Sobre</h3>
+                    <div class="row row-wrap" style="gap:12px;align-items:flex-end">
+                        <div class="field grow" style="min-width:220px">
+                            <label class="field__label" for="id_texto_sobre">Texto bajo el sobre<span class="opt">Opcional</span></label>
+                            <input type="text" name="texto_sobre" id="id_texto_sobre" maxlength="120" value="{{ invitacion.texto_sobre }}" placeholder="Tienes una invitación especial">
+                        </div>
+                        <button type="button" class="btn btn--soft" data-ver-sobre><i class="ri-mail-open-line"></i>Ver cómo se abre</button>
+                    </div>
+                </div>
+            </section>
+
+            {# Mensaje #}
+            <section class="paso" data-paso="mensaje" hidden>
+                <div class="paso__titulo"><span class="paso__num">3</span><div><h2>Mensaje</h2><p>Unas palabras para tus invitados.</p></div></div>
+                <div class="bloque">
+                    <div class="field">
+                        <label class="field__label" for="id_frase">Frase o mensaje<span class="opt">Opcional</span></label>
+                        <textarea name="frase" id="id_frase" rows="4" placeholder="Escribe tu mensaje o elige una sugerencia">{{ invitacion.frase }}</textarea>
+                    </div>
+                    <p class="field__help mt-2">Sugerencias</p>
+                    <div class="sugerencias-editor">
+                        {% for f in frases %}<button type="button" data-rellenar="id_frase">{{ f }}</button>{% endfor %}
+                    </div>
+                </div>
+                <div class="bloque">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label class="field__label" for="id_aviso">Aviso importante<span class="opt">Opcional</span></label>
+                            <input type="text" name="aviso" id="id_aviso" maxlength="160" value="{{ invitacion.aviso }}" placeholder="Ej. Evento solo para adultos">
+                            <div class="row row-wrap mt-1" style="gap:6px">
+                                {% for a in avisos %}<button type="button" class="chip chip--outline" style="cursor:pointer" data-rellenar="id_aviso">{{ a }}</button>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="field__label" for="id_hashtag">Hashtag<span class="opt">Opcional</span></label>
+                            <div class="field__control has-icon"><i class="ri-hashtag field__icon"></i>
+                                <input type="text" name="hashtag" id="id_hashtag" maxlength="60" value="{{ invitacion.hashtag }}" placeholder="AnaYLuis2026"></div>
+                            <small class="field__help">Para que compartan sus fotos en redes.</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {# Lugares #}
+            <section class="paso" data-paso="lugares" hidden>
+                <div class="paso__titulo"><span class="paso__num">4</span><div><h2>Lugares</h2><p>Ceremonia religiosa, civil, recepción, fiesta… cada uno con su hora y mapa.</p></div></div>
+                <div class="bloque">
+                    <div class="row between row-wrap mb-2" style="gap:10px">
+                        <h3 class="bloque__titulo" style="margin:0">Dónde será cada momento</h3>
+                        <button type="button" class="btn btn--primary btn--sm" data-modal="{% url 'invitaciones:lugar_crear' evento.pk %}"><i class="ri-map-pin-add-line"></i>Agregar lugar</button>
+                    </div>
+                    <div class="lista-editor" id="lista-lugares">{% include 'invitaciones/editor/_lugares.html' %}</div>
+                    <div class="mt-2">{% campo form.mostrar_mapa %}</div>
+                </div>
+                <div class="bloque">
+                    <div class="row between row-wrap" style="gap:10px">
+                        <div><h3 class="bloque__titulo" style="margin:0">Itinerario</h3>
+                            <p class="field__help">Se toma del itinerario del evento ({{ evento.itinerario.count }} actividad{{ evento.itinerario.count|pluralize:"es" }}).</p></div>
+                        <a class="btn btn--sm" href="{% url 'eventos:detalle' evento.pk %}#itinerario" target="_blank"><i class="ri-external-link-line"></i>Editar itinerario</a>
+                    </div>
+                    <div class="mt-2">{% campo form.mostrar_itinerario %}</div>
+                </div>
+            </section>
+
+            {# Personas #}
+            <section class="paso" data-paso="personas" hidden>
+                <div class="paso__titulo"><span class="paso__num">5</span><div><h2>Personas especiales</h2><p>Padres, padrinos, damas, chambelanes… en el orden que quieras.</p></div></div>
+                <div class="bloque">
+                    <div class="row between row-wrap mb-2" style="gap:10px">
+                        <h3 class="bloque__titulo" style="margin:0">Grupos</h3>
+                        <button type="button" class="btn btn--primary btn--sm" data-modal="{% url 'invitaciones:mencion_crear' evento.pk %}"><i class="ri-add-line"></i>Agregar grupo</button>
+                    </div>
+                    <div class="lista-editor" id="lista-personas">{% include 'invitaciones/editor/_personas.html' %}</div>
+                </div>
+            </section>
+
+            {# Galería #}
+            <section class="paso" data-paso="galeria" hidden>
+                <div class="paso__titulo"><span class="paso__num">6</span><div><h2>Galería</h2><p>Fotos de la sesión, de los festejados o del lugar.</p></div></div>
+                <div class="bloque">
+                    <label class="dropzone" id="subir-fotos-zona" data-url="{% url 'invitaciones:fotos_subir' evento.pk %}">
+                        <input type="file" id="subir-fotos" accept="image/*" multiple>
+                        <div class="dropzone__preview"><i class="ri-image-add-line"></i></div>
+                        <div class="dropzone__text"><strong>Arrastra o elige varias fotos</strong><small>JPG o PNG, hasta 8 MB cada una</small></div>
+                    </label>
+                    <div id="lista-galeria" class="mt-2">{% include 'invitaciones/editor/_galeria.html' %}</div>
+                </div>
+            </section>
+
+            {# Detalles #}
+            <section class="paso" data-paso="detalles" hidden>
+                <div class="paso__titulo"><span class="paso__num">7</span><div><h2>Detalles</h2><p>Vestimenta, regalos, música y cuenta regresiva.</p></div></div>
+                <div class="bloque">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label class="field__label" for="id_dress_code">Código de vestimenta<span class="opt">Opcional</span></label>
+                            <div class="field__control has-icon"><i class="ri-shirt-line field__icon"></i>
+                                <input type="text" name="dress_code" id="id_dress_code" maxlength="120" value="{{ invitacion.dress_code }}" placeholder="Ej. Formal · evitar blanco"></div>
+                        </div>
+                        {% campo form.regalos_url icono="ri-gift-line" %}
+                        <div class="field span-2">
+                            <label class="field__label" for="id_mesa_regalos">Mesa de regalos<span class="opt">Opcional</span></label>
+                            <textarea name="mesa_regalos" id="id_mesa_regalos" rows="3" placeholder="Liverpool · Evento 51234567&#10;Lluvia de sobres">{{ invitacion.mesa_regalos }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Música de fondo</h3>
+                    <p class="field__help mb-2">Comienza a sonar cuando el invitado abre el sobre.</p>
+                    <div class="form-grid">
+                        <div class="dropzone" id="zona-musica">
+                            <input type="file" name="musica" accept="audio/*">
+                            <div class="dropzone__preview"><i class="ri-music-2-line"></i></div>
+                            <div class="dropzone__text"><strong id="musica-nombre">{% if invitacion.musica %}Cambiar canción{% else %}Elige un MP3{% endif %}</strong><small>Hasta 10 MB</small></div>
+                            {% if invitacion.musica %}<label class="dropzone__clear"><input type="checkbox" name="musica-clear"> Quitar</label>{% endif %}
+                        </div>
+                        <div class="field">
+                            <label class="field__label" for="id_musica_titulo">Nombre de la canción<span class="opt">Opcional</span></label>
+                            <input type="text" name="musica_titulo" id="id_musica_titulo" maxlength="120" value="{{ invitacion.musica_titulo }}" placeholder="Ej. Perfect · Ed Sheeran">
+                        </div>
+                    </div>
+                    <audio id="musica-previa" controls preload="none" {% if invitacion.musica %}src="{{ invitacion.musica.url }}"{% else %}hidden{% endif %} style="width:100%;margin-top:12px"></audio>
+                </div>
+                <div class="bloque">{% campo form.mostrar_contador %}</div>
+            </section>
+
+            {# Confirmación #}
+            <section class="paso" data-paso="confirmacion" hidden>
+                <div class="paso__titulo"><span class="paso__num">8</span><div><h2>Confirmación</h2><p>Cómo responden tus invitados y cuándo se publica.</p></div></div>
+                <div class="bloque">
+                    <div class="form-grid">
+                        {% campo form.fecha_limite_rsvp icono="ri-calendar-close-line" %}
+                    </div>
+                    <div class="lista-switches">
+                        {% campo form.rsvp_abierto %}
+                        {% campo form.publicada %}
+                    </div>
+                </div>
+                <div class="bloque">
+                    <h3 class="bloque__titulo">Enlace para compartir</h3>
+                    <div class="copy-field"><code>{{ url_publica }}</code><button type="button" class="icon-btn icon-btn--sm" data-copy="{{ url_publica }}" aria-label="Copiar"><i class="ri-file-copy-line"></i></button></div>
+                </div>
+            </section>
+
+            <div class="editor__pie">
+                <button type="button" class="btn btn--ghost" data-paso-anterior><i class="ri-arrow-left-line"></i>Anterior</button>
+                <span class="editor__progreso" id="editor-progreso"></span>
+                <button type="button" class="btn btn--primary" data-paso-siguiente>Siguiente<i class="ri-arrow-right-line"></i></button>
+            </div>
+        </div>
+    </form>
+
+    {# ---------------- Vista previa (compacta y ocultable) ---------------- #}
+    <aside class="editor__vista" id="editor-vista" aria-label="Vista previa">
+        <div class="vista__barra">
+            <div class="segmented segmented--mini" id="dispositivos">
+                <button type="button" data-dispositivo="celular" aria-pressed="true" aria-label="Celular" data-tip="Celular"><i class="ri-smartphone-line"></i></button>
+                <button type="button" data-dispositivo="escritorio" aria-pressed="false" aria-label="Computadora" data-tip="Computadora"><i class="ri-computer-line"></i></button>
+            </div>
+            <div class="row" style="gap:2px">
+                <button type="button" class="icon-btn icon-btn--sm" data-ver-sobre aria-label="Ver el sobre" data-tip="Ver sobre"><i class="ri-mail-open-line"></i></button>
+                <button type="button" class="icon-btn icon-btn--sm" id="recargar-vista" aria-label="Actualizar vista previa" data-tip="Actualizar"><i class="ri-refresh-line"></i></button>
+                <button type="button" class="icon-btn icon-btn--sm" id="ampliar-vista" aria-label="Ver en grande" data-tip="Ver en grande"><i class="ri-fullscreen-line"></i></button>
+                <button type="button" class="icon-btn icon-btn--sm" id="cerrar-vista" aria-label="Ocultar vista previa" data-tip="Ocultar"><i class="ri-close-line"></i></button>
+            </div>
+        </div>
+        <div class="vista__lienzo" id="lienzo">
+            <div class="marco-escala" id="marco-escala">
+                <div class="marco marco--celular" id="marco">
+                    <div class="marco__barra" aria-hidden="true"><i></i><i></i><i></i></div>
+                    <iframe id="vista" src="{{ invitacion.get_absolute_url }}?preview=1" title="Vista previa de la invitación"></iframe>
+                </div>
+            </div>
+        </div>
+        <p class="vista__nota"><i class="ri-flashlight-line"></i>Se actualiza mientras escribes</p>
+    </aside>
+</div>
+<button type="button" class="btn btn--primary ver-previa-flotante" id="ver-previa" aria-label="Mostrar vista previa"><i class="ri-eye-line"></i><span>Vista previa</span></button>
+
+{{ paletas|json_script:"datos-paletas" }}
+{{ colores_plantilla|json_script:"datos-colores" }}
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/editor-invitacion.js' %}"></script>{% endblock %}

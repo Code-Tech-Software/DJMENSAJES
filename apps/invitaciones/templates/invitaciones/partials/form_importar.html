@@ -1,0 +1,24 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="alert mb-3"><i class="ri-lightbulb-flash-line"></i>
+    <div><strong>Formato rápido</strong>Una invitación por línea, separando con comas: <code class="mono">Nombre, pases, WhatsApp, grupo</code>. Puedes copiar columnas directo desde Excel.</div></div>
+<div class="stack" style="gap:16px">
+    {% campo form.lista %}
+    {% campo form.grupo icono="ri-group-line" %}
+</div>
+<div class="row small muted mt-2" id="import-preview"><i class="ri-information-line"></i><span>Escribe o pega tu lista…</span></div>
+<script>
+    (() => {
+        const area = document.getElementById('{{ form.lista.id_for_label }}');
+        const out = document.querySelector('#import-preview span');
+        const contar = () => {
+            const filas = area.value.split('\n').map(l => l.trim()).filter(Boolean);
+            const pases = filas.reduce((t, l) => t + (parseInt((l.split(/[,;\t]/)[1] || '1').trim(), 10) || 1), 0);
+            out.textContent = filas.length ? `${filas.length} invitaciones · ${pases} pases` : 'Escribe o pega tu lista…';
+        };
+        area.addEventListener('input', contar);
+        contar();
+    })();
+</script>
+{% endblock %}

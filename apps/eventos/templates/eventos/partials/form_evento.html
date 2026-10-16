@@ -1,0 +1,117 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+
+{% block form_attrs %}data-wizard novalidate {% if form.instance.pk %}data-free-save{% endif %}{% endblock %}
+
+{% block pasos %}
+<div class="steps">
+    <button type="button" class="step" data-step><span><i class="ri-sparkling-2-line"></i>Evento</span></button>
+    <button type="button" class="step" data-step><span><i class="ri-map-pin-time-line"></i>Fecha y lugar</span></button>
+    <button type="button" class="step" data-step><span><i class="ri-user-star-line"></i>Cliente</span></button>
+    <button type="button" class="step" data-step><span><i class="ri-broadcast-line"></i>En vivo</span></button>
+</div>
+{% endblock %}
+
+{% block cuerpo %}
+{# Paso 1 · Datos generales #}
+<div data-step-panel>
+    <div class="stack" style="gap:18px">
+        {% campo form.nombre_evento icono="ri-quill-pen-line" %}
+
+        <div class="field {% if form.tipo_evento.errors %}field--error{% endif %}">
+            <span class="field__label">Tipo de evento<span class="req">*</span></span>
+            <div class="tiles">
+                {% for radio in form.tipo_evento %}
+                <label class="tile tipo-{{ radio.data.value }}">
+                    {{ radio.tag }}
+                    <span class="tile__body"><i class="{{ radio.data.value|icono_tipo }}"></i>{{ radio.choice_label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% for e in form.tipo_evento.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+        </div>
+
+        <div class="form-grid">
+            <div class="field">
+                <span class="field__label">Etapa</span>
+                <div class="segmented" style="display:flex">
+                    {% for radio in form.etapa %}
+                    <label class="grow">{{ radio.tag }}<span style="justify-content:center">
+                        {% if radio.data.value == 'cotizacion' %}<i class="ri-draft-line"></i>{% elif radio.data.value == 'confirmado' %}<i class="ri-checkbox-circle-line"></i>{% else %}<i class="ri-close-circle-line"></i>{% endif %}
+                        {{ radio.choice_label }}</span></label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% campo form.colaborador icono="ri-store-2-line" %}
+        </div>
+    </div>
+</div>
+
+{# Paso 2 · Fecha y lugar #}
+<div data-step-panel>
+    <div class="form-grid">
+        {% campo form.fecha_inicio_evento icono="ri-calendar-event-line" %}
+        {% campo form.fecha_fin_evento icono="ri-calendar-check-line" %}
+        {% campo form.lugar icono="ri-building-line" %}
+        {% campo form.num_invitados icono="ri-group-line" %}
+        {% campo form.direccion icono="ri-map-pin-line" clase="span-2" %}
+        {% campo form.url_mapa icono="ri-map-2-line" clase="span-2" %}
+    </div>
+    <div class="alert mt-3"><i class="ri-lightbulb-flash-line"></i>
+        <div>La ubicación y el enlace de Maps se muestran en la invitación digital con un botón “Cómo llegar”.</div></div>
+</div>
+
+{# Paso 3 · Cliente y contrato #}
+<div data-step-panel>
+    <div class="form-grid">
+        {% campo form.cliente_nombre icono="ri-user-3-line" clase="span-2" %}
+        {% campo form.cliente_telefono icono="ri-whatsapp-line" %}
+        {% campo form.cliente_email icono="ri-mail-line" %}
+        <div class="field span-2 {% if form.precio_total.errors %}field--error{% endif %}">
+            <label class="field__label" for="{{ form.precio_total.id_for_label }}">Precio total del servicio</label>
+            <div class="input-group"><span class="input-addon">MXN $</span>{{ form.precio_total }}</div>
+            <small class="field__help">Podrás registrar anticipos y pagos desde el detalle del evento.</small>
+            {% for e in form.precio_total.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+        </div>
+        {% campo form.servicios clase="span-2" %}
+        {% campo form.notas clase="span-2" %}
+    </div>
+</div>
+
+{# Paso 4 · Pantallas e interacción en vivo #}
+<div data-step-panel>
+    <div class="field">
+        <span class="field__label">Fondo visual de las pantallas<span class="opt">Opcional</span></span>
+        <div class="thumbs">
+            {% for radio in form.banner %}
+            <label class="thumb">
+                {{ radio.tag }}
+                <span class="thumb__img">
+                    {% with b=radio.data.value.instance %}
+                    {% if b and b.miniatura %}<img src="{{ b.miniatura.url }}" alt="" loading="lazy">{% elif b %}<i class="ri-image-line"></i>{% else %}<i class="ri-forbid-2-line"></i>{% endif %}
+                    {% endwith %}
+                </span>
+                <div class="thumb__name">{{ radio.choice_label }}</div>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-grid mt-3">
+        {% campo form.estado clase="span-2" %}
+        {% campo form.mensaje_bienvenida icono="ri-chat-smile-2-line" clase="span-2" %}
+        {% campo form.password_vip icono="ri-vip-crown-2-line" %}
+        {% campo form.cooldown icono="ri-timer-line" %}
+        {% campo form.permitir_saludos %}
+        {% campo form.permitir_canciones %}
+        {% campo form.moderar_pantalla clase="span-2" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block pie %}
+<span class="footer-hint hide-mobile"><i class="ri-keyboard-line"></i>Enter para avanzar</span>
+<button type="button" class="btn btn--ghost" data-prev><i class="ri-arrow-left-line"></i>Anterior</button>
+<button type="button" class="btn btn--primary" data-next>Siguiente<i class="ri-arrow-right-line"></i></button>
+<button type="submit" class="btn {% if form.instance.pk %}btn--soft{% else %}btn--primary{% endif %}" data-save><i class="ri-check-line"></i>{{ texto_boton }}</button>
+{% endblock %}

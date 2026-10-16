@@ -1,0 +1,290 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#f3f5f9">
+    <script>
+        // Claro por defecto; el DJ puede cambiar a oscuro y se recuerda en este dispositivo
+        try { if (localStorage.getItem('dj-tema') === 'oscuro') document.documentElement.dataset.tema = 'oscuro'; } catch (e) {}
+    </script>
+    <title>Panel DJ · {{ evento.nombre_evento }}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/isotipo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/envivo-dj.css' %}">
+</head>
+<body>
+<div class="dj">
+    <header class="dj-top {% if not evento.estado %}en-pausa{% endif %}" id="dj-top">
+        <div class="dj-top__evento">
+            <small><span class="conexion" id="conexion">En vivo</span> · Panel DJ · {{ evento.tipo_corto }}<span class="estado-pausa">· Recepción en pausa</span></small>
+            <h1>{{ evento.nombre_evento }}</h1>
+        </div>
+        <div class="reloj" id="reloj">--:--</div>
+        <div class="dj-top__acciones">
+            <button class="ctrl {% if evento.estado %}on{% else %}pausa{% endif %}" id="btn-recepcion" title="Pausar o reanudar la recepción de mensajes">
+                <i class="{% if evento.estado %}ri-radio-button-line{% else %}ri-pause-circle-fill{% endif %}"></i><span>{% if evento.estado %}Recibiendo{% else %}En pausa{% endif %}</span>
+            </button>
+            <button class="ctrl" id="btn-sonido" title="Sonido al recibir mensajes"><i class="ri-notification-off-line"></i><span>Sonido</span></button>
+            <button class="ctrl" id="btn-tema" title="Cambiar a tema oscuro o claro"><i class="ri-moon-clear-line"></i></button>
+            <button class="ctrl" id="btn-qr" title="Mostrar QR para invitados"><i class="ri-qr-code-line"></i></button>
+            <a class="ctrl" href="{{ url_pantalla }}" target="_blank" title="Abrir pantalla del proyector"><i class="ri-tv-2-line"></i></a>
+            <button class="ctrl" id="btn-completa" title="Pantalla completa"><i class="ri-fullscreen-line"></i></button>
+        </div>
+    </header>
+
+    <div class="dj-barra">
+        <div class="contadores">
+            <div class="contador" style="--c:var(--cancion)"><i class="ri-music-2-fill"></i><div><strong id="n-cancion">0</strong> <span>canciones</span></div></div>
+            <div class="contador" style="--c:var(--saludo)"><i class="ri-chat-heart-fill"></i><div><strong id="n-saludo">0</strong> <span>saludos</span></div></div>
+            <div class="contador" style="--c:var(--oro)"><i class="ri-vip-crown-2-fill"></i><div><strong id="n-vip">0</strong> <span>VIP</span></div></div>
+            <div class="contador" style="--c:var(--ok)"><i class="ri-check-double-line"></i><div><strong id="n-atendido">0</strong> <span>atendidos</span></div></div>
+        </div>
+        <div class="vista-tabs" id="vista">
+            <button data-vista="pendientes" class="activo">Pendientes</button>
+            <button data-vista="historial">Historial</button>
+        </div>
+        <div class="vista-tabs tabs-movil" id="tabs-movil" style="display:none">
+            <button data-col="cancion" class="activo">Canciones</button>
+            <button data-col="saludo">Saludos</button>
+        </div>
+        <label class="buscar"><i class="ri-search-line"></i><input type="search" id="buscar" placeholder="Buscar por canción, artista o nombre"></label>
+    </div>
+
+    <main class="tablero" id="tablero" data-movil="cancion">
+        <section class="columna columna--cancion" style="--c:var(--cancion)">
+            <div class="columna__cab"><i class="ri-music-2-fill"></i>Canciones <span class="num" id="c-cancion">0</span></div>
+            <div class="lista" id="lista-cancion"></div>
+        </section>
+        <section class="columna columna--saludo" style="--c:var(--saludo)">
+            <div class="columna__cab"><i class="ri-chat-heart-fill"></i>Saludos <span class="num" id="c-saludo">0</span></div>
+            <div class="lista" id="lista-saludo"></div>
+        </section>
+    </main>
+</div>
+
+<div class="deshacer" id="deshacer"><span id="deshacer-texto">Marcado como atendido</span><button id="deshacer-btn">Deshacer</button></div>
+<div class="aviso-pausa {% if not evento.estado %}visible{% endif %}" id="aviso-pausa"><i class="ri-pause-circle-fill"></i>Recepción en pausa: los invitados no pueden enviar mensajes.</div>
+
+<div class="modal-qr" id="modal-qr">
+    <div class="modal-qr__caja">
+        <h3>Escanea para pedir canciones</h3>
+        <p>{{ url_invitados }}</p>
+        <div id="qr-svg">{{ qr|safe }}</div>
+        <button class="ctrl" id="cerrar-qr">Cerrar</button>
+    </div>
+</div>
+
+{{ mensajes|json_script:"datos-mensajes" }}
+<script src="{% static 'js/envivo.js' %}"></script>
+<script>
+    (() => {
+        const TOKEN = "{{ evento.token_dj }}";
+        const URLS = {
+            accion: (id, accion) => `/envivo/dj/${TOKEN}/mensajes/${id}/${accion}/`,
+            mensajes: `/envivo/dj/${TOKEN}/mensajes/`,
+            recepcion: `/envivo/dj/${TOKEN}/recepcion/`,
+            ws: `/ws/envivo/dj/${TOKEN}/`,
+        };
+        const $ = s => document.querySelector(s);
+        const mensajes = new Map();
+        JSON.parse($('#datos-mensajes').textContent).forEach(m => mensajes.set(m.id, m));
+        let vista = 'pendientes';
+        let filtro = '';
+        let sonido = false;
+        let nuevos = new Set();
+        let sinLeer = 0;
+        const tituloBase = document.title;
+
+        /* ---------- Reloj ---------- */
+        const reloj = () => { $('#reloj').textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }); };
+        reloj(); setInterval(reloj, 10000);
+
+        /* ---------- Sonido (sin archivos: Web Audio) ---------- */
+        let audio;
+        function campana(vip) {
+            if (!sonido) return;
+            audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+            const notas = vip ? [880, 1175, 1568] : [784, 1046];
+            notas.forEach((f, i) => {
+                const o = audio.createOscillator(); const g = audio.createGain();
+                o.type = 'sine'; o.frequency.value = f;
+                g.gain.setValueAtTime(0.0001, audio.currentTime + i * .12);
+                g.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + i * .12 + .02);
+                g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + i * .12 + .35);
+                o.connect(g).connect(audio.destination);
+                o.start(audio.currentTime + i * .12); o.stop(audio.currentTime + i * .12 + .4);
+            });
+        }
+        $('#btn-sonido').addEventListener('click', () => {
+            sonido = !sonido;
+            $('#btn-sonido').classList.toggle('on', sonido);
+            $('#btn-sonido i').className = sonido ? 'ri-notification-3-fill' : 'ri-notification-off-line';
+            if (sonido) campana(false);
+            try { localStorage.setItem('dj-sonido', sonido ? '1' : '0'); } catch (e) {}
+        });
+        try { if (localStorage.getItem('dj-sonido') === '1') { sonido = true; $('#btn-sonido').classList.add('on'); $('#btn-sonido i').className = 'ri-notification-3-fill'; } } catch (e) {}
+
+        /* ---------- Render ---------- */
+        const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        function tarjeta(m) {
+            const e = EnVivo.escapar;
+            const sub = m.tipo === 'cancion'
+                ? (m.artista ? `<div class="msj__sub"><i class="ri-user-voice-line"></i> ${e(m.artista)}</div>` : '')
+                : (m.destinatario ? `<div class="msj__sub">Para: <strong>${e(m.destinatario)}</strong></div>` : '');
+            const acciones = m.estatus === 'pendiente'
+                ? `<button class="btn-msj btn-msj--ok" data-accion="atender" title="Marcar como atendido"><i class="ri-check-line"></i></button>
+                   ${m.tipo === 'saludo' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar del proyector' : 'Mostrar en el proyector'}"><i class="ri-tv-2-line"></i></button>` : ''}
+                   <button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ri-close-line"></i></button>`
+                : `<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ri-arrow-go-back-line"></i></button>
+                   ${m.tipo === 'saludo' && m.estatus === 'atendido' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="Proyector"><i class="ri-tv-2-line"></i></button>` : ''}`;
+            return `<article class="msj msj--${m.tipo} ${m.vip ? 'msj--vip' : ''} ${m.estatus !== 'pendiente' ? 'msj--' + m.estatus : ''} ${nuevos.has(m.id) ? 'msj--nuevo' : ''}" data-id="${m.id}">
+                <div class="msj__cuerpo">
+                    <div class="msj__meta"><strong>${e(m.nombre)}</strong>${m.vip ? '<span class="msj__vip"><i class="ri-vip-crown-2-fill"></i>VIP</span>' : ''}<span>· ${m.hora}</span><span data-hace="${m.fecha}">· ${EnVivo.haceCuanto(m.fecha)}</span>${m.estatus === 'atendido' ? '<span style="color:var(--ok)">· atendido</span>' : ''}${m.estatus === 'descartado' ? '<span>· descartado</span>' : ''}</div>
+                    <div class="msj__texto">${e(m.mensaje)}</div>${sub}
+                </div>
+                <div class="msj__acciones">${acciones}</div></article>`;
+        }
+        function vacio(tipo) {
+            const t = vista === 'pendientes'
+                ? (tipo === 'cancion' ? ['ri-music-2-line', 'Sin canciones pendientes'] : ['ri-chat-heart-line', 'Sin saludos pendientes'])
+                : ['ri-history-line', 'Aún no hay historial'];
+            return `<div class="vacio"><i class="${t[0]}"></i>${t[1]}</div>`;
+        }
+        function render() {
+            const todos = [...mensajes.values()];
+            const visibles = todos.filter(m => (vista === 'pendientes' ? m.estatus === 'pendiente' : m.estatus !== 'pendiente'))
+                .filter(m => !filtro || norm(`${m.mensaje} ${m.artista} ${m.nombre} ${m.destinatario}`).includes(filtro));
+            // Pendientes: VIP primero y luego en orden de llegada (cola). Historial: lo más reciente primero.
+            visibles.sort((a, b) => vista === 'pendientes' ? (b.vip - a.vip) || (new Date(a.fecha) - new Date(b.fecha)) : new Date(b.fecha) - new Date(a.fecha));
+            ['cancion', 'saludo'].forEach(tipo => {
+                const lista = visibles.filter(m => m.tipo === tipo);
+                $(`#lista-${tipo}`).innerHTML = lista.length ? lista.map(tarjeta).join('') : vacio(tipo);
+                $(`#c-${tipo}`).textContent = lista.length;
+            });
+            const pend = todos.filter(m => m.estatus === 'pendiente');
+            $('#n-cancion').textContent = pend.filter(m => m.tipo === 'cancion').length;
+            $('#n-saludo').textContent = pend.filter(m => m.tipo === 'saludo').length;
+            $('#n-vip').textContent = pend.filter(m => m.vip).length;
+            $('#n-atendido').textContent = todos.filter(m => m.estatus === 'atendido').length;
+        }
+        setInterval(() => document.querySelectorAll('[data-hace]').forEach(el => { el.textContent = '· ' + EnVivo.haceCuanto(el.dataset.hace); }), 30000);
+
+        /* ---------- Acciones ---------- */
+        let ultimo = null; let tDeshacer;
+        async function accion(id, nombre) {
+            const r = await EnVivo.enviarJSON(URLS.accion(id, nombre));
+            if (!r.ok) return;
+            mensajes.set(r.mensaje.id, r.mensaje);
+            nuevos.delete(id);
+            render();
+            if (nombre === 'atender' || nombre === 'descartar') {
+                ultimo = id;
+                $('#deshacer-texto').textContent = nombre === 'atender' ? 'Marcado como atendido' : 'Mensaje descartado';
+                $('#deshacer').classList.add('visible');
+                clearTimeout(tDeshacer);
+                tDeshacer = setTimeout(() => $('#deshacer').classList.remove('visible'), 5000);
+            }
+        }
+        $('#tablero').addEventListener('click', e => {
+            const b = e.target.closest('[data-accion]');
+            if (!b) return;
+            accion(+b.closest('[data-id]').dataset.id, b.dataset.accion);
+        });
+        $('#deshacer-btn').addEventListener('click', () => {
+            if (ultimo) accion(ultimo, 'restaurar');
+            $('#deshacer').classList.remove('visible');
+            ultimo = null;
+        });
+
+        $('#vista').addEventListener('click', e => {
+            const b = e.target.closest('[data-vista]');
+            if (!b) return;
+            vista = b.dataset.vista;
+            document.querySelectorAll('#vista button').forEach(x => x.classList.toggle('activo', x === b));
+            render();
+        });
+        $('#tabs-movil').addEventListener('click', e => {
+            const b = e.target.closest('[data-col]');
+            if (!b) return;
+            $('#tablero').dataset.movil = b.dataset.col;
+            document.querySelectorAll('#tabs-movil button').forEach(x => x.classList.toggle('activo', x === b));
+        });
+        $('#buscar').addEventListener('input', e => { filtro = norm(e.target.value.trim()); render(); });
+
+        /* ---------- Recepción (pausa) ---------- */
+        function pintarRecepcion(activo) {
+            const b = $('#btn-recepcion');
+            b.classList.toggle('on', activo); b.classList.toggle('pausa', !activo);
+            b.innerHTML = activo ? '<i class="ri-radio-button-line"></i><span>Recibiendo</span>' : '<i class="ri-pause-circle-fill"></i><span>En pausa</span>';
+            $('#aviso-pausa').classList.toggle('visible', !activo);
+            $('#dj-top').classList.toggle('en-pausa', !activo);
+        }
+        $('#btn-recepcion').addEventListener('click', async () => {
+            const r = await EnVivo.enviarJSON(URLS.recepcion);
+            if (r.ok) pintarRecepcion(r.activo);
+        });
+
+        /* ---------- Tema claro / oscuro ---------- */
+        function pintarTema() {
+            const oscuro = document.documentElement.dataset.tema === 'oscuro';
+            $('#btn-tema i').className = oscuro ? 'ri-sun-line' : 'ri-moon-clear-line';
+            document.querySelector('meta[name="theme-color"]').content = oscuro ? '#07090f' : '#f3f5f9';
+        }
+        $('#btn-tema').addEventListener('click', () => {
+            const oscuro = document.documentElement.dataset.tema !== 'oscuro';
+            if (oscuro) document.documentElement.dataset.tema = 'oscuro'; else delete document.documentElement.dataset.tema;
+            try { localStorage.setItem('dj-tema', oscuro ? 'oscuro' : 'claro'); } catch (e) {}
+            pintarTema();
+        });
+        pintarTema();
+
+        /* ---------- QR y pantalla completa ---------- */
+        $('#btn-qr').addEventListener('click', () => $('#modal-qr').classList.add('abierto'));
+        $('#cerrar-qr').addEventListener('click', () => $('#modal-qr').classList.remove('abierto'));
+        $('#modal-qr').addEventListener('click', e => { if (e.target.id === 'modal-qr') e.target.classList.remove('abierto'); });
+        EnVivo.pantallaCompleta($('#btn-completa'));
+        EnVivo.mantenerEncendida();
+
+        /* ---------- Tiempo real ---------- */
+        async function sincronizar() {
+            try {
+                const r = await (await fetch(URLS.mensajes)).json();
+                mensajes.clear();
+                r.mensajes.forEach(m => mensajes.set(m.id, m));
+                pintarRecepcion(r.activo);
+                render();
+            } catch (e) {}
+        }
+        EnVivo.conexion(URLS.ws, {
+            alCambiarEstado: (ok, reconexion) => {
+                $('#conexion').classList.toggle('off', !ok);
+                $('#conexion').textContent = ok ? 'En vivo' : 'Reconectando…';
+                if (ok && reconexion) sincronizar();
+            },
+            alMensaje: datos => {
+                if (datos.tipo === 'nuevo') {
+                    const m = datos.mensaje;
+                    mensajes.set(m.id, m);
+                    nuevos.add(m.id);
+                    setTimeout(() => { nuevos.delete(m.id); document.querySelector(`[data-id="${m.id}"]`)?.classList.remove('msj--nuevo'); }, 12000);
+                    render();
+                    campana(m.vip);
+                    if (document.hidden) { sinLeer += 1; document.title = `(${sinLeer}) ${tituloBase}`; }
+                }
+                if (datos.tipo === 'cambio') { mensajes.set(datos.mensaje.id, datos.mensaje); render(); }
+                if (datos.tipo === 'config') pintarRecepcion(datos.activo);
+            },
+        });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) { sinLeer = 0; document.title = tituloBase; } });
+
+        render();
+    })();
+</script>
+</body>
+</html>

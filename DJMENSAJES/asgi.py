@@ -1,21 +1,20 @@
 import os
+
 from django.core.asgi import get_asgi_application
 
-# 🔹 Configura Django ANTES de importar nada más
+# Configura Django ANTES de importar cualquier cosa que use modelos
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DJMENSAJES.settings')
+django_asgi_app = get_asgi_application()
 
-import django
-django.setup()
+from channels.auth import AuthMiddlewareStack  # noqa: E402
+from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
+from channels.security.websocket import AllowedHostsOriginValidator  # noqa: E402
 
-# 🔹 Luego importa channels
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
-from eventos import routing as eventos_routing
+from apps.envivo.routing import websocket_urlpatterns  # noqa: E402
 
-# 🔹 Define la aplicación ASGI
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(eventos_routing.websocket_urlpatterns)
+    'http': django_asgi_app,
+    'websocket': AllowedHostsOriginValidator(
+        AuthMiddlewareStack(URLRouter(websocket_urlpatterns))
     ),
 })

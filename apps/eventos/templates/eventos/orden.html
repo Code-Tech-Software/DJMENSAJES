@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static ui %}
+{% block title %}Orden {{ folio }}{% endblock %}
+{% block head %}
+<style>
+    body { background: var(--surface-3); }
+    .doc { max-width: 860px; margin: 28px auto; background: #fff; color: #0e1726; border-radius: 18px; box-shadow: var(--sh); overflow: hidden; }
+    .doc__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 34px 40px 26px; border-bottom: 4px solid #0098da; }
+    .doc__head img { height: 44px; }
+    .doc__folio { text-align: right; }
+    .doc__folio strong { display: block; font-size: 22px; letter-spacing: -.02em; }
+    .doc__folio span { color: #64748b; font-size: 13px; }
+    .doc__body { padding: 28px 40px 36px; }
+    .doc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: #0098da; margin: 26px 0 12px; }
+    .doc h2:first-child { margin-top: 0; }
+    .doc .dl dt { color: #64748b; }
+    .doc .dl dd { color: #0e1726; }
+    .doc table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .doc th, .doc td { padding: 10px 0; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    .doc th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; }
+    .doc .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .totales { margin-left: auto; width: 300px; margin-top: 14px; }
+    .totales div { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; }
+    .totales .gran { border-top: 2px solid #0e1726; font-size: 18px; font-weight: 800; margin-top: 4px; padding-top: 10px; }
+    .firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-top: 64px; }
+    .firmas div { border-top: 1px solid #0e1726; padding-top: 8px; text-align: center; font-size: 13px; color: #475569; }
+    .legal { font-size: 11.5px; color: #64748b; margin-top: 28px; line-height: 1.6; }
+    .acciones { position: fixed; bottom: 22px; right: 22px; display: flex; gap: 10px; }
+    @media print {
+        body { background: #fff; }
+        .doc { margin: 0; box-shadow: none; border-radius: 0; max-width: none; }
+        .acciones { display: none; }
+    }
+</style>
+{% endblock %}
+{% block body %}
+<article class="doc">
+    <header class="doc__head">
+        <div>
+            <img src="{% static 'img/grupo-em-neg.png' %}" alt="Grupo EM">
+            {% if evento.colaborador %}<p class="small" style="color:#64748b;margin-top:10px">Operado por <strong style="color:#0e1726">{{ evento.colaborador }}</strong>{% if evento.colaborador.telefono %} · {{ evento.colaborador.telefono }}{% endif %}</p>{% endif %}
+        </div>
+        <div class="doc__folio">
+            <span>Orden de servicio</span>
+            <strong>{{ folio }}</strong>
+            <span>Emitida el {{ hoy|date:"j \d\e F \d\e Y" }}</span>
+        </div>
+    </header>
+    <div class="doc__body">
+        <h2>Cliente</h2>
+        <dl class="dl">
+            <div><dt>Nombre</dt><dd>{{ evento.cliente_nombre|default:"________________________" }}</dd></div>
+            <div><dt>Teléfono</dt><dd>{{ evento.cliente_telefono|default:"—" }}</dd></div>
+            <div><dt>Correo</dt><dd>{{ evento.cliente_email|default:"—" }}</dd></div>
+        </dl>
+
+        <h2>Evento</h2>
+        <dl class="dl">
+            <div><dt>Evento</dt><dd>{{ evento.nombre_evento }} · {{ evento.tipo_corto }}</dd></div>
+            <div><dt>Fecha</dt><dd>{{ evento.fecha_inicio_evento|date:"l j \d\e F \d\e Y" }}</dd></div>
+            <div><dt>Horario</dt><dd>{{ evento.fecha_inicio_evento|date:"H:i" }} a {{ evento.fecha_fin_evento|date:"H:i" }} h ({{ evento.duracion_horas }} h)</dd></div>
+            <div><dt>Lugar</dt><dd>{{ evento.lugar|default:"—" }}</dd></div>
+            <div><dt>Dirección</dt><dd>{{ evento.direccion|default:"—" }}</dd></div>
+            <div><dt>Invitados</dt><dd>{{ evento.num_invitados|default:"—" }}</dd></div>
+        </dl>
+
+        <h2>Servicios contratados</h2>
+        {% if evento.lista_servicios %}
+        <table><tbody>{% for s in evento.lista_servicios %}<tr><td>✓ {{ s }}</td></tr>{% endfor %}</tbody></table>
+        {% else %}<p class="small" style="color:#64748b">Por definir.</p>{% endif %}
+
+        {% if itinerario %}
+        <h2>Itinerario</h2>
+        <table><tbody>{% for a in itinerario %}<tr><td style="width:90px" class="mono">{{ a.hora|time:"H:i" }}</td><td>{{ a.titulo }}{% if a.descripcion %} <span style="color:#64748b">· {{ a.descripcion }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
+        {% endif %}
+
+        <h2>Pagos</h2>
+        <table>
+            <thead><tr><th>Fecha</th><th>Concepto</th><th>Método</th><th class="num">Monto</th></tr></thead>
+            <tbody>
+            {% for p in pagos %}<tr><td>{{ p.fecha|date:"d/m/Y" }}</td><td>{{ p.referencia|default:"Abono" }}</td><td>{{ p.get_metodo_display }}</td><td class="num">{{ p.monto|moneda }}</td></tr>
+            {% empty %}<tr><td colspan="4" style="color:#64748b">Sin pagos registrados.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+        <div class="totales">
+            <div><span>Total del servicio</span><strong>{{ evento.precio_total|moneda }}</strong></div>
+            <div><span>Pagado</span><span>{{ evento.total_pagado|moneda }}</span></div>
+            <div class="gran"><span>Saldo</span><span>{{ evento.saldo|moneda }}</span></div>
+        </div>
+
+        <p class="legal">El saldo deberá liquidarse a más tardar el día del evento antes de su inicio. Cualquier cambio de fecha
+            u horario está sujeto a disponibilidad. Este documento resume los servicios acordados entre el cliente y Grupo EM.</p>
+
+        <div class="firmas">
+            <div>{{ evento.cliente_nombre|default:"Cliente" }}<br><small>Firma de conformidad</small></div>
+            <div>{{ evento.colaborador|default:"Grupo EM" }}<br><small>Firma del prestador</small></div>
+        </div>
+    </div>
+</article>
+<div class="acciones">
+    <a class="btn" href="{{ evento.get_absolute_url }}"><i class="ri-arrow-left-line"></i>Volver</a>
+    <button class="btn btn--primary" onclick="window.print()"><i class="ri-printer-line"></i>Imprimir / PDF</button>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+
+{% block form_attrs %}data-wizard novalidate data-free-save{% endblock %}
+
+{% block pasos %}
+<div class="steps">
+    <button type="button" class="step" data-step><span><i class="ri-store-2-line"></i>Agencia</span></button>
+    <button type="button" class="step" data-step><span><i class="ri-contacts-book-3-line"></i>Contacto y redes</span></button>
+    <button type="button" class="step" data-step><span><i class="ri-palette-line"></i>Marca</span></button>
+</div>
+{% endblock %}
+
+{% block cuerpo %}
+<div data-step-panel>
+    <div class="stack" style="gap:18px">
+        <div class="form-grid">
+            {% campo form.nombre icono="ri-store-2-line" %}
+            {% campo form.ciudad icono="ri-map-pin-line" %}
+        </div>
+        <div class="field">
+            <span class="field__label">Giro<span class="req">*</span></span>
+            <div class="tiles tiles--compact">
+                {% for radio in form.tipo %}
+                <label class="tile">{{ radio.tag }}
+                    <span class="tile__body">
+                        {% if radio.data.value == 'sonido' %}<i class="ri-headphone-line"></i>{% elif radio.data.value == 'agencia' %}<i class="ri-briefcase-4-line"></i>{% elif radio.data.value == 'salon' %}<i class="ri-building-2-line"></i>{% elif radio.data.value == 'foto' %}<i class="ri-camera-3-line"></i>{% elif radio.data.value == 'banquete' %}<i class="ri-restaurant-2-line"></i>{% elif radio.data.value == 'decoracion' %}<i class="ri-flower-line"></i>{% else %}<i class="ri-store-2-line"></i>{% endif %}
+                        {{ radio.choice_label }}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% campo form.eslogan icono="ri-double-quotes-l" %}
+        {% campo form.descripcion %}
+        {% campo form.estado %}
+    </div>
+</div>
+
+<div data-step-panel>
+    <div class="form-section">
+        <div class="form-section__title"><i class="ri-contacts-line"></i>Contacto</div>
+        <div class="form-grid">
+            {% campo form.responsable icono="ri-user-3-line" %}
+            {% campo form.telefono icono="ri-phone-line" %}
+            {% campo form.email icono="ri-mail-line" %}
+            {% campo form.whatsapp icono="ri-whatsapp-line" %}
+        </div>
+    </div>
+    <div class="form-section">
+        <div class="form-section__title"><i class="ri-share-line"></i>Redes sociales <small>· aparecen en la pantalla de invitados</small></div>
+        <div class="form-grid">
+            {% campo form.facebook icono="ri-facebook-circle-line" %}
+            {% campo form.instagram icono="ri-instagram-line" %}
+            {% campo form.tiktok icono="ri-tiktok-line" %}
+            {% campo form.sitio_web icono="ri-global-line" %}
+        </div>
+    </div>
+</div>
+
+<div data-step-panel>
+    <div class="form-grid">
+        {% campo form.logo_principal oscuro=True %}
+        {% campo form.logo_secundario oscuro=True %}
+        {% campo form.color_marca tipo="color" clase="span-2" %}
+    </div>
+    <div class="alert mt-3"><i class="ri-magic-line"></i><div>Los logos y el color se aplican automáticamente a la pantalla de invitados, al proyector y a la orden de servicio de los eventos de esta agencia.</div></div>
+</div>
+{% endblock %}
+
+{% block pie %}
+<button type="button" class="btn btn--ghost" data-prev><i class="ri-arrow-left-line"></i>Anterior</button>
+<button type="button" class="btn btn--primary" data-next>Siguiente<i class="ri-arrow-right-line"></i></button>
+<button type="submit" class="btn btn--primary" data-save><i class="ri-check-line"></i>{{ texto_boton }}</button>
+{% endblock %}

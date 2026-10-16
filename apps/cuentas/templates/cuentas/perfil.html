@@ -1,0 +1,84 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Mi perfil{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Mi perfil</div>
+        <h1>Mi perfil</h1>
+        <p>Tu información personal y de acceso.</p>
+    </div>
+</div>
+
+<div class="grid grid-sidebar reveal">
+    <div class="stack">
+        <div class="card" style="overflow:hidden">
+            <div class="profile-cover"></div>
+            <div class="card__body" style="margin-top:-62px;position:relative">
+                <div class="row row-wrap" style="align-items:flex-end;gap:18px">
+                    <div style="padding:5px;background:var(--surface);border-radius:50%">{% avatar user 'avatar--xl' %}</div>
+                    <div class="grow" style="padding-bottom:6px">
+                        <h2 style="font-size:24px">{{ user }}</h2>
+                        <div class="row row-wrap mt-1">
+                            <span class="chip chip--info"><i class="ri-shield-user-line"></i>{{ user.rol_visible }}</span>
+                            {% if user.colaborador %}<span class="chip chip--live"><i class="ri-store-2-line"></i>{{ user.colaborador }}</span>{% endif %}
+                            {% if user.cargo %}<span class="chip chip--muted">{{ user.cargo }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="row" style="padding-bottom:6px">
+                        <button class="btn" data-modal="{% url 'cuentas:cambiar_contrasena' %}"><i class="ri-lock-password-line"></i>Contraseña</button>
+                        <button class="btn btn--primary" data-modal="{% url 'cuentas:editar_perfil' %}"><i class="ri-edit-2-line"></i>Editar perfil</button>
+                    </div>
+                </div>
+
+                <hr class="mt-3 mb-3">
+                <dl class="dl">
+                    <div><dt><i class="ri-at-line"></i>Usuario</dt><dd>@{{ user.username }}</dd></div>
+                    <div><dt><i class="ri-mail-line"></i>Correo</dt><dd>{{ user.email|default:"—" }}</dd></div>
+                    <div><dt><i class="ri-phone-line"></i>Teléfono</dt><dd>{{ user.telefono|default:"—" }}</dd></div>
+                    <div><dt><i class="ri-map-pin-line"></i>Dirección</dt><dd>{{ user.direccion|default:"—" }}</dd></div>
+                    <div><dt><i class="ri-calendar-line"></i>Miembro desde</dt><dd>{{ user.date_joined|date:"d \d\e F Y" }}</dd></div>
+                    <div><dt><i class="ri-time-line"></i>Último acceso</dt><dd>{{ user.last_login|hace|default:"—" }}</dd></div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__head"><div class="card-title"><span class="ico"><i class="ri-calendar-schedule-line"></i></span><div><h3>Mis próximos eventos</h3><p>Los que tienes a tu cargo</p></div></div>
+                <a class="btn btn--ghost btn--sm" href="{% url 'eventos:lista' %}">Ver todos</a></div>
+            <div class="list mt-2">
+                {% for e in proximos %}
+                <a href="{{ e.get_absolute_url }}" class="list-item tipo-{{ e.tipo_evento }}">
+                    <div class="date-block"><small>{{ e.fecha_inicio_evento|date:"M" }}</small><strong>{{ e.fecha_inicio_evento|date:"d" }}</strong></div>
+                    <div class="list-item__body"><div class="list-item__title">{{ e.nombre_evento }}</div><div class="list-item__sub">{{ e.tipo_corto }} · {{ e.fecha_inicio_evento|date:"H:i" }} h{% if e.lugar %} · {{ e.lugar }}{% endif %}</div></div>
+                    <span class="chip chip--info">{{ e.dias_restantes|dias_texto }}</span>
+                </a>
+                {% empty %}
+                {% include 'components/vacio.html' with icono='ri-calendar-line' titulo='Sin eventos próximos' texto='Cuando tengas eventos programados aparecerán aquí.' %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="stack">
+        <div class="grid grid-2" style="gap:14px">
+            <div class="card stat"><div class="stat__label">Eventos creados</div><div class="stat__value">{{ creados }}</div></div>
+            <div class="card stat tone-live"><div class="stat__label">Eventos visibles</div><div class="stat__value">{{ visibles }}</div></div>
+        </div>
+        <div class="card card--pad">
+            <div class="card-title mb-2"><span class="ico"><i class="ri-palette-line"></i></span><div><h3 style="font-size:15px">Apariencia</h3><p class="muted small">Elige cómo se ve el panel.</p></div></div>
+            <div class="segmented w-full" style="display:flex">
+                <button class="grow" onclick="EM.setTheme('light')"><i class="ri-sun-line"></i>Claro</button>
+                <button class="grow" onclick="EM.setTheme('dark')"><i class="ri-moon-clear-line"></i>Oscuro</button>
+            </div>
+        </div>
+        <div class="card card--pad">
+            <div class="card-title mb-2"><span class="ico"><i class="ri-keyboard-line"></i></span><div><h3 style="font-size:15px">Atajos</h3><p class="muted small">Trabaja más rápido.</p></div></div>
+            <div class="stack small" style="gap:10px">
+                <div class="row between"><span class="text-2">Búsqueda rápida</span><span><kbd>Ctrl</kbd> <kbd>K</kbd></span></div>
+                <div class="row between"><span class="text-2">Cerrar ventana</span><kbd>Esc</kbd></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

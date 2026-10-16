@@ -1,0 +1,116 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Eventos{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Eventos</div>
+        <h1>Eventos</h1>
+        <p>Administra fechas, clientes, invitaciones y pantallas en vivo de cada evento.</p>
+    </div>
+    <div class="page-head__actions">
+        <div class="segmented" id="vista-toggle">
+            <button type="button" data-vista="tarjetas" aria-pressed="true"><i class="ri-layout-grid-line"></i><span class="hide-mobile">Tarjetas</span></button>
+            <button type="button" data-vista="tabla" aria-pressed="false"><i class="ri-list-check-2"></i><span class="hide-mobile">Tabla</span></button>
+        </div>
+        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ri-add-line"></i>Nuevo evento</button>
+    </div>
+</div>
+
+<form data-autosubmit data-target="#resultados, #tabs-cuando" id="filtros">
+    <div class="tabs" style="margin-bottom:16px" id="tabs-cuando">
+        {% for valor, nombre, icono, n in opciones_cuando %}
+        <label class="tab {% if cuando == valor %}is-active{% endif %}" style="cursor:pointer">
+            <input type="radio" name="cuando" value="{{ valor }}" {% if cuando == valor %}checked{% endif %} hidden>
+            <i class="{{ icono }}"></i>{{ nombre }}<span class="count">{{ n }}</span>
+        </label>
+        {% endfor %}
+    </div>
+    <div class="toolbar">
+        <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, lugar o cliente"></div>
+        <select class="input" name="tipo" aria-label="Tipo">
+            <option value="">Todos los tipos</option>
+            {% for v, n in tipos %}<option value="{{ v }}" {% if tipo == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select>
+        <select class="input" name="etapa" aria-label="Etapa">
+            <option value="">Todas las etapas</option>
+            {% for v, n in etapas %}<option value="{{ v }}" {% if etapa == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select>
+        {% if colaboradores %}
+        <select class="input" name="colaborador" aria-label="Colaborador">
+            <option value="">Todas las agencias</option>
+            {% for c in colaboradores %}<option value="{{ c.pk }}" {% if colaborador == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+        </select>
+        {% endif %}
+    </div>
+</form>
+
+<div id="resultados">
+    {% if eventos %}
+    <div class="grid grid-auto reveal" data-vista-panel="tarjetas">
+        {% for e in eventos %}{% include 'eventos/partials/tarjeta_evento.html' %}{% endfor %}
+    </div>
+
+    <div class="card" data-vista-panel="tabla" hidden>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Evento</th><th>Fecha</th><th class="hide-mobile">Lugar</th><th class="hide-mobile">Agencia</th><th class="hide-mobile">Invitados</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                {% for e in eventos %}
+                <tr class="tipo-{{ e.tipo_evento }}">
+                    <td><a href="{{ e.get_absolute_url }}" class="cell-user"><span class="ico-square"><i class="{{ e.icono }}"></i></span><div><div class="t-title">{{ e.nombre_evento }}</div><div class="t-sub">{{ e.tipo_corto }}{% if e.etapa == 'cotizacion' %} · Cotización{% endif %}</div></div></a></td>
+                    <td class="nowrap"><div class="t-title">{{ e.fecha_inicio_evento|date:"d M Y" }}</div><div class="t-sub">{{ e.fecha_inicio_evento|date:"H:i" }} h</div></td>
+                    <td class="hide-mobile t-muted">{{ e.lugar|default:"—" }}</td>
+                    <td class="hide-mobile t-muted">{{ e.colaborador|default:"—" }}</td>
+                    <td class="hide-mobile">{% if e.n_invitados %}<strong>{{ e.pases_confirmados|default:0 }}</strong><span class="t-muted"> / {{ e.pases|default:0 }}</span>{% else %}<span class="t-muted">—</span>{% endif %}</td>
+                    <td><span class="chip estado-{{ e.estado_temporal }} chip--dot">{% if e.estado_temporal == 'proximo' %}{{ e.dias_restantes|dias_texto }}{% else %}{{ e.estado_temporal_display }}{% endif %}</span></td>
+                    <td class="t-actions">
+                        <a class="icon-btn icon-btn--sm" href="{% url 'invitaciones:panel' e.pk %}" data-tip="Invitación"><i class="ri-mail-open-line"></i></a>
+                        <button class="icon-btn icon-btn--sm" data-modal="{% url 'eventos:editar' e.pk %}" data-tip="Editar"><i class="ri-edit-2-line"></i></button>
+                        <a class="icon-btn icon-btn--sm" href="{{ e.get_absolute_url }}" data-tip="Abrir"><i class="ri-arrow-right-up-line"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% include 'components/paginacion.html' %}
+    {% else %}
+    <div class="card">
+        {% if hay_filtros %}
+            {% include 'components/vacio.html' with icono='ri-search-eye-line' titulo='Sin coincidencias' texto='Prueba con otros filtros o revisa la pestaña “Todos”.' %}
+        {% else %}
+            {% url 'eventos:crear' as url_crear %}
+            {% include 'components/vacio.html' with icono='ri-calendar-event-line' titulo='No hay eventos aquí' texto='Crea un evento para generar su invitación digital, el QR para invitados y el panel del DJ.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (() => {
+        const filtros = document.getElementById('filtros');
+        filtros.addEventListener('change', e => {
+            if (e.target.name !== 'cuando') return;
+            filtros.querySelectorAll('#tabs-cuando .tab').forEach(t => t.classList.toggle('is-active', t.contains(e.target)));
+        });
+        const aplicarVista = vista => {
+            document.querySelectorAll('[data-vista-panel]').forEach(p => { p.hidden = p.dataset.vistaPanel !== vista; });
+            document.querySelectorAll('[data-vista]').forEach(b => b.setAttribute('aria-pressed', b.dataset.vista === vista));
+            try { localStorage.setItem('em-vista-eventos', vista); } catch (e) {}
+        };
+        let vista = 'tarjetas';
+        try { vista = localStorage.getItem('em-vista-eventos') || vista; } catch (e) {}
+        aplicarVista(vista);
+        document.getElementById('vista-toggle').addEventListener('click', e => {
+            const b = e.target.closest('[data-vista]');
+            if (b) { vista = b.dataset.vista; aplicarVista(vista); }
+        });
+        // Mantener la vista elegida al refrescar resultados por filtros
+        new MutationObserver(() => aplicarVista(vista)).observe(document.getElementById('resultados'), { childList: true });
+    })();
+</script>
+{% endblock %}

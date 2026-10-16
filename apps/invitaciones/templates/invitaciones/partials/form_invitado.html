@@ -1,0 +1,40 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.nombre icono="ri-user-heart-line" clase="span-2" %}
+    {% campo form.pases icono="ri-ticket-2-line" %}
+    {% campo form.telefono icono="ri-whatsapp-line" %}
+    {% campo form.grupo icono="ri-group-line" %}
+    {% campo form.mesa icono="ri-restaurant-line" %}
+    {% campo form.email icono="ri-mail-line" %}
+    {% campo form.notas icono="ri-sticky-note-line" %}
+</div>
+<datalist id="grupos-sugeridos">
+    {% for g in grupos %}<option value="{{ g }}">{% endfor %}
+    <option value="Familia novia"><option value="Familia novio"><option value="Familia"><option value="Amigos"><option value="Trabajo">
+</datalist>
+
+{% if form.instance.pk %}
+<div class="form-section mt-3">
+    <div class="form-section__title"><i class="ri-checkbox-circle-line"></i>Respuesta <small>· normalmente la registra el invitado desde su enlace</small></div>
+    <div class="form-grid">
+        <div class="field span-2">
+            <div class="segmented" style="display:flex">
+                {% for radio in form.estado %}<label class="grow">{{ radio.tag }}<span style="justify-content:center">{{ radio.choice_label }}</span></label>{% endfor %}
+            </div>
+        </div>
+        {% campo form.pases_confirmados icono="ri-user-follow-line" %}
+    </div>
+    {% if form.instance.mensaje %}<div class="alert mt-2"><i class="ri-chat-quote-line"></i><div><strong>Su mensaje</strong>{{ form.instance.mensaje }}</div></div>{% endif %}
+</div>
+{% else %}
+<div style="display:none">{{ form.estado }}{{ form.pases_confirmados }}</div>
+{% endif %}
+{% endblock %}
+
+{% block pie %}
+<button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+{% if not form.instance.pk %}<button type="submit" name="otro" value="1" class="btn"><i class="ri-add-line"></i>Guardar y otro</button>{% endif %}
+<button type="submit" class="btn btn--primary"><i class="ri-check-line"></i>{{ texto_boton }}</button>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/login.css' %}">{% endblock %}
+
+{% block body %}
+<div class="login">
+    <section class="scene" aria-hidden="true">
+        <div class="scene__aurora"><span></span><span></span><span></span></div>
+        <div class="scene__grid"></div>
+
+        <div class="scene__logo"><img src="{% static 'img/logo-gupoem.png' %}" alt="Grupo EM"></div>
+
+        <div class="scene__hero">
+            <span class="scene__kicker"><b>EN VIVO</b> Tu evento, conectado con cada invitado</span>
+            <h1>Eventos que se <em>viven</em><br>en tiempo real.</h1>
+            <p class="scene__lead">Invitaciones digitales con confirmación, saludos y canciones que llegan al DJ al instante,
+                y toda la operación de tus sub-agencias en un solo lugar.</p>
+        </div>
+
+        <div class="feed">
+            <div class="feed__track">
+                {% for _ in "12" %}
+                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ri-music-2-line"></i></div>
+                    <div><strong>Mesa 7 pidió una canción</strong><p>“Payaso de Rodeo” · Caballo Dorado</p></div></div>
+                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ri-user-follow-line"></i></div>
+                    <div><strong>Familia Pérez confirmó</strong><p>4 pases · Mesa 12</p></div></div>
+                <div class="bubble bubble--hi"><div class="bubble__icon"><i class="ri-chat-heart-line"></i></div>
+                    <div><strong>Saludo para los novios</strong><p>“¡Que vivan Ana y Luis! Los queremos” — Tía Rosy</p></div></div>
+                <div class="bubble bubble--vip"><div class="bubble__icon"><i class="ri-vip-crown-2-line"></i></div>
+                    <div><strong>VIP · Padrinos</strong><p>“El Triste” para el vals de los novios</p></div></div>
+                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ri-disc-line"></i></div>
+                    <div><strong>Sofía pidió una canción</strong><p>“Tusa” · Karol G</p></div></div>
+                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ri-qr-scan-2-line"></i></div>
+                    <div><strong>Entrada registrada</strong><p>Familia Ruiz llegó con 3 pases</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="scene__foot">
+            <div class="eq"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="scene__pills">
+                <span><i class="ri-mail-open-line"></i>Invitaciones digitales</span>
+                <span><i class="ri-slideshow-3-line"></i>Pantalla en vivo</span>
+                <span><i class="ri-headphone-line"></i>Panel DJ</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="access">
+        <button class="icon-btn icon-btn--bordered theme-float" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ri-moon-clear-line"></i></button>
+
+        <div class="access__card">
+            <div class="access__badge"><img src="{% static 'img/isotipo.png' %}" alt=""></div>
+            <h2>Bienvenido de nuevo</h2>
+            <p class="access__sub">Ingresa para administrar tus eventos.</p>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert--danger access__error mb-3" role="alert">
+                <i class="ri-error-warning-line"></i>
+                <div>{{ form.non_field_errors.0 }}</div>
+            </div>
+            {% endif %}
+
+            <form method="post" id="login-form" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <div class="field">
+                    <label class="field__label" for="id_username">Usuario</label>
+                    <div class="field__control has-icon">
+                        <i class="ri-user-3-line field__icon"></i>
+                        {{ form.username }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="id_password">Contraseña</label>
+                    <div class="field__control has-icon">
+                        <i class="ri-lock-2-line field__icon"></i>
+                        {{ form.password }}
+                        <button type="button" class="icon-btn icon-btn--sm pass-toggle" id="pass-toggle" aria-label="Mostrar contraseña">
+                            <i class="ri-eye-line"></i>
+                        </button>
+                    </div>
+                    <small class="caps" id="caps"><i class="ri-arrow-up-circle-line"></i>Bloq Mayús está activado</small>
+                </div>
+
+                <div class="access__row">
+                    <label for="id_recordarme">
+                        <span class="switch"><input type="checkbox" name="recordarme" id="id_recordarme" {% if form.recordarme.value %}checked{% endif %}><span class="switch__track"></span></span>
+                        Mantener sesión
+                    </label>
+                    <button type="button" class="link" id="olvide">¿Olvidaste tu contraseña?</button>
+                </div>
+
+                <div class="alert access__help" id="ayuda">
+                    <i class="ri-customer-service-2-line"></i>
+                    <div><strong>Te ayudamos</strong>Pide a un administrador que la restablezca desde <em>Equipo</em>. Después podrás cambiarla en tu perfil.</div>
+                </div>
+
+                <button type="submit" class="btn btn--primary btn--lg" id="login-btn">
+                    Entrar al panel <i class="ri-arrow-right-line"></i>
+                </button>
+            </form>
+        </div>
+
+        <p class="access__foot">© {% now "Y" %} Grupo EM · Plataforma de eventos</p>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (() => {
+        const pass = document.getElementById('id_password');
+        const user = document.getElementById('id_username');
+        const toggle = document.getElementById('pass-toggle');
+        toggle.addEventListener('click', () => {
+            const visible = pass.type === 'text';
+            pass.type = visible ? 'password' : 'text';
+            toggle.innerHTML = `<i class="${visible ? 'ri-eye-line' : 'ri-eye-off-line'}"></i>`;
+            pass.focus();
+        });
+        const caps = document.getElementById('caps');
+        pass.addEventListener('keyup', e => caps.classList.toggle('is-on', e.getModifierState && e.getModifierState('CapsLock')));
+        document.getElementById('olvide').addEventListener('click', () => document.getElementById('ayuda').classList.toggle('is-open'));
+
+        // Recordar el último usuario en este dispositivo
+        try {
+            const guardado = localStorage.getItem('em-ultimo-usuario');
+            if (guardado && !user.value) { user.value = guardado; pass.focus(); }
+        } catch (e) {}
+        document.getElementById('login-form').addEventListener('submit', e => {
+            if (!user.value.trim() || !pass.value) {
+                e.preventDefault();
+                (!user.value.trim() ? user : pass).focus();
+                EM.toast('Escribe tu usuario y contraseña.', 'warning');
+                return;
+            }
+            try { localStorage.setItem('em-ultimo-usuario', user.value.trim()); } catch (err) {}
+            document.getElementById('login-btn').classList.add('is-loading');
+        });
+    })();
+</script>
+{% endblock %}

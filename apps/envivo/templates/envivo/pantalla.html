@@ -1,0 +1,207 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ evento.nombre_evento }} · Pantalla</title>
+    <link rel="icon" type="image/png" href="{% static 'img/isotipo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; }
+        * { box-sizing: border-box; margin: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: #fff; background: #05070d; -webkit-font-smoothing: antialiased; cursor: none; }
+        body.mostrar-cursor { cursor: default; }
+        .fondo { position: fixed; inset: 0; z-index: -2; }
+        .fondo img { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.1); animation: respira 30s ease-in-out infinite alternate; }
+        .fondo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(4, 7, 14, .92) 0%, rgba(4, 7, 14, .72) 45%, rgba(4, 7, 14, .55) 100%); }
+        .aurora { position: fixed; inset: -20%; z-index: -1; filter: blur(90px); opacity: .55; pointer-events: none; }
+        .aurora span { position: absolute; border-radius: 50%; animation: deriva 22s ease-in-out infinite alternate; }
+        .aurora span:nth-child(1) { width: 50vw; height: 50vw; left: 0; top: 10%; background: var(--marca); }
+        .aurora span:nth-child(2) { width: 40vw; height: 40vw; right: 5%; bottom: 0; background: #7c4dff; animation-delay: -8s; }
+
+        .escena { height: 100vh; display: grid; grid-template-columns: minmax(340px, 34vw) 1fr; gap: 4vw; padding: 5vh 5vw; align-items: center; }
+
+        .qr-panel { display: flex; flex-direction: column; align-items: center; gap: 2.4vh; text-align: center; }
+        .qr-caja { width: min(30vw, 62vh); padding: 1.6vw; background: #fff; border-radius: 2vw; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .6), 0 0 0 10px rgba(255, 255, 255, .08); position: relative; }
+        .qr-caja svg { width: 100%; height: auto; display: block; }
+        .qr-caja::after { content: ""; position: absolute; inset: -14px; border-radius: 2.6vw; border: 2px solid color-mix(in srgb, var(--marca) 70%, transparent); animation: halo 2.6s ease-out infinite; }
+        .qr-panel h2 { font-size: clamp(22px, 2.4vw, 44px); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+        .qr-panel h2 span { color: var(--marca); filter: brightness(1.3); }
+        .url { font-size: clamp(14px, 1.2vw, 22px); font-weight: 700; padding: .6vh 1.2vw; border-radius: 99px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); }
+
+        .derecha { display: flex; flex-direction: column; height: 100%; justify-content: center; gap: 4vh; min-width: 0; }
+        .titulo small { display: block; margin-bottom: 1.6vh; font-size: clamp(14px, 1.3vw, 22px); letter-spacing: .4em; text-transform: uppercase; font-weight: 700; opacity: .8; }
+        .titulo h1 { font-family: "Great Vibes", cursive; font-weight: 400; font-size: clamp(60px, 8.5vw, 170px); line-height: 1; text-shadow: 0 6px 40px rgba(0, 0, 0, .5), 0 0 40px color-mix(in srgb, var(--marca) 45%, transparent); overflow-wrap: anywhere; }
+
+        .foco { position: relative; min-height: 34vh; }
+        .tarjeta {
+            position: absolute; inset: 0 auto auto 0; width: 100%;
+            padding: 3.4vh 2.6vw; border-radius: 2vw;
+            background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18);
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .7);
+            opacity: 0; transform: translateY(30px) scale(.97); transition: opacity .8s, transform .8s cubic-bezier(.2, .8, .2, 1);
+        }
+        .tarjeta.activa { opacity: 1; transform: none; }
+        .tarjeta.saliendo { opacity: 0; transform: translateY(-24px) scale(.98); }
+        .tarjeta .comillas { position: absolute; right: 2vw; top: -2vh; font-size: clamp(80px, 10vw, 180px); line-height: 1; color: var(--marca); opacity: .35; font-family: Georgia, serif; }
+        .tarjeta__para { font-size: clamp(14px, 1.3vw, 22px); font-weight: 700; color: #9fe1ff; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1.2vh; }
+        .tarjeta__texto { font-size: clamp(26px, 3vw, 58px); font-weight: 800; line-height: 1.18; letter-spacing: -.02em; overflow-wrap: anywhere; }
+        .tarjeta__de { display: flex; align-items: center; gap: .8vw; margin-top: 2.4vh; font-size: clamp(16px, 1.5vw, 28px); font-weight: 700; opacity: .9; }
+        .tarjeta__de .av { width: 2.6vw; height: 2.6vw; min-width: 34px; min-height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--marca); font-size: .8em; }
+        .tarjeta__nuevo { position: absolute; top: -1.6vh; left: 2vw; padding: .5vh 1vw; border-radius: 99px; background: #ff3d5e; font-size: clamp(11px, .9vw, 16px); font-weight: 800; letter-spacing: .1em; display: none; }
+        .tarjeta.es-nuevo .tarjeta__nuevo { display: inline-block; animation: latido 1s 3; }
+        .tarjeta.vip { border-color: rgba(255, 201, 74, .6); background: linear-gradient(135deg, rgba(255, 201, 74, .2), rgba(255, 255, 255, .08)); }
+
+        .instrucciones { display: flex; gap: 1.4vw; }
+        .paso { flex: 1; display: flex; align-items: center; gap: 1vw; padding: 2vh 1.4vw; border-radius: 1.4vw; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); font-size: clamp(13px, 1.15vw, 20px); font-weight: 600; }
+        .paso i { font-size: clamp(22px, 2vw, 36px); color: var(--marca); filter: brightness(1.35); }
+
+        .puntos { display: flex; gap: 8px; }
+        .puntos span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, .25); transition: all .3s; }
+        .puntos span.activo { width: 26px; border-radius: 8px; background: #fff; }
+
+        .marca { position: fixed; right: 3vw; bottom: 3.4vh; display: flex; align-items: center; gap: 1vw; opacity: .9; }
+        .marca img { max-height: 7vh; max-width: 14vw; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .5)); }
+        .esquina { position: fixed; top: 3vh; right: 3vw; display: flex; gap: 10px; align-items: center; }
+        .vivo { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .15); font-size: clamp(11px, .95vw, 16px); font-weight: 800; letter-spacing: .12em; }
+        .vivo::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #ff3d5e; animation: pulso 1.6s infinite; }
+        .vivo.off::before { background: #8b95a7; animation: none; }
+        .btn-completa { width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(0, 0, 0, .35); color: #fff; font-size: 20px; cursor: pointer; opacity: 0; transition: opacity .3s; }
+        .mostrar-cursor .btn-completa { opacity: 1; }
+
+        @keyframes respira { to { transform: scale(1.08); } }
+        @keyframes deriva { to { transform: translate(10vw, -8vh) scale(1.2); } }
+        @keyframes halo { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.08); } }
+        @keyframes pulso { 70% { box-shadow: 0 0 0 9px rgba(255, 61, 94, 0); } 0% { box-shadow: 0 0 0 0 rgba(255, 61, 94, .7); } }
+        @keyframes latido { 50% { transform: scale(1.12); } }
+
+        @media (max-aspect-ratio: 1/1) {
+            html, body { overflow: auto; }
+            .escena { grid-template-columns: 1fr; height: auto; min-height: 100vh; padding: 6vh 6vw 14vh; }
+            .qr-caja { width: min(70vw, 420px); }
+            .instrucciones { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+{% if banner and banner.imagen_pantalla %}<div class="fondo"><img src="{{ banner.imagen_pantalla.url }}" alt=""></div>{% endif %}
+<div class="aurora"><span></span><span></span></div>
+
+<div class="esquina">
+    <span class="vivo" id="vivo">EN VIVO</span>
+    <button class="btn-completa" id="btn-completa" aria-label="Pantalla completa"><i class="ri-fullscreen-line"></i></button>
+</div>
+
+<main class="escena">
+    <section class="qr-panel">
+        <div class="qr-caja">{{ qr|safe }}</div>
+        <h2>Escanea y <span>pide tu canción</span><br>o manda un saludo</h2>
+        <div class="url">{{ url_corta }}</div>
+    </section>
+
+    <section class="derecha">
+        <div class="titulo">
+            <small>{{ evento.tipo_corto }}</small>
+            <h1>{{ evento.nombre_evento }}</h1>
+        </div>
+
+        <div class="foco" id="foco"></div>
+        <div class="puntos" id="puntos"></div>
+
+        <div class="instrucciones" id="instrucciones">
+            <div class="paso"><i class="ri-qr-scan-2-line"></i>Escanea el código con tu cámara</div>
+            <div class="paso"><i class="ri-music-2-line"></i>Pide tu canción favorita</div>
+            <div class="paso"><i class="ri-chat-heart-line"></i>Tu saludo puede salir aquí</div>
+        </div>
+    </section>
+</main>
+
+{% if colaborador and colaborador.logo %}
+<div class="marca"><img src="{{ colaborador.logo.url }}" alt="{{ colaborador.nombre }}"></div>
+{% endif %}
+
+{{ saludos|json_script:"datos-saludos" }}
+<script src="{% static 'js/envivo.js' %}"></script>
+<script>
+    (() => {
+        const foco = document.getElementById('foco');
+        const puntos = document.getElementById('puntos');
+        let saludos = JSON.parse(document.getElementById('datos-saludos').textContent);
+        let indice = saludos.length - 1;
+        let rotacion = null;
+        const MAX = 16;
+
+        function tarjeta(s, esNuevo) {
+            const e = EnVivo.escapar;
+            const el = document.createElement('article');
+            el.className = `tarjeta ${s.vip ? 'vip' : ''} ${esNuevo ? 'es-nuevo' : ''}`;
+            el.innerHTML = `<span class="tarjeta__nuevo">¡NUEVO!</span><span class="comillas">”</span>
+                ${s.destinatario ? `<div class="tarjeta__para">Para ${e(s.destinatario)}</div>` : ''}
+                <div class="tarjeta__texto">${e(s.mensaje)}</div>
+                <div class="tarjeta__de"><span class="av">${e((s.nombre || '?').charAt(0).toUpperCase())}</span>${e(s.nombre)}${s.vip ? ' <i class="ri-vip-crown-2-fill" style="color:#ffc94a"></i>' : ''}</div>`;
+            return el;
+        }
+
+        function mostrar(i, esNuevo = false) {
+            if (!saludos.length) {
+                foco.innerHTML = '';
+                document.getElementById('instrucciones').style.display = '';
+                puntos.innerHTML = '';
+                return;
+            }
+            document.getElementById('instrucciones').style.display = 'none';
+            indice = (i + saludos.length) % saludos.length;
+            const anterior = foco.querySelector('.tarjeta.activa');
+            if (anterior) { anterior.classList.remove('activa'); anterior.classList.add('saliendo'); setTimeout(() => anterior.remove(), 800); }
+            const nueva = tarjeta(saludos[indice], esNuevo);
+            foco.appendChild(nueva);
+            requestAnimationFrame(() => requestAnimationFrame(() => nueva.classList.add('activa')));
+            puntos.innerHTML = saludos.map((_, j) => `<span class="${j === indice ? 'activo' : ''}"></span>`).join('');
+        }
+
+        function reiniciarRotacion() {
+            clearInterval(rotacion);
+            rotacion = setInterval(() => { if (saludos.length > 1) mostrar(indice + 1); }, 9000);
+        }
+
+        EnVivo.conexion('/ws/envivo/{{ evento.codigo }}/pantalla/', {
+            alCambiarEstado: ok => document.getElementById('vivo').classList.toggle('off', !ok),
+            alMensaje: datos => {
+                if (datos.tipo === 'mostrar') {
+                    saludos = saludos.filter(s => s.id !== datos.mensaje.id);
+                    saludos.push(datos.mensaje);
+                    if (saludos.length > MAX) saludos.shift();
+                    mostrar(saludos.length - 1, true);
+                    reiniciarRotacion();
+                }
+                if (datos.tipo === 'quitar') {
+                    const actual = saludos[indice];
+                    saludos = saludos.filter(s => s.id !== datos.id);
+                    if (actual && actual.id === datos.id) mostrar(indice);
+                    else if (actual) { indice = Math.max(0, saludos.indexOf(actual)); mostrar(indice); }
+                    else mostrar(0);
+                }
+            },
+        });
+
+        // Cursor y botón visibles solo al mover el mouse
+        let tCursor;
+        document.addEventListener('mousemove', () => {
+            document.body.classList.add('mostrar-cursor');
+            clearTimeout(tCursor);
+            tCursor = setTimeout(() => document.body.classList.remove('mostrar-cursor'), 2500);
+        });
+        EnVivo.pantallaCompleta(document.getElementById('btn-completa'));
+        EnVivo.mantenerEncendida();
+        mostrar(indice);
+        reiniciarRotacion();
+    })();
+</script>
+</body>
+</html>

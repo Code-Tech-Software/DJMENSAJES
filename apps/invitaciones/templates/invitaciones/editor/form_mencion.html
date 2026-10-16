@@ -1,0 +1,12 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="stack" style="gap:14px">
+    {% campo form.titulo icono="ri-price-tag-3-line" %}
+    <div class="row row-wrap" style="gap:6px;margin-top:-4px">
+        {% for s in sugerencias %}<button type="button" class="chip chip--outline" style="cursor:pointer" onclick="document.getElementById('{{ form.titulo.id_for_label }}').value=this.textContent;document.getElementById('{{ form.titulo.id_for_label }}').dispatchEvent(new Event('input',{bubbles:true}))">{{ s }}</button>{% endfor %}
+    </div>
+    {% campo form.nombres %}
+</div>
+<datalist id="titulos-mencion">{% for s in sugerencias %}<option value="{{ s }}">{% endfor %}</datalist>
+{% endblock %}

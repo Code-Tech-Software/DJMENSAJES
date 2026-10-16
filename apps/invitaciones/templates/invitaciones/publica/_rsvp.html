@@ -1,0 +1,83 @@
+{% if invitado %}
+    {% if invitado.estado == 'confirmado' %}
+    <div class="rsvp__estado">
+        <span class="icono-grande"><i class="ri-check-line"></i></span>
+        <p class="rsvp__saludo">{% if respondio == 'si' %}¡Gracias por confirmar!{% else %}¡Asistencia confirmada!{% endif %}</p>
+        <p class="rsvp__texto">Te esperamos, {{ invitado.nombre }}. Reservamos <strong>{{ invitado.pases_confirmados }} lugar{{ invitado.pases_confirmados|pluralize:"es" }}</strong>{% if invitado.mesa %} en la mesa {{ invitado.mesa }}{% endif %}.</p>
+    </div>
+    {% if pase_qr %}
+    <div class="pase">
+        <div class="pase__cabecera"><small>Pase de entrada</small><strong>{{ invitacion.nombres_visibles }}</strong></div>
+        <div class="pase__corte"></div>
+        <div class="pase__cuerpo">
+            <div class="pase__qr">{{ pase_qr|safe }}</div>
+            <div class="pase__datos">
+                <div><small>Invitado</small><b>{{ invitado.nombre }}</b></div>
+                <div><small>Pases</small><b>{{ invitado.pases_confirmados }}</b></div>
+                <div><small>Fecha</small><b>{{ inicio|date:"d/m/Y · H:i" }}</b></div>
+                {% if invitado.mesa %}<div><small>Mesa</small><b>{{ invitado.mesa }}</b></div>{% endif %}
+            </div>
+        </div>
+    </div>
+    <p class="aviso" style="margin-top:14px">Presenta este pase en la entrada. Puedes tomarle captura de pantalla.</p>
+    {% endif %}
+    {% elif invitado.estado == 'rechazado' %}
+    <div class="rsvp__estado">
+        <span class="icono-grande no"><i class="ri-heart-line"></i></span>
+        <p class="rsvp__saludo">Gracias por avisarnos</p>
+        <p class="rsvp__texto">Lamentamos que no puedas acompañarnos, {{ invitado.nombre }}. ¡Te tendremos presente!</p>
+    </div>
+    {% else %}
+    <p class="rsvp__saludo">¡Hola, {{ invitado.nombre }}!</p>
+    <p class="rsvp__texto">Nos encantaría contar con tu presencia.{% if invitacion.fecha_limite_rsvp %} Por favor confirma antes del {{ invitacion.fecha_limite_rsvp|date:"j \d\e F" }}.{% endif %}</p>
+    <span class="rsvp__pases">Hemos reservado <strong>{{ invitado.pases }}</strong> lugar{{ invitado.pases|pluralize:"es" }}</span>
+    {% endif %}
+
+    {% if rsvp_cerrado %}
+        {% if invitado.estado == 'pendiente' %}<p class="aviso">La confirmación ya cerró. Si necesitas ayuda, contacta a los anfitriones.</p>{% endif %}
+    {% else %}
+        {% if invitado.estado != 'pendiente' %}<details class="cambiar"><summary>Cambiar mi respuesta</summary>{% endif %}
+        <form method="post" action="{% url 'invitacion_publica:rsvp' invitacion.slug invitado.token %}" class="form-rsvp">
+            {% csrf_token %}
+            <div class="opciones">
+                <label><input type="radio" name="asistira" value="si" {% if invitado.estado != 'rechazado' %}checked{% endif %}><span><i class="ri-emotion-happy-line"></i>¡Sí, ahí estaré!</span></label>
+                <label><input type="radio" name="asistira" value="no" {% if invitado.estado == 'rechazado' %}checked{% endif %}><span><i class="ri-emotion-unhappy-line"></i>No podré ir</span></label>
+            </div>
+            {% if invitado.pases > 1 %}
+            <div class="contador-pases" data-pases>
+                <span>¿Cuántos asistirán?</span>
+                <div class="stepper">
+                    <button type="button" data-menos aria-label="Menos">−</button>
+                    <input type="number" name="pases" min="1" max="{{ invitado.pases }}" value="{% if invitado.pases_confirmados %}{{ invitado.pases_confirmados }}{% else %}{{ invitado.pases }}{% endif %}" aria-label="Pases">
+                    <button type="button" data-mas aria-label="Más">+</button>
+                </div>
+            </div>
+            {% else %}<input type="hidden" name="pases" value="1">{% endif %}
+            <div class="campo"><label for="mensaje">Mensaje para los anfitriones (opcional)</label><textarea id="mensaje" name="mensaje" maxlength="500" placeholder="¡Felicidades! Ahí nos vemos…">{{ invitado.mensaje }}</textarea></div>
+            <button type="submit" class="boton boton--lleno boton--bloque"><i class="ri-send-plane-fill"></i>Enviar respuesta</button>
+        </form>
+        {% if invitado.estado != 'pendiente' %}</details>{% endif %}
+    {% endif %}
+
+{% elif invitacion.rsvp_abierto and not rsvp_cerrado %}
+    <p class="rsvp__saludo">¿Nos acompañas?</p>
+    <p class="rsvp__texto">Confirma en un minuto{% if invitacion.fecha_limite_rsvp %}, antes del {{ invitacion.fecha_limite_rsvp|date:"j \d\e F" }}{% endif %}.</p>
+    <form method="post" action="{% url 'invitacion_publica:rsvp_abierto' invitacion.slug %}" class="form-rsvp">
+        {% csrf_token %}
+        <div class="campo"><label for="nombre">Tu nombre o el de tu familia</label><input id="nombre" name="nombre" required maxlength="150" placeholder="Ej. Familia Pérez"></div>
+        <div class="campo"><label for="telefono">WhatsApp (opcional)</label><input id="telefono" name="telefono" inputmode="tel" maxlength="30" placeholder="10 dígitos"></div>
+        <div class="opciones">
+            <label><input type="radio" name="asistira" value="si" checked><span><i class="ri-emotion-happy-line"></i>¡Sí, ahí estaré!</span></label>
+            <label><input type="radio" name="asistira" value="no"><span><i class="ri-emotion-unhappy-line"></i>No podré ir</span></label>
+        </div>
+        <div class="contador-pases" data-pases>
+            <span>¿Cuántos asistirán?</span>
+            <div class="stepper"><button type="button" data-menos aria-label="Menos">−</button><input type="number" name="pases" min="1" max="10" value="1" aria-label="Pases"><button type="button" data-mas aria-label="Más">+</button></div>
+        </div>
+        <div class="campo"><label for="mensaje">Mensaje (opcional)</label><textarea id="mensaje" name="mensaje" maxlength="500"></textarea></div>
+        <button type="submit" class="boton boton--lleno boton--bloque"><i class="ri-send-plane-fill"></i>Confirmar</button>
+    </form>
+{% else %}
+    <p class="rsvp__saludo">Confirmación personal</p>
+    <p class="rsvp__texto" style="margin-bottom:0">{% if rsvp_cerrado %}La confirmación de asistencia ya cerró.{% else %}Confirma tu asistencia desde el enlace personalizado que recibiste por WhatsApp.{% endif %}</p>
+{% endif %}

@@ -1,0 +1,18 @@
+{% with p=invitacion.plantilla %}
+<header class="cabecera">
+    {% if p == 'jardin' %}
+    <svg class="ramita" viewBox="0 0 80 28" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true">
+        <path d="M4 14h72"/><path d="M40 14c-6-9-14-10-20-8 4 6 11 9 20 8z" fill="currentColor" fill-opacity=".2"/>
+        <path d="M40 14c6-9 14-10 20-8-4 6-11 9-20 8z" fill="currentColor" fill-opacity=".2"/>
+        <path d="M40 14c-6 9-14 10-20 8 4-6 11-9 20-8z" fill="currentColor" fill-opacity=".12"/>
+        <path d="M40 14c6 9 14 10 20 8-4-6-11-9-20-8z" fill="currentColor" fill-opacity=".12"/>
+        <circle cx="40" cy="14" r="2.4" fill="currentColor"/>
+    </svg>
+    {% endif %}
+    {% if p == 'moderna' %}<span class="cabecera__num">{{ numero }}</span>{% endif %}
+    <span class="etiqueta">{{ etiqueta }}</span>
+    {% if titulo %}<h2 class="titulo-seccion">{{ titulo }}</h2>{% endif %}
+    {% if p == 'elegante' %}{% include 'invitaciones/publica/_floritura.html' with clase='floritura--seccion' %}{% endif %}
+    {% if p == 'fiesta' %}<span class="linea-neon"></span>{% endif %}
+</header>
+{% endwith %}

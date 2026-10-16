@@ -1,0 +1,57 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Invitaciones{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Invitaciones</div>
+        <h1>Invitaciones digitales</h1>
+        <p>Diseña, envía por WhatsApp y sigue en tiempo real quién abrió y confirmó.</p>
+    </div>
+    <div class="page-head__actions">
+        <div class="segmented">
+            <a href="?" class="{% if not ver_pasados %}is-active{% endif %}">Próximos</a>
+            <a href="?pasados=1" class="{% if ver_pasados %}is-active{% endif %}">Todos</a>
+        </div>
+    </div>
+</div>
+
+{% if eventos %}
+<div class="grid grid-auto reveal">
+    {% for e in eventos %}
+    {% with inv=e.invitacion %}
+    <a href="{% url 'invitaciones:panel' e.pk %}" class="card card--hover ev-card tipo-{{ e.tipo_evento }}">
+        <div class="ev-card__cover" style="height:110px">
+            {% with portada=e.imagen_portada %}{% if portada %}<img src="{{ portada.url }}" alt="" loading="lazy">{% else %}<span class="pattern"><i class="ri-mail-open-line"></i></span>{% endif %}{% endwith %}
+            <div class="ev-card__badges">
+                <span class="chip"><i class="{{ e.icono }}"></i>{{ e.tipo_corto }}</span>
+                {% if inv and inv.publicada %}<span class="chip" style="color:var(--success)"><i class="ri-checkbox-circle-fill" style="color:var(--success)"></i>Publicada</span>
+                {% elif inv %}<span class="chip"><i class="ri-draft-line"></i>Borrador</span>
+                {% else %}<span class="chip"><i class="ri-add-circle-line"></i>Sin diseñar</span>{% endif %}
+            </div>
+            <div class="date-block ev-card__date"><small>{{ e.fecha_inicio_evento|date:"M" }}</small><strong>{{ e.fecha_inicio_evento|date:"d" }}</strong></div>
+        </div>
+        <div class="ev-card__body">
+            <div class="ev-card__title">{{ e.nombre_evento }}</div>
+            <div class="ev-card__meta"><span><i class="ri-time-line"></i>{{ e.fecha_inicio_evento|date:"D j M Y" }}</span></div>
+            {% if e.n_invitados %}
+            <div>
+                <div class="row between xsmall muted" style="margin-bottom:5px"><span>{{ e.confirmados|default:0 }} de {{ e.pases|default:0 }} pases confirmados</span><span>{{ e.vistos }} vistas</span></div>
+                <div class="progress progress--sm progress--success"><span data-width="{{ e.confirmados|default:0|porcentaje:e.pases }}"></span></div>
+            </div>
+            {% else %}
+            <p class="xsmall muted">Aún sin invitados en la lista.</p>
+            {% endif %}
+        </div>
+        <div class="ev-card__foot"><span class="small strong text-brand">{% if inv %}Administrar{% else %}Crear invitación{% endif %} <i class="ri-arrow-right-line"></i></span><span class="chip chip--muted">{{ e.n_invitados }} invitaciones</span></div>
+    </a>
+    {% endwith %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    {% url 'eventos:crear' as url_crear %}
+    {% include 'components/vacio.html' with icono='ri-mail-open-line' titulo='Sin eventos próximos' texto='Crea un evento y diseña su invitación digital en minutos.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
+</div>
+{% endif %}
+{% endblock %}

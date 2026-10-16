@@ -1,0 +1,22 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="alert mb-3"><i class="ri-wallet-3-line"></i>
+    <div>Saldo actual: <strong>{{ evento.saldo|moneda }}</strong> de {{ evento.precio_total|moneda }}</div></div>
+<div class="stack" style="gap:16px">
+    <div class="field {% if form.monto.errors %}field--error{% endif %}">
+        <label class="field__label" for="{{ form.monto.id_for_label }}">Monto<span class="req">*</span></label>
+        <div class="input-group"><span class="input-addon">$</span>{{ form.monto }}</div>
+        {% if evento.saldo %}<button type="button" class="btn btn--ghost btn--sm" style="align-self:flex-start" onclick="document.getElementById('{{ form.monto.id_for_label }}').value='{{ evento.saldo|stringformat:".2f" }}'"><i class="ri-magic-line"></i>Liquidar saldo ({{ evento.saldo|moneda }})</button>{% endif %}
+        {% for e in form.monto.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+    </div>
+    {% campo form.fecha icono="ri-calendar-line" %}
+    <div class="field">
+        <span class="field__label">Método</span>
+        <div class="segmented" style="display:flex;flex-wrap:wrap">
+            {% for radio in form.metodo %}<label class="grow">{{ radio.tag }}<span style="justify-content:center">{{ radio.choice_label }}</span></label>{% endfor %}
+        </div>
+    </div>
+    {% campo form.referencia icono="ri-file-text-line" %}
+</div>
+{% endblock %}

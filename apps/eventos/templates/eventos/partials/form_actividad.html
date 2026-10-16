@@ -1,0 +1,22 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.hora icono="ri-time-line" %}
+    {% campo form.titulo icono="ri-text" %}
+    <div class="field span-2">
+        <span class="field__label">Ícono</span>
+        <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(92px,1fr))">
+            {% for radio in form.icono %}
+            <label class="tile">{{ radio.tag }}
+                <span class="tile__body" style="padding:10px 6px;font-size:12px">
+                    {% if radio.data.value == 'ceremonia' %}<i class="ri-diamond-ring-line"></i>{% elif radio.data.value == 'recepcion' %}<i class="ri-door-open-line"></i>{% elif radio.data.value == 'cena' %}<i class="ri-restaurant-2-line"></i>{% elif radio.data.value == 'brindis' %}<i class="ri-goblet-line"></i>{% elif radio.data.value == 'vals' %}<i class="ri-music-2-line"></i>{% elif radio.data.value == 'fotos' %}<i class="ri-camera-3-line"></i>{% elif radio.data.value == 'fiesta' %}<i class="ri-disc-line"></i>{% elif radio.data.value == 'pastel' %}<i class="ri-cake-3-line"></i>{% else %}<i class="ri-star-smile-line"></i>{% endif %}
+                    {{ radio.choice_label }}
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+    {% campo form.descripcion icono="ri-map-pin-line" clase="span-2" %}
+</div>
+{% endblock %}

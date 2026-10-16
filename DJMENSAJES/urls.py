@@ -1,22 +1,31 @@
-from django.contrib import admin
-from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib.auth import views as auth_views
-from eventos import views
-from django.urls import re_path
+from django.contrib import admin
+from django.urls import include, path
 
-from eventos.views import iniciar_sesion
+admin.site.site_header = 'Grupo EM · Administración'
+admin.site.site_title = 'Grupo EM'
+admin.site.index_title = 'Panel técnico'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', iniciar_sesion, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('registro/', views.registro, name='registro'),
-    path('', views.home, name='home'),
-    path('eventos/', include('eventos.urls')),
 
+    # Panel interno
+    path('', include('apps.core.urls')),
+    path('', include('apps.cuentas.urls')),
+    path('eventos/', include('apps.eventos.urls')),
+    path('colaboradores/', include('apps.colaboradores.urls')),
+    path('banners/', include('apps.banners.urls')),
+    path('invitaciones/', include('apps.invitaciones.urls')),
+
+    # Páginas públicas
+    path('i/', include('apps.invitaciones.urls_publicas')),
+    path('', include('apps.envivo.urls')),
 ]
-# Para servir archivos multimedia en desarrollo
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler403 = 'apps.core.views.error_403'
+handler404 = 'apps.core.views.error_404'
+handler500 = 'apps.core.views.error_500'
