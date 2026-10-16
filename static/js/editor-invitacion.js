@@ -165,10 +165,9 @@
 
   const nav = $('#editor-nav');
 
-  // Centra la sección activa dentro del menú (sin mover la página)
+  // Centra el paso activo cuando la barra de pasos no cabe (celulares), sin mover la página
   function centrarBoton(b) {
     if (nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: b.offsetLeft - (nav.clientWidth - b.offsetWidth) / 2, behavior: 'smooth' });
-    if (nav.scrollHeight > nav.clientHeight) nav.scrollTo({ top: b.offsetTop - (nav.clientHeight - b.offsetHeight) / 2, behavior: 'smooth' });
   }
 
   function irA(i, inicio = false) {
@@ -176,8 +175,10 @@
     pasos.forEach((p, j) => { p.hidden = j !== actual; });
     botones.forEach((b, j) => {
       b.classList.toggle('is-active', j === actual);
+      b.classList.toggle('is-hecho', j < actual);
       if (j === actual) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
     });
+    nav.style.setProperty('--avance', actual / (pasos.length - 1));
     centrarBoton(botones[actual]);
     form.scrollTop = 0;
     // En celulares se desplaza la página completa: se vuelve al inicio de la sección
@@ -226,14 +227,37 @@
     $$('[data-muestra]').forEach(m => { m.textContent = texto; });
   }
 
-  /* Sugerencias de texto */
-  form.addEventListener('click', e => {
+  /* Sugerencias de texto (en la hoja y dentro de los modales) */
+  document.addEventListener('click', e => {
     const b = e.target.closest('[data-rellenar]');
     if (!b) return;
     const campo = document.getElementById(b.dataset.rellenar);
+    if (!campo) return;
     campo.value = b.textContent.trim();
     campo.dispatchEvent(new Event('input', { bubbles: true }));
-    campo.focus();
+    const siguiente = b.dataset.luego && document.getElementById(b.dataset.luego);
+    (siguiente && !siguiente.value.trim() ? siguiente : campo).focus();
+  });
+
+  // Marca la sugerencia elegida y actualiza el "Así se verá" de personas especiales
+  function pintarMencionPrevia(caja) {
+    const titulo = document.getElementById(caja.dataset.titulo);
+    const nombres = document.getElementById(caja.dataset.nombres);
+    if (!titulo || !nombres) return;
+    const lista = nombres.value.split('\n').map(n => n.trim()).filter(Boolean);
+    caja.querySelector('[data-mp-titulo]').textContent = titulo.value.trim() || 'Padrinos de anillos';
+    caja.querySelector('[data-mp-nombres]').innerHTML = (lista.length ? lista : ['Nombre y apellido'])
+      .map(n => `<span>${EM.escapeHtml(n)}</span>`).join('');
+    caja.classList.toggle('is-vacia', !titulo.value.trim() && !lista.length);
+  }
+  document.addEventListener('input', e => {
+    const id = e.target.id;
+    if (id) {
+      const valor = e.target.value.trim();
+      $$(`[data-rellenar="${CSS.escape(id)}"]`).forEach(b => b.classList.toggle('is-active', b.textContent.trim() === valor));
+    }
+    const caja = e.target.form && e.target.form.querySelector('[data-mencion-previa]');
+    if (caja) pintarMencionPrevia(caja);
   });
 
   /* ------------------------------------------------------------ Cambios */

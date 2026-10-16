@@ -96,6 +96,12 @@ class HijoInvitacionMixin(LoginRequiredMixin, FormularioModalMixin):
     def get_queryset(self):
         return self.model.objects.filter(invitacion__evento__in=eventos_de(self.request.user))
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Ids propios: el editor ya tiene campos "titulo" y "nombres" en la misma página
+        kwargs['auto_id'] = f'{self.seccion}-%s'
+        return kwargs
+
     def get_context_data(self, **kwargs):
         contexto = super().get_context_data(**kwargs)
         contexto['sugerencias'] = Mencion.SUGERENCIAS
@@ -148,7 +154,6 @@ class MencionCrear(HijoInvitacionMixin, CreateView):
     titulo = 'Agregar personas especiales'
     subtitulo = 'Padres, padrinos, damas… cada grupo con su título.'
     icono = 'ri-hearts-line'
-    tamano = ''
     texto_boton = 'Agregar'
     mensaje_exito = 'Agregado a la invitación.'
     seccion = 'personas'
@@ -160,7 +165,6 @@ class MencionEditar(HijoInvitacionMixin, UpdateView):
     template_modal = 'invitaciones/editor/form_mencion.html'
     titulo = 'Editar personas especiales'
     icono = 'ri-hearts-line'
-    tamano = ''
     mensaje_exito = 'Cambios guardados.'
     seccion = 'personas'
 

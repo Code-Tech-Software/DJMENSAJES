@@ -1,12 +1,18 @@
 {% extends 'components/modal_form.html' %}
 {% load ui %}
 {% block cuerpo %}
-<div class="stack" style="gap:14px">
-    {% campo form.titulo icono="ri-price-tag-3-line" %}
-    <div class="row row-wrap" style="gap:6px;margin-top:-4px">
-        {% for s in sugerencias %}<button type="button" class="chip chip--outline" style="cursor:pointer" onclick="document.getElementById('{{ form.titulo.id_for_label }}').value=this.textContent;document.getElementById('{{ form.titulo.id_for_label }}').dispatchEvent(new Event('input',{bubbles:true}))">{{ s }}</button>{% endfor %}
+<div class="mencion-form">
+    <div class="mencion-form__campos">
+        {% campo form.titulo icono="ri-price-tag-3-line" %}
+        <div class="sugerencias-chips" aria-label="Títulos sugeridos">
+            {% for s in sugerencias %}<button type="button" class="chip chip--outline chip--btn{% if form.titulo.value == s %} is-active{% endif %}" data-rellenar="{{ form.titulo.id_for_label }}" data-luego="{{ form.nombres.id_for_label }}">{{ s }}</button>{% endfor %}
+        </div>
+        {% campo form.nombres %}
     </div>
-    {% campo form.nombres %}
+    <div class="mencion-previa{% if not form.titulo.value and not form.nombres.value %} is-vacia{% endif %}" data-mencion-previa data-titulo="{{ form.titulo.id_for_label }}" data-nombres="{{ form.nombres.id_for_label }}">
+        <span class="mencion-previa__etiqueta"><i class="ri-eye-line"></i>Así se verá</span>
+        <small data-mp-titulo>{{ form.titulo.value|default:"Padrinos de anillos" }}</small>
+        <div class="mencion-previa__nombres" data-mp-nombres>{% if form.nombres.value %}{{ form.nombres.value|linebreaksbr }}{% else %}Nombre y apellido{% endif %}</div>
+    </div>
 </div>
-<datalist id="titulos-mencion">{% for s in sugerencias %}<option value="{{ s }}">{% endfor %}</datalist>
 {% endblock %}

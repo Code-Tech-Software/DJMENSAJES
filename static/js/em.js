@@ -753,9 +753,7 @@
 
   /* ------------------------------------------------------------------ Arranque */
   document.addEventListener('DOMContentLoaded', () => {
-    try {
-      if (localStorage.getItem('em-sidebar') === 'min' && window.matchMedia('(min-width: 1025px)').matches) $('.app')?.classList.add('is-collapsed');
-    } catch (e) { /* */ }
+    // El menú contraído se aplica en layouts/app.html, antes de dibujar la página
     $$('[data-theme-icon]').forEach(i => { i.className = document.documentElement.dataset.theme === 'dark' ? 'ri-sun-line' : 'ri-moon-clear-line'; });
 
     const topbar = $('.topbar');

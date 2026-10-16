@@ -3,6 +3,8 @@
 
 {% block body %}
 <div class="app">
+    {# El menú contraído se aplica antes de dibujarse: sin expandirse y contraerse al cambiar de página #}
+    <script>try { if (localStorage.getItem('em-sidebar') === 'min' && matchMedia('(min-width: 1025px)').matches) document.currentScript.parentNode.classList.add('is-collapsed'); } catch (e) {}</script>
     <aside class="sidebar" aria-label="Menú principal">
         <a href="{% url 'core:dashboard' %}" class="sidebar__brand">
             <img src="{% static 'img/isotipo.png' %}" alt="Grupo EM">

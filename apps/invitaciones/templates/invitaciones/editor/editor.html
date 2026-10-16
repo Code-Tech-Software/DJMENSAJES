@@ -31,16 +31,18 @@
         </div>
     </header>
 
-    {# ---------------- Secciones ---------------- #}
-    <nav class="editor__nav scroll-thin" id="editor-nav" aria-label="Secciones del editor">
-        <button type="button" data-ir="diseno" class="is-active"><i class="ri-palette-line"></i><span><strong>Estilo</strong><small>Plantilla, color y letra</small></span></button>
-        <button type="button" data-ir="portada"><i class="ri-image-line"></i><span><strong>Portada</strong><small>Nombres, foto y sobre</small></span></button>
-        <button type="button" data-ir="mensaje"><i class="ri-quill-pen-line"></i><span><strong>Mensaje</strong><small>Frase, aviso y hashtag</small></span></button>
-        <button type="button" data-ir="lugares"><i class="ri-map-pin-2-line"></i><span><strong>Lugares</strong><small>Dónde y a qué hora</small></span><em class="nav-num" data-contador="lugares" {% if not ubicaciones %}hidden{% endif %}>{{ ubicaciones|length }}</em></button>
-        <button type="button" data-ir="personas"><i class="ri-hearts-line"></i><span><strong>Personas</strong><small>Padres y padrinos</small></span><em class="nav-num" data-contador="personas" {% if not menciones %}hidden{% endif %}>{{ menciones|length }}</em></button>
-        <button type="button" data-ir="galeria"><i class="ri-gallery-line"></i><span><strong>Galería</strong><small>Fotos del evento</small></span><em class="nav-num" data-contador="galeria" {% if not fotos %}hidden{% endif %}>{{ fotos|length }}</em></button>
-        <button type="button" data-ir="detalles"><i class="ri-gift-2-line"></i><span><strong>Detalles</strong><small>Vestimenta, regalos y más</small></span></button>
-        <button type="button" data-ir="confirmacion"><i class="ri-checkbox-circle-line"></i><span><strong>Confirmación</strong><small>Respuestas y publicación</small></span></button>
+    {# ---------------- Pasos (barra horizontal sobre la hoja) ---------------- #}
+    <nav class="editor__pasos" id="editor-nav" aria-label="Pasos del editor">
+        <div class="pasos-lista">
+            <button type="button" data-ir="diseno" class="is-active" title="Plantilla, color y letra"><span class="pasos__icono"><i class="ri-palette-line"></i></span><span class="pasos__texto">Estilo</span></button>
+            <button type="button" data-ir="portada" title="Nombres, foto y sobre"><span class="pasos__icono"><i class="ri-image-line"></i></span><span class="pasos__texto">Portada</span></button>
+            <button type="button" data-ir="mensaje" title="Frase, aviso y hashtag"><span class="pasos__icono"><i class="ri-quill-pen-line"></i></span><span class="pasos__texto">Mensaje</span></button>
+            <button type="button" data-ir="lugares" title="Dónde y a qué hora"><span class="pasos__icono"><i class="ri-map-pin-2-line"></i><em class="nav-num" data-contador="lugares" {% if not ubicaciones %}hidden{% endif %}>{{ ubicaciones|length }}</em></span><span class="pasos__texto">Lugares</span></button>
+            <button type="button" data-ir="personas" title="Padres, padrinos y más"><span class="pasos__icono"><i class="ri-hearts-line"></i><em class="nav-num" data-contador="personas" {% if not menciones %}hidden{% endif %}>{{ menciones|length }}</em></span><span class="pasos__texto">Personas</span></button>
+            <button type="button" data-ir="galeria" title="Fotos del evento"><span class="pasos__icono"><i class="ri-gallery-line"></i><em class="nav-num" data-contador="galeria" {% if not fotos %}hidden{% endif %}>{{ fotos|length }}</em></span><span class="pasos__texto">Galería</span></button>
+            <button type="button" data-ir="detalles" title="Vestimenta, regalos y música"><span class="pasos__icono"><i class="ri-gift-2-line"></i></span><span class="pasos__texto">Detalles</span></button>
+            <button type="button" data-ir="confirmacion" title="Respuestas y publicación"><span class="pasos__icono"><i class="ri-checkbox-circle-line"></i></span><span class="pasos__texto">Confirmar</span></button>
+        </div>
     </nav>
 
     {# ---------------- Hoja de edición ---------------- #}
@@ -142,7 +144,7 @@
                             <label class="field__label" for="id_aviso">Aviso importante<span class="opt">Opcional</span></label>
                             <input type="text" name="aviso" id="id_aviso" maxlength="160" value="{{ invitacion.aviso }}" placeholder="Ej. Evento solo para adultos">
                             <div class="row row-wrap mt-1" style="gap:6px">
-                                {% for a in avisos %}<button type="button" class="chip chip--outline" style="cursor:pointer" data-rellenar="id_aviso">{{ a }}</button>{% endfor %}
+                                {% for a in avisos %}<button type="button" class="chip chip--outline chip--btn" data-rellenar="id_aviso">{{ a }}</button>{% endfor %}
                             </div>
                         </div>
                         <div class="field">

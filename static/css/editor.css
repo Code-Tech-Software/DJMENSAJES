@@ -1,21 +1,20 @@
 /* ==========================================================================
    Editor de invitaciones
-   Barra superior · secciones · hoja de edición (protagonista) · vista previa
-   compacta que se puede ocultar o ampliar.
+   Barra superior · pasos en horizontal · hoja de edición (protagonista) ·
+   vista previa compacta que se puede ocultar o ampliar.
    ========================================================================== */
 .content--editor { max-width: none; padding: 0; }
 
 .editor {
-  --nav-w: 236px;
   --vista-w: 340px;
   display: grid;
-  grid-template-columns: var(--nav-w) minmax(0, 1fr) var(--vista-w);
-  grid-template-rows: auto minmax(0, 1fr);
-  grid-template-areas: "barra barra barra" "nav hoja vista";
+  grid-template-columns: minmax(0, 1fr) var(--vista-w);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: "barra barra" "pasos vista" "hoja vista";
   height: calc(100vh - var(--topbar-h));
   background: var(--bg);
 }
-.editor-sin-vista .editor { grid-template-columns: var(--nav-w) minmax(0, 1fr); grid-template-areas: "barra barra" "nav hoja"; }
+.editor-sin-vista .editor { grid-template-columns: minmax(0, 1fr); grid-template-areas: "barra" "pasos" "hoja"; }
 
 /* ------------------------------------------------------------ Barra superior */
 .editor__barra {
@@ -37,31 +36,48 @@
 .guardado[data-estado="ok"] i { color: var(--success); }
 .guardado[data-estado="error"] { color: var(--danger); }
 
-/* ------------------------------------------------------------ Secciones */
-.editor__nav {
-  grid-area: nav; position: relative; display: flex; flex-direction: column; gap: 2px;
-  padding: 14px 10px; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border);
+/* ------------------------------------------------------------ Pasos
+   Barra horizontal tipo "stepper" alineada con la hoja: cada paso es un círculo
+   con ícono, unidos por una línea que se va llenando con el avance. */
+.editor__pasos {
+  grid-area: pasos; padding: 12px 32px 10px; background: var(--surface); border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
 }
-.editor__nav button {
-  position: relative; display: flex; align-items: center; gap: 11px; width: 100%; padding: 8px 10px;
-  border-radius: 12px; text-align: left; color: var(--text-2); transition: background .15s, color .15s;
+.editor__pasos::-webkit-scrollbar { display: none; }
+.pasos-lista {
+  --circulo: 36px;
+  position: relative; display: grid; grid-template-columns: repeat(8, minmax(68px, 1fr));
+  max-width: 820px; margin: 0 auto;
 }
-.editor__nav button > i {
-  width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: 10px;
-  background: var(--surface-3); font-size: 18px; transition: background .15s, color .15s;
+/* Línea de fondo (del primer al último círculo) y línea de avance */
+.pasos-lista::before, .pasos-lista::after {
+  content: ""; position: absolute; top: calc(var(--circulo) / 2 - 1px); left: calc(100% / 16); height: 2px; border-radius: 2px;
 }
-.editor__nav button > span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.editor__nav strong { font-size: 13.5px; font-weight: 700; color: var(--text); }
-.editor__nav small { font-size: 11.5px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.editor__nav button:hover { background: var(--surface-2); }
-.editor__nav button.is-active { background: var(--brand-soft); }
-.editor__nav button.is-active > i { background: var(--brand); color: #fff; box-shadow: 0 6px 14px -6px var(--brand); }
-.editor__nav button.is-active strong { color: var(--brand-strong); }
+.pasos-lista::before { right: calc(100% / 16); background: var(--border); }
+.pasos-lista::after { width: calc((100% - 100% / 8) * var(--avance, 0)); background: var(--brand); transition: width .4s var(--ease); }
+.pasos-lista button {
+  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 0 2px 2px; font-size: 12px; font-weight: 650; color: var(--text-3); transition: color .15s;
+}
+.pasos__icono {
+  position: relative; width: var(--circulo); height: var(--circulo); border-radius: 50%; display: grid; place-items: center;
+  font-size: 17px; background: var(--surface); border: 2px solid var(--border-strong); color: var(--text-3);
+  transition: background .2s, border-color .2s, color .2s, box-shadow .2s, transform .2s var(--ease);
+}
+.pasos__texto { white-space: nowrap; }
+.pasos-lista button:hover { color: var(--text); }
+.pasos-lista button:hover .pasos__icono { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+.pasos-lista button.is-hecho .pasos__icono { border-color: var(--brand); color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, var(--surface)); }
+.pasos-lista button.is-hecho { color: var(--text-2); }
+.pasos-lista button.is-active { color: var(--text); font-weight: 750; }
+.pasos-lista button.is-active .pasos__icono { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 4px var(--brand-ring); }
+.pasos-lista button:focus-visible { outline: none; }
+.pasos-lista button:focus-visible .pasos__icono { box-shadow: 0 0 0 4px var(--brand-ring); }
 .nav-num {
-  font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; flex-shrink: 0;
-  display: grid; place-items: center; font-size: 11px; font-weight: 750; background: var(--surface-3); color: var(--text-2);
+  position: absolute; top: -7px; right: -11px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 99px;
+  display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 750; line-height: 1;
+  background: var(--text); color: var(--surface); border: 2px solid var(--surface);
 }
-.editor__nav button.is-active .nav-num { background: var(--surface); color: var(--brand-strong); }
 
 /* ------------------------------------------------------------ Hoja de edición */
 .editor__form { grid-area: hoja; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 26px 32px 0; }
@@ -168,6 +184,36 @@
 .sugerencias-editor button::before { content: "\201C"; position: absolute; left: 10px; top: 2px; font-size: 22px; color: var(--brand); font-family: Georgia, serif; }
 .sugerencias-editor button:hover { border-color: var(--brand); color: var(--text); }
 
+/* Sugerencias en forma de chip (aviso, títulos de personas) */
+.sugerencias-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip--btn { cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+.chip--btn:hover { border-color: var(--brand); color: var(--brand-strong); }
+.chip--btn.is-active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-strong); }
+.sugerencias-editor button.is-active { border-color: var(--brand); background: var(--brand-soft); color: var(--text); }
+
+/* Modal de personas especiales: campos + "Así se verá" */
+.mencion-form { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 20px; align-items: start; }
+.mencion-form__campos { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.mencion-form__campos .sugerencias-chips { margin-top: -6px; }
+.mencion-previa {
+  position: sticky; top: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  padding: 38px 16px 24px; border-radius: 16px; border: 1px solid #e8dcc6; color: #3b3328;
+  background: radial-gradient(circle at 50% 0, rgba(176, 141, 87, .12), transparent 60%), #fbf8f3;
+}
+.mencion-previa__etiqueta {
+  position: absolute; top: 10px; left: 12px; display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #a08a66;
+}
+.mencion-previa small { font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #a8875a; }
+.mencion-previa small::after { content: ""; display: block; width: 42px; height: 1px; margin: 10px auto 0; background: #d9c49c; }
+.mencion-previa__nombres { font-family: "Cormorant Garamond", Georgia, serif; font-size: 19px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.mencion-previa__nombres span { display: block; }
+.mencion-previa.is-vacia small, .mencion-previa.is-vacia .mencion-previa__nombres { opacity: .45; }
+@media (max-width: 640px) {
+  .mencion-form { grid-template-columns: minmax(0, 1fr); }
+  .mencion-previa { position: static; }
+}
+
 /* Listas (lugares y personas) */
 .lista-editor { display: flex; flex-direction: column; gap: 8px; }
 .item-lista { display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
@@ -260,27 +306,14 @@
 
 /* ------------------------------------------------------------ Pantallas medianas
    Si el área de trabajo es angosta (menú del sistema abierto o laptop pequeña),
-   las secciones pasan a solo ícono y la vista previa se angosta para dejarle
-   el espacio a la hoja. */
+   la vista previa se angosta para dejarle el espacio a la hoja. */
 @media (min-width: 1101px) and (max-width: 1259px) {
-  .editor { --nav-w: 96px; --vista-w: 310px; }
-  .editor__nav { padding: 12px 8px; }
-  .editor__nav button { flex-direction: column; gap: 4px; padding: 8px 4px; text-align: center; }
-  .editor__nav button > span { align-items: center; }
-  .editor__nav small { display: none; }
-  .editor__nav strong { font-size: 11px; }
-  .nav-num { position: absolute; top: 3px; right: 10px; min-width: 18px; height: 18px; padding: 0 5px; font-size: 10.5px; }
-  .editor__form { padding: 22px 22px 0; }
+  .editor { --vista-w: 300px; }
+  .editor__form, .editor__pasos { padding-left: 22px; padding-right: 22px; }
 }
 @media (min-width: 1101px) and (max-width: 1447px) {
-  .app:not(.is-collapsed) .editor { --nav-w: 96px; --vista-w: 310px; }
-  .app:not(.is-collapsed) .editor__nav { padding: 12px 8px; }
-  .app:not(.is-collapsed) .editor__nav button { flex-direction: column; gap: 4px; padding: 8px 4px; text-align: center; }
-  .app:not(.is-collapsed) .editor__nav button > span { align-items: center; }
-  .app:not(.is-collapsed) .editor__nav small { display: none; }
-  .app:not(.is-collapsed) .editor__nav strong { font-size: 11px; }
-  .app:not(.is-collapsed) .nav-num { position: absolute; top: 3px; right: 10px; min-width: 18px; height: 18px; padding: 0 5px; font-size: 10.5px; }
-  .app:not(.is-collapsed) .editor__form { padding: 22px 22px 0; }
+  .app:not(.is-collapsed) .editor { --vista-w: 310px; }
+  .app:not(.is-collapsed) .editor__form, .app:not(.is-collapsed) .editor__pasos { padding-left: 22px; padding-right: 22px; }
 }
 @media (min-width: 1760px) {
   .editor { --vista-w: 380px; }
@@ -290,17 +323,10 @@
 @media (max-width: 1100px) {
   .editor { display: block; height: auto; min-height: calc(100vh - var(--topbar-h)); }
   .editor__barra { padding: 12px 16px; }
-  .editor__nav {
-    position: sticky; top: var(--topbar-h); z-index: 20; flex-direction: row; gap: 4px; padding: 8px 12px;
-    overflow-x: auto; overflow-y: hidden; scrollbar-width: none; border-right: 0; border-bottom: 1px solid var(--border);
-  }
-  .editor__nav::-webkit-scrollbar { display: none; }
-  .editor__nav button { flex: 0 0 auto; width: auto; min-width: 66px; flex-direction: column; gap: 3px; padding: 6px 8px; text-align: center; }
-  .editor__nav button > i { width: 30px; height: 30px; font-size: 17px; }
-  .editor__nav button > span { align-items: center; }
-  .editor__nav small { display: none; }
-  .editor__nav strong { font-size: 11px; }
-  .nav-num { position: absolute; top: 2px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; font-size: 10.5px; }
+  .editor__pasos { position: sticky; top: var(--topbar-h); z-index: 20; padding: 10px 12px 8px; }
+  .pasos-lista { --circulo: 32px; max-width: none; min-width: 600px; }
+  .pasos__icono { font-size: 15px; }
+  .pasos-lista button { font-size: 11px; }
   .editor__form { overflow: visible; padding: 18px 16px 0; }
   .paso__titulo h2 { font-size: 19px; }
   .editor__vista { display: none; }

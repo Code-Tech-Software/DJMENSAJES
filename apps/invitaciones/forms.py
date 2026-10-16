@@ -92,7 +92,7 @@ class MencionForm(forms.ModelForm):
         model = Mencion
         fields = ['titulo', 'nombres']
         widgets = {
-            'titulo': forms.TextInput(attrs={'placeholder': 'Ej. Padrinos de anillos', 'list': 'titulos-mencion'}),
+            'titulo': forms.TextInput(attrs={'placeholder': 'Ej. Padrinos de anillos', 'autocomplete': 'off'}),
             'nombres': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Rosa Martínez y Juan Pérez\nLaura Gómez'}),
         }
 
