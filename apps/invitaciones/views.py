@@ -53,9 +53,10 @@ def obtener_invitacion(evento):
 
 def mensaje_whatsapp(request, invitado, invitacion):
     url = request.build_absolute_uri(invitado.get_absolute_url())
-    texto = (f'¡Hola {invitado.nombre}! 💌\n'
+    # Sin emojis: en algunos celulares llegan como "�"
+    texto = (f'¡Hola {invitado.nombre}!\n'
              f'Con mucho cariño te compartimos la invitación: {invitacion.titulo_visible} · {invitacion.nombres_visibles}.\n'
-             f'Ábrela y confirma tu asistencia aquí 👉 {url}')
+             f'Ábrela y confirma tu asistencia aquí: {url}')
     destino = f'https://wa.me/{invitado.whatsapp_numero}' if invitado.whatsapp_numero else 'https://wa.me/'
     return f'{destino}?text={quote(texto)}'
 

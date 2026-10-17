@@ -5,58 +5,26 @@
 
 {% block body %}
 <div class="login">
-    <section class="scene" aria-hidden="true">
-        <div class="scene__aurora"><span></span><span></span><span></span></div>
-        <div class="scene__grid"></div>
-
-        <div class="scene__logo"><img src="{% static 'img/logo-gupoem.png' %}" alt="Grupo EM"></div>
-
-        <div class="scene__hero">
-            <span class="scene__kicker"><b>EN VIVO</b> Tu evento, conectado con cada invitado</span>
-            <h1>Eventos que se <em>viven</em><br>en tiempo real.</h1>
-            <p class="scene__lead">Invitaciones digitales con confirmación, saludos y canciones que llegan al DJ al instante,
-                y toda la operación de tus sub-agencias en un solo lugar.</p>
+    {# Escena de marca: logotipo, una frase y luces suaves (sin animaciones cargadas) #}
+    <aside class="escena" aria-hidden="true">
+        <div class="escena__luces"><span></span><span></span></div>
+        <img class="escena__logo" src="{% static 'img/logo-gupoem.png' %}" alt="">
+        <div class="escena__texto">
+            <h2>Eventos que se <em>viven</em><br>en tiempo real.</h2>
+            <p>Invitaciones digitales, saludos y canciones que llegan al DJ al instante.</p>
         </div>
+    </aside>
 
-        <div class="feed">
-            <div class="feed__track">
-                {% for _ in "12" %}
-                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ph ph-music-notes"></i></div>
-                    <div><strong>Mesa 7 pidió una canción</strong><p>“Payaso de Rodeo” · Caballo Dorado</p></div></div>
-                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ph ph-user-check"></i></div>
-                    <div><strong>Familia Pérez confirmó</strong><p>4 pases · Mesa 12</p></div></div>
-                <div class="bubble bubble--hi"><div class="bubble__icon"><i class="ph ph-chat-teardrop-text"></i></div>
-                    <div><strong>Saludo para los novios</strong><p>“¡Que vivan Ana y Luis! Los queremos” — Tía Rosy</p></div></div>
-                <div class="bubble bubble--vip"><div class="bubble__icon"><i class="ph ph-crown-simple"></i></div>
-                    <div><strong>VIP · Padrinos</strong><p>“El Triste” para el vals de los novios</p></div></div>
-                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ph ph-vinyl-record"></i></div>
-                    <div><strong>Sofía pidió una canción</strong><p>“Tusa” · Karol G</p></div></div>
-                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ph ph-scan"></i></div>
-                    <div><strong>Entrada registrada</strong><p>Familia Ruiz llegó con 3 pases</p></div></div>
-                {% endfor %}
-            </div>
-        </div>
+    <main class="acceso">
+        <button class="icon-btn acceso__tema" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
 
-        <div class="scene__foot">
-            <div class="eq"><span></span><span></span><span></span><span></span><span></span></div>
-            <div class="scene__pills">
-                <span><i class="ph ph-envelope-open"></i>Invitaciones digitales</span>
-                <span><i class="ph ph-projector-screen"></i>Pantalla en vivo</span>
-                <span><i class="ph ph-headphones"></i>Panel DJ</span>
-            </div>
-        </div>
-    </section>
-
-    <section class="access">
-        <button class="icon-btn icon-btn--bordered theme-float" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
-
-        <div class="access__card">
-            <div class="access__badge"><img src="{% static 'img/isotipo.png' %}" alt=""></div>
-            <h2>Bienvenido de nuevo</h2>
-            <p class="access__sub">Ingresa para administrar tus eventos.</p>
+        <div class="acceso__caja">
+            <span class="acceso__insignia"><img src="{% static 'img/isotipo.png' %}" alt="{{ ajustes.nombre }}"></span>
+            <h1>Bienvenido de nuevo</h1>
+            <p class="acceso__sub">Ingresa para administrar tus eventos.</p>
 
             {% if form.non_field_errors %}
-            <div class="alert alert--danger access__error mb-3" role="alert">
+            <div class="alert alert--danger acceso__error" role="alert">
                 <i class="ph ph-warning-circle"></i>
                 <div>{{ form.non_field_errors.0 }}</div>
             </div>
@@ -68,45 +36,40 @@
 
                 <div class="field">
                     <label class="field__label" for="id_username">Usuario</label>
-                    <div class="field__control has-icon">
-                        <i class="ph ph-user field__icon"></i>
-                        {{ form.username }}
-                    </div>
+                    <div class="field__control has-icon"><i class="ph ph-user field__icon"></i>{{ form.username }}</div>
                 </div>
 
                 <div class="field">
-                    <label class="field__label" for="id_password">Contraseña</label>
-                    <div class="field__control has-icon">
-                        <i class="ph ph-lock field__icon"></i>
-                        {{ form.password }}
-                        <button type="button" class="icon-btn icon-btn--sm pass-toggle" id="pass-toggle" aria-label="Mostrar contraseña">
-                            <i class="ph ph-eye"></i>
-                        </button>
+                    <div class="acceso__etiqueta">
+                        <label class="field__label" for="id_password">Contraseña</label>
+                        <button type="button" class="acceso__enlace" id="olvide">¿La olvidaste?</button>
                     </div>
-                    <small class="caps" id="caps"><i class="ph ph-arrow-circle-up"></i>Bloq Mayús está activado</small>
+                    <div class="field__control has-icon acceso__clave">
+                        <i class="ph ph-lock-simple field__icon"></i>
+                        {{ form.password }}
+                        <button type="button" class="icon-btn icon-btn--sm" id="pass-toggle" aria-label="Mostrar contraseña"><i class="ph ph-eye"></i></button>
+                    </div>
+                    <small class="acceso__mayus" id="caps"><i class="ph ph-arrow-fat-up"></i>Bloq Mayús está activado</small>
                 </div>
 
-                <div class="access__row">
-                    <label for="id_recordarme">
-                        <span class="switch"><input type="checkbox" name="recordarme" id="id_recordarme" {% if form.recordarme.value %}checked{% endif %}><span class="switch__track"></span></span>
-                        Mantener sesión
-                    </label>
-                    <button type="button" class="link" id="olvide">¿Olvidaste tu contraseña?</button>
+                <div class="alert acceso__ayuda" id="ayuda">
+                    <i class="ph ph-info"></i>
+                    <div>Pide a un administrador que la restablezca desde <strong>Equipo</strong>; después podrás cambiarla en tu perfil.</div>
                 </div>
 
-                <div class="alert access__help" id="ayuda">
-                    <i class="ph ph-headset"></i>
-                    <div><strong>Te ayudamos</strong>Pide a un administrador que la restablezca desde <em>Equipo</em>. Después podrás cambiarla en tu perfil.</div>
-                </div>
+                <label class="acceso__recordar" for="id_recordarme">
+                    <input type="checkbox" name="recordarme" id="id_recordarme" {% if form.recordarme.value %}checked{% endif %}>
+                    Mantener la sesión iniciada
+                </label>
 
-                <button type="submit" class="btn btn--primary btn--lg" id="login-btn">
-                    Entrar al panel <i class="ph ph-arrow-right"></i>
-                </button>
+                <button type="submit" class="btn btn--primary acceso__boton" id="login-btn">Entrar al panel<i class="ph ph-arrow-right"></i></button>
             </form>
+
+            <p class="acceso__nota"><i class="ph ph-shield-check"></i>¿Aún no tienes acceso? Pídelo a un administrador de tu equipo.</p>
         </div>
 
-        <p class="access__foot">© {% now "Y" %} {{ ajustes.nombre }} · Plataforma de eventos</p>
-    </section>
+        <p class="acceso__pie">© {% now "Y" %} {{ ajustes.nombre }}</p>
+    </main>
 </div>
 {% endblock %}
 
@@ -120,6 +83,7 @@
             const visible = pass.type === 'text';
             pass.type = visible ? 'password' : 'text';
             toggle.innerHTML = `<i class="${visible ? 'ph ph-eye' : 'ph ph-eye-slash'}"></i>`;
+            toggle.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
             pass.focus();
         });
         const caps = document.getElementById('caps');

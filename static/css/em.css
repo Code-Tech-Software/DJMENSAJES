@@ -980,6 +980,9 @@ kbd {
   content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
   background: var(--text); color: var(--surface); font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 7px;
   white-space: nowrap; pointer-events: none; z-index: 80; animation: fade-in .15s;
+  /* Tipografía propia: si la etiqueta va sobre un ícono no hereda la fuente de íconos */
+  font-family: var(--font); font-style: normal; font-variant: normal; line-height: 1.35;
+  letter-spacing: normal; text-transform: none; font-feature-settings: normal; -webkit-font-feature-settings: normal;
 }
 .muted { color: var(--text-3); }
 .text-2 { color: var(--text-2); }
