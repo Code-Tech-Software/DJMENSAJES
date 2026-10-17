@@ -4,27 +4,37 @@
 {% block head %}<link rel="stylesheet" href="{% static 'css/login.css' %}">{% endblock %}
 
 {% block body %}
-<div class="login">
-    {# Escena de marca: logotipo, una frase y luces suaves (sin animaciones cargadas) #}
-    <aside class="escena" aria-hidden="true">
-        <div class="escena__luces"><span></span><span></span></div>
-        <img class="escena__logo" src="{% static 'img/logo-gupoem.png' %}" alt="">
-        <div class="escena__texto">
-            <h2>Eventos que se <em>viven</em><br>en tiempo real.</h2>
-            <p>Invitaciones digitales, saludos y canciones que llegan al DJ al instante.</p>
-        </div>
-    </aside>
+<div class="ingreso">
+    <div class="ingreso__fondo" aria-hidden="true"></div>
 
-    <main class="acceso">
-        <button class="icon-btn acceso__tema" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
+    <header class="ingreso__barra">
+        <img class="ingreso__logo" src="{% static 'img/logo-gupoem.png' %}" alt="{{ ajustes.nombre }}">
+        <button class="ingreso__tema" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
+    </header>
 
-        <div class="acceso__caja">
-            <span class="acceso__insignia"><img src="{% static 'img/isotipo.png' %}" alt="{{ ajustes.nombre }}"></span>
-            <h1>Bienvenido de nuevo</h1>
-            <p class="acceso__sub">Ingresa para administrar tus eventos.</p>
+    <main class="ingreso__contenido">
+        {# ---------------- Marca: frase y lo que hace la plataforma ---------------- #}
+        <section class="ingreso__marca">
+            <span class="ingreso__ceja">Plataforma de eventos</span>
+            <h2>Eventos que se <em>viven</em> en tiempo real.</h2>
+            <p>Invitaciones digitales, pantallas en vivo y el panel del DJ, todo conectado.</p>
+            <ul class="ingreso__puntos">
+                <li><span class="ingreso__ico"><i class="ph ph-envelope-open"></i></span>
+                    <div><strong>Invitaciones con confirmación</strong><small>Tus invitados confirman y reciben su pase QR.</small></div></li>
+                <li><span class="ingreso__ico"><i class="ph ph-broadcast"></i></span>
+                    <div><strong>Pantalla y panel del DJ</strong><small>Canciones, saludos y fotos llegan al instante.</small></div></li>
+                <li><span class="ingreso__ico"><i class="ph ph-users-three"></i></span>
+                    <div><strong>Todo tu equipo</strong><small>Eventos, pagos y sub-agencias en un solo lugar.</small></div></li>
+            </ul>
+        </section>
+
+        {# ---------------- Tarjeta de acceso ---------------- #}
+        <section class="ingreso__tarjeta" aria-labelledby="titulo-ingreso">
+            <h1 id="titulo-ingreso">Inicia sesión</h1>
+            <p class="ingreso__sub">Bienvenido de nuevo. Ingresa tus datos para continuar.</p>
 
             {% if form.non_field_errors %}
-            <div class="alert alert--danger acceso__error" role="alert">
+            <div class="alert alert--danger ingreso__error" role="alert">
                 <i class="ph ph-warning-circle"></i>
                 <div>{{ form.non_field_errors.0 }}</div>
             </div>
@@ -40,36 +50,36 @@
                 </div>
 
                 <div class="field">
-                    <div class="acceso__etiqueta">
-                        <label class="field__label" for="id_password">Contraseña</label>
-                        <button type="button" class="acceso__enlace" id="olvide">¿La olvidaste?</button>
-                    </div>
-                    <div class="field__control has-icon acceso__clave">
+                    <label class="field__label" for="id_password">Contraseña</label>
+                    <div class="field__control has-icon ingreso__clave">
                         <i class="ph ph-lock-simple field__icon"></i>
                         {{ form.password }}
                         <button type="button" class="icon-btn icon-btn--sm" id="pass-toggle" aria-label="Mostrar contraseña"><i class="ph ph-eye"></i></button>
                     </div>
-                    <small class="acceso__mayus" id="caps"><i class="ph ph-arrow-fat-up"></i>Bloq Mayús está activado</small>
+                    <small class="ingreso__mayus" id="caps"><i class="ph ph-arrow-fat-up"></i>Bloq Mayús está activado</small>
                 </div>
 
-                <div class="alert acceso__ayuda" id="ayuda">
+                <div class="ingreso__fila">
+                    <label class="ingreso__recordar" for="id_recordarme">
+                        <input type="checkbox" name="recordarme" id="id_recordarme" {% if form.recordarme.value %}checked{% endif %}>
+                        Mantener sesión
+                    </label>
+                    <button type="button" class="ingreso__enlace" id="olvide">¿Olvidaste tu contraseña?</button>
+                </div>
+
+                <div class="alert ingreso__ayuda" id="ayuda">
                     <i class="ph ph-info"></i>
                     <div>Pide a un administrador que la restablezca desde <strong>Equipo</strong>; después podrás cambiarla en tu perfil.</div>
                 </div>
 
-                <label class="acceso__recordar" for="id_recordarme">
-                    <input type="checkbox" name="recordarme" id="id_recordarme" {% if form.recordarme.value %}checked{% endif %}>
-                    Mantener la sesión iniciada
-                </label>
-
-                <button type="submit" class="btn btn--primary acceso__boton" id="login-btn">Entrar al panel<i class="ph ph-arrow-right"></i></button>
+                <button type="submit" class="btn btn--primary ingreso__boton" id="login-btn">Entrar<i class="ph ph-arrow-right"></i></button>
             </form>
 
-            <p class="acceso__nota"><i class="ph ph-shield-check"></i>¿Aún no tienes acceso? Pídelo a un administrador de tu equipo.</p>
-        </div>
-
-        <p class="acceso__pie">© {% now "Y" %} {{ ajustes.nombre }}</p>
+            <p class="ingreso__nota">¿Aún no tienes cuenta? Pídela a un administrador de tu equipo.</p>
+        </section>
     </main>
+
+    <footer class="ingreso__pie">© {% now "Y" %} {{ ajustes.nombre }}</footer>
 </div>
 {% endblock %}
 
