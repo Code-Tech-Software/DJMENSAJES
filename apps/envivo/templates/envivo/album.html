@@ -165,7 +165,7 @@
 <div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-label="Foto">
     <div class="visor__barra">
         <span id="visor-cuenta"></span>
-        <a class="visor__boton visor__boton--cerrar" id="visor-descargar" href="#" target="_blank" rel="noopener" download aria-label="Descargar"><i class="ph ph-download-simple"></i></a>
+        <a class="visor__boton visor__boton--cerrar" id="visor-descargar" href="#" download aria-label="Descargar"><i class="ph ph-download-simple"></i></a>
         <button type="button" class="visor__boton" id="visor-cerrar" aria-label="Cerrar"><i class="ph ph-x"></i></button>
     </div>
     <div class="visor__escena" id="visor-escena">
@@ -196,7 +196,8 @@
             const f = fotos[actual];
             $('visor-img').src = f.foto;
             $('visor-img').alt = f.mensaje || 'Foto del evento';
-            $('visor-descargar').href = f.foto;
+            // Pasa por el servidor para que se descargue (no que se abra en otra pestaña)
+            $('visor-descargar').href = `{% url 'envivo:album' evento.codigo %}${f.id}/descargar/`;
             $('visor-texto').textContent = f.mensaje || '';
             $('visor-texto').hidden = !f.mensaje;
             $('visor-de').textContent = `📸 ${f.nombre} · ${f.hora}`;

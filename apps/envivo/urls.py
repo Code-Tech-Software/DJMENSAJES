@@ -10,6 +10,7 @@ urlpatterns = [
     path('e/<str:codigo>/enviar/', views.enviar, name='enviar'),
     path('e/<str:codigo>/foto/', views.enviar_foto, name='enviar_foto'),
     path('e/<str:codigo>/album/', views.album, name='album'),
+    path('e/<str:codigo>/album/<int:pk>/descargar/', views.album_descargar, name='album_descargar'),
     path('e/<str:codigo>/vip/', views.vip, name='vip'),
     path('e/<str:codigo>/nombre/', views.cambiar_nombre, name='nombre'),
     path('e/<str:codigo>/mis-mensajes/', views.mis_mensajes, name='mis_mensajes'),

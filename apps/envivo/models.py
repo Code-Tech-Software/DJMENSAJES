@@ -92,6 +92,7 @@ class Mensaje(models.Model):
             'en_pantalla': self.en_pantalla,
             'hora': local.strftime('%H:%M'),
             'fecha': local.isoformat(),
+            'atendido_hora': timezone.localtime(self.atendido_en).strftime('%H:%M') if self.atendido_en else '',
             **self._datos_foto(),
         }
 

@@ -3,9 +3,10 @@ import math
 import re
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.crypto import constant_time_compare
 from django.views.decorators.http import require_GET, require_POST
 
@@ -80,7 +81,6 @@ def invitado(request, codigo):
         'espera_total': int(evento.cooldown * 60),
         'mis_mensajes': [m.a_dict() for m in mios],
         'invitacion': getattr(evento, 'invitacion', None),
-        'url_album': evento.url_album(),
     })
 
 
@@ -270,6 +270,25 @@ def album(request, codigo):
         'url_invitados': evento.url_invitados(),
         'portada': fotos[0].foto.url if fotos else '',
     })
+
+
+def album_descargar(request, codigo, pk):
+    """
+    Descarga una foto del álbum. Con Cloudinary la imagen está en otro dominio y el navegador ignora el
+    atributo "download" (solo la abre en otra pestaña); aquí se entrega como archivo adjunto.
+    """
+    evento = _evento(codigo)
+    mensaje = get_object_or_404(evento.mensajes.fotos_album(), pk=pk)
+    if not mensaje.foto:
+        raise Http404
+    try:
+        archivo = mensaje.foto.open('rb')
+    except Exception:  # el almacenamiento no la encontró
+        raise Http404
+    nombre = f"{slugify(evento.nombre_evento) or 'evento'}-{mensaje.pk}.jpg"
+    respuesta = FileResponse(archivo, as_attachment=True, filename=nombre, content_type='image/jpeg')
+    respuesta['Cache-Control'] = 'private, max-age=3600'
+    return respuesta
 
 
 # --- Panel del DJ -------------------------------------------------------------------------

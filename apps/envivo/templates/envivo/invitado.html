@@ -73,15 +73,11 @@
         {% if evento.permitir_fotos %}
         <button class="accion accion--foto" data-abrir="hoja-foto">
             <span class="accion__icono"><i class="ph-fill ph-camera"></i></span>
-            <span><strong>Comparte una foto</strong><small>Puede salir en la pantalla y en el álbum</small></span>
+            <span><strong>Comparte una foto</strong><small>Tómala ahora o elígela de tu galería</small></span>
             <i class="ph ph-arrow-up-right"></i>
         </button>
         {% endif %}
     </section>
-
-    {% if evento.permitir_fotos or evento.permitir_saludos %}
-    <a class="enlace-album" href="{{ url_album }}"><i class="ph ph-images"></i>Ver el álbum del evento<i class="ph ph-caret-right"></i></a>
-    {% endif %}
 
     <section class="mios" id="mios" {% if not mis_mensajes %}hidden{% endif %}>
         <h2><i class="ph ph-clock-counter-clockwise"></i>Mis mensajes</h2>
@@ -161,12 +157,20 @@
     <div class="hoja__titulo"><i class="ph-fill ph-camera"></i><div><h2 id="t-foto">Comparte una foto</h2><p>El DJ la revisa y puede salir en la pantalla.</p></div></div>
     <form id="form-foto">
         <div class="error-inv"></div>
-        <label class="foto-zona" id="foto-zona">
-            <input type="file" id="foto-archivo" accept="image/*" hidden>
-            <span class="foto-zona__vacia"><i class="ph ph-camera-plus"></i><strong>Toma o elige una foto</strong><small>Desde la cámara o tu galería</small></span>
+        {# Dos entradas: "capture" abre directo la cámara (en algunos Android el selector normal solo muestra la galería) #}
+        <input type="file" id="foto-camara" accept="image/*" capture="environment" hidden>
+        <input type="file" id="foto-galeria" accept="image/*" hidden>
+        <div class="foto-zona" id="foto-zona">
+            <div class="foto-zona__vacia">
+                <label class="foto-op foto-op--camara" for="foto-camara"><i class="ph-fill ph-camera"></i><strong>Tomar foto</strong><small>Abre la cámara</small></label>
+                <label class="foto-op" for="foto-galeria"><i class="ph ph-images"></i><strong>Galería</strong><small>Una que ya tengas</small></label>
+            </div>
             <img class="foto-zona__previa" id="foto-previa" alt="Foto elegida" hidden>
-            <span class="foto-zona__cambiar" id="foto-cambiar" hidden><i class="ph ph-arrows-clockwise"></i>Cambiar</span>
-        </label>
+            <div class="foto-zona__cambiar" id="foto-cambiar" hidden>
+                <label for="foto-camara"><i class="ph ph-camera"></i>Tomar otra</label>
+                <label for="foto-galeria"><i class="ph ph-images"></i>Galería</label>
+            </div>
+        </div>
         <div class="campo-inv"><label>Tu nombre</label><input name="nombre" maxlength="60" placeholder="¿Quién la toma?" autocomplete="given-name"></div>
         <div class="campo-inv"><label>Pie de foto</label><input name="mensaje" maxlength="140" placeholder="Ej. ¡La mejor fiesta del año!"></div>
         <div class="progreso-foto" id="progreso-foto" hidden><span></span></div>
@@ -401,7 +405,6 @@
         /* ---------- Fotos ---------- */
         const formFoto = $('#form-foto');
         if (formFoto) {
-            const archivo = $('#foto-archivo');
             const previa = $('#foto-previa');
             const zona = $('#foto-zona');
             const barra = $('#progreso-foto');
@@ -409,7 +412,8 @@
             let elegida = null;
             const error = texto => { errFoto.textContent = texto; errFoto.classList.toggle('visible', !!texto); };
 
-            archivo.addEventListener('change', async () => {
+            // La misma foto llega por la cámara o por la galería
+            [$('#foto-camara'), $('#foto-galeria')].forEach(archivo => archivo.addEventListener('change', async () => {
                 const original = archivo.files[0];
                 if (!original) return;
                 error('');
@@ -423,7 +427,7 @@
                 $('#foto-cambiar').hidden = false;
                 zona.classList.add('con-foto');
                 archivo.value = '';
-            });
+            }));
 
             formFoto.addEventListener('submit', async e => {
                 e.preventDefault();

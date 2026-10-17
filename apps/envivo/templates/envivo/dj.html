@@ -48,18 +48,18 @@
             <div class="contador" style="--c:var(--saludo)"><i class="ph-fill ph-chat-teardrop-text"></i><div><strong id="n-saludo">0</strong> <span>saludos</span></div></div>
             {% if mostrar_fotos %}<div class="contador" style="--c:var(--foto)"><i class="ph-fill ph-camera"></i><div><strong id="n-foto">0</strong> <span>fotos</span></div></div>{% endif %}
             <div class="contador" style="--c:var(--oro)"><i class="ph-fill ph-crown-simple"></i><div><strong id="n-vip">0</strong> <span>VIP</span></div></div>
-            <div class="contador" style="--c:var(--ok)"><i class="ph ph-checks"></i><div><strong id="n-atendido">0</strong> <span>atendidos</span></div></div>
+            <div class="contador" style="--c:var(--ok)"><i class="ph-fill ph-check-circle"></i><div><strong id="n-atendido">0</strong> <span>atendidos</span></div></div>
         </div>
         <div class="vista-tabs" id="vista">
-            <button data-vista="pendientes" class="activo">Pendientes</button>
-            <button data-vista="historial">Historial</button>
+            <button data-vista="pendientes" class="activo">Pendientes <b id="t-pendientes">0</b></button>
+            <button data-vista="historial">Historial <b id="t-historial">0</b></button>
         </div>
         <div class="vista-tabs tabs-movil" id="tabs-movil" style="display:none">
             <button data-col="cancion" class="activo">Canciones</button>
             <button data-col="saludo">Saludos</button>
             {% if mostrar_fotos %}<button data-col="foto">Fotos</button>{% endif %}
         </div>
-        <label class="buscar"><i class="ph ph-magnifying-glass"></i><input type="search" id="buscar" placeholder="Buscar por canción, artista, nombre o texto"></label>
+        <label class="buscar"><i class="ph ph-magnifying-glass"></i><input type="search" id="buscar" placeholder="Buscar canción, artista o nombre"></label>
     </div>
 
     <main class="tablero {% if mostrar_fotos %}tablero--fotos{% endif %}" id="tablero" data-movil="cancion">
@@ -162,18 +162,25 @@
         function tarjeta(m) {
             const e = EnVivo.escapar;
             const sub = m.tipo === 'cancion'
-                ? (m.artista ? `<div class="msj__sub"><i class="ph ph-user-sound"></i> ${e(m.artista)}</div>` : '')
-                : (m.destinatario ? `<div class="msj__sub">Para: <strong>${e(m.destinatario)}</strong></div>` : '');
+                ? (m.artista ? `<div class="msj__sub"><i class="ph ph-user-sound"></i>${e(m.artista)}</div>` : '')
+                : (m.destinatario ? `<div class="msj__sub"><i class="ph ph-arrow-bend-down-right"></i>Para <strong>${e(m.destinatario)}</strong></div>` : '');
+            const pantalla = m.tipo === 'saludo' && (m.estatus === 'pendiente' || m.estatus === 'atendido')
+                ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar del proyector' : 'Mostrar en el proyector'}"><i class="ph ph-television-simple"></i></button>` : '';
             const acciones = m.estatus === 'pendiente'
-                ? `<button class="btn-msj btn-msj--ok" data-accion="atender" title="${m.tipo === 'saludo' && MODERADO ? 'Aprobar: sale en la pantalla' : 'Marcar como atendido'}"><i class="ph ph-check"></i></button>
-                   ${m.tipo === 'saludo' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar del proyector' : 'Mostrar en el proyector'}"><i class="ph ph-television-simple"></i></button>` : ''}
-                   <button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ph ph-x"></i></button>`
-                : `<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ph ph-arrow-u-up-left"></i></button>
-                   ${m.tipo === 'saludo' && m.estatus === 'atendido' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="Proyector"><i class="ph ph-television-simple"></i></button>` : ''}`;
+                ? `${pantalla}<button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ph ph-x"></i></button>
+                   <button class="btn-msj btn-msj--ok" data-accion="atender" title="${m.tipo === 'saludo' && MODERADO ? 'Aprobar: sale en la pantalla' : 'Marcar como atendido'}"><i class="ph ph-check"></i></button>`
+                : `${pantalla}<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ph ph-arrow-u-up-left"></i></button>`;
+            // En el historial la tarjeta se lee completa: el estado va en una etiqueta, no con transparencia
+            const etiquetas = [
+                m.estatus === 'atendido' ? `<span class="etiqueta etiqueta--ok"><i class="ph-fill ph-check-circle"></i>${m.tipo === 'cancion' ? 'Sonó' : 'Atendido'}${m.atendido_hora ? ' · ' + m.atendido_hora : ''}</span>` : '',
+                m.estatus === 'descartado' ? '<span class="etiqueta etiqueta--x"><i class="ph-fill ph-x-circle"></i>Descartado</span>' : '',
+                m.tipo === 'saludo' && m.en_pantalla ? '<span class="etiqueta etiqueta--pantalla"><i class="ph-fill ph-television-simple"></i>En pantalla</span>' : '',
+            ].join('');
             return `<article class="msj msj--${m.tipo} ${m.vip ? 'msj--vip' : ''} ${m.estatus !== 'pendiente' ? 'msj--' + m.estatus : ''} ${nuevos.has(m.id) ? 'msj--nuevo' : ''}" data-id="${m.id}">
                 <div class="msj__cuerpo">
-                    <div class="msj__meta"><strong>${e(m.nombre)}</strong>${m.vip ? '<span class="msj__vip"><i class="ph-fill ph-crown-simple"></i>VIP</span>' : ''}<span>· ${m.hora}</span><span data-hace="${m.fecha}">· ${EnVivo.haceCuanto(m.fecha)}</span>${m.estatus === 'atendido' ? '<span style="color:var(--ok)">· atendido</span>' : ''}${m.estatus === 'descartado' ? '<span>· descartado</span>' : ''}</div>
+                    <div class="msj__meta"><strong>${e(m.nombre)}</strong>${m.vip ? '<span class="msj__vip"><i class="ph-fill ph-crown-simple"></i>VIP</span>' : ''}<span class="msj__hora">${m.hora} · <span data-hace="${m.fecha}">${EnVivo.haceCuanto(m.fecha)}</span></span></div>
                     <div class="msj__texto">${e(m.mensaje)}</div>${sub}
+                    ${etiquetas ? `<div class="msj__etiquetas">${etiquetas}</div>` : ''}
                 </div>
                 <div class="msj__acciones">${acciones}</div></article>`;
         }
@@ -190,9 +197,12 @@
         }
         function tarjetaFoto(m) {
             const e = EnVivo.escapar;
+            const marca = m.estatus === 'descartado' ? '<span class="foto-tile__marca foto-tile__marca--x"><i class="ph ph-x-circle"></i>Descartada</span>'
+                : m.en_pantalla ? '<span class="foto-tile__marca"><i class="ph ph-television-simple"></i>En pantalla</span>'
+                : m.estatus === 'atendido' ? '<span class="foto-tile__marca foto-tile__marca--album"><i class="ph ph-images"></i>En el álbum</span>' : '';
             return `<article class="foto-tile ${m.vip ? 'foto-tile--vip' : ''} ${m.estatus !== 'pendiente' ? 'msj--' + m.estatus : ''} ${nuevos.has(m.id) ? 'msj--nuevo' : ''}" data-id="${m.id}">
                 <button class="foto-tile__img" data-ver title="Ver en grande"><img src="${e(m.miniatura)}" alt="" loading="lazy"></button>
-                ${m.en_pantalla ? '<span class="foto-tile__marca"><i class="ph ph-television-simple"></i>En pantalla</span>' : ''}
+                ${marca}
                 <div class="foto-tile__info"><strong>${e(m.nombre)}</strong>${m.vip ? '<i class="ph-fill ph-crown-simple" style="color:var(--oro)"></i>' : ''}<span>${m.hora}</span></div>
                 ${m.mensaje ? `<p class="foto-tile__pie">${e(m.mensaje)}</p>` : ''}
                 <div class="foto-tile__acciones">${accionesFoto(m)}</div></article>`;
@@ -215,11 +225,19 @@
                 $(`#c-${tipo}`).textContent = lista.length;
             });
             const pend = todos.filter(m => m.estatus === 'pendiente');
-            TIPOS.forEach(tipo => { $(`#n-${tipo}`).textContent = pend.filter(m => m.tipo === tipo).length; });
+            const contar = (id, n, uno, varios) => {
+                const el = $(`#${id}`);
+                el.textContent = n;
+                el.nextElementSibling.textContent = n === 1 ? uno : varios;
+            };
+            const NOMBRES = { cancion: ['canción', 'canciones'], saludo: ['saludo', 'saludos'], foto: ['foto', 'fotos'] };
+            TIPOS.forEach(tipo => contar(`n-${tipo}`, pend.filter(m => m.tipo === tipo).length, ...NOMBRES[tipo]));
             $('#n-vip').textContent = pend.filter(m => m.vip).length;
-            $('#n-atendido').textContent = todos.filter(m => m.estatus === 'atendido').length;
+            contar('n-atendido', todos.filter(m => m.estatus === 'atendido').length, 'atendido', 'atendidos');
+            $('#t-pendientes').textContent = pend.length;
+            $('#t-historial').textContent = todos.length - pend.length;
         }
-        setInterval(() => document.querySelectorAll('[data-hace]').forEach(el => { el.textContent = '· ' + EnVivo.haceCuanto(el.dataset.hace); }), 30000);
+        setInterval(() => document.querySelectorAll('[data-hace]').forEach(el => { el.textContent = EnVivo.haceCuanto(el.dataset.hace); }), 30000);
 
         /* ---------- Acciones ---------- */
         let ultimo = null; let tDeshacer;
@@ -293,13 +311,18 @@
             ultimo = null;
         });
 
+        // La pestaña elegida queda en la dirección (#historial) para que sobreviva a una recarga
+        function cambiarVista(nueva) {
+            vista = nueva;
+            document.querySelectorAll('#vista button').forEach(x => x.classList.toggle('activo', x.dataset.vista === nueva));
+            history.replaceState(null, '', nueva === 'historial' ? '#historial' : location.pathname);
+            render();
+        }
         $('#vista').addEventListener('click', e => {
             const b = e.target.closest('[data-vista]');
-            if (!b) return;
-            vista = b.dataset.vista;
-            document.querySelectorAll('#vista button').forEach(x => x.classList.toggle('activo', x === b));
-            render();
+            if (b) cambiarVista(b.dataset.vista);
         });
+        if (location.hash === '#historial') cambiarVista('historial');
         $('#tabs-movil').addEventListener('click', e => {
             const b = e.target.closest('[data-col]');
             if (!b) return;

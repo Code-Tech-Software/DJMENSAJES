@@ -116,32 +116,30 @@ button { cursor: pointer; border: 0; background: none; }
 .mio.recien-atendido { animation: celebrar .9s; }
 
 /* Enlace al álbum */
-.enlace-album {
-  display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 14px 16px; border-radius: 18px;
-  background: var(--vidrio); border: 1px solid var(--vidrio-borde); backdrop-filter: blur(12px);
-  color: #fff; font-weight: 700; font-size: 14.5px; text-decoration: none;
+/* Elegir foto: tomarla con la cámara o elegirla de la galería */
+.foto-zona { position: relative; border-radius: 20px; overflow: hidden; }
+.foto-zona__vacia { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.foto-op {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 150px; padding: 18px 10px;
+  text-align: center; border-radius: 20px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  border: 1.5px dashed rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .05); transition: background .2s, transform .15s;
 }
-.enlace-album i:first-child { font-size: 20px; color: #7fe3ff; }
-.enlace-album i:last-child { margin-left: auto; opacity: .6; }
-
-/* Elegir foto */
-.foto-zona {
-  position: relative; display: grid; place-items: center; min-height: 190px; border-radius: 20px; overflow: hidden; cursor: pointer;
-  border: 1.5px dashed rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .05); transition: border-color .2s, background .2s;
-}
-.foto-zona:active { background: rgba(255, 255, 255, .09); }
-.foto-zona__vacia { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px; text-align: center; }
-.foto-zona__vacia i { font-size: 40px; color: #7fe3ff; }
-.foto-zona__vacia strong { font-size: 16px; }
-.foto-zona__vacia small { color: var(--suave); font-size: 12.5px; }
-.foto-zona.con-foto { border-style: solid; border-color: transparent; background: #000; }
+.foto-op:active { background: rgba(255, 255, 255, .1); transform: scale(.98); }
+.foto-op i { font-size: 36px; color: #7fe3ff; }
+.foto-op strong { font-size: 15.5px; }
+.foto-op small { color: var(--suave); font-size: 12px; }
+.foto-op--camara { border: 1.5px solid rgba(127, 227, 255, .35); background: linear-gradient(140deg, rgba(0, 201, 167, .28), rgba(0, 166, 255, .22) 60%, rgba(132, 94, 247, .22)); }
+.foto-op--camara i { color: #fff; }
+.foto-zona.con-foto { background: #000; }
 .foto-zona.con-foto .foto-zona__vacia { display: none; }
 .foto-zona__previa { width: 100%; max-height: 46svh; object-fit: contain; display: block; }
-.foto-zona__cambiar {
-  position: absolute; right: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px;
-  background: rgba(0, 0, 0, .6); backdrop-filter: blur(8px); font-size: 12.5px; font-weight: 700;
+.foto-zona__cambiar { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+.foto-zona__cambiar label {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 99px; cursor: pointer;
+  background: rgba(0, 0, 0, .62); backdrop-filter: blur(8px); font-size: 12.5px; font-weight: 700;
 }
-.foto-zona.procesando::after { content: "Preparando foto…"; position: absolute; inset: 0; display: grid; place-items: center; background: rgba(7, 11, 20, .7); font-weight: 700; }
+.foto-zona__previa[hidden], .foto-zona__cambiar[hidden] { display: none; }
+.foto-zona.procesando::after { content: "Preparando foto…"; position: absolute; inset: 0; border-radius: 20px; display: grid; place-items: center; background: rgba(7, 11, 20, .7); font-weight: 700; }
 .progreso-foto { height: 6px; border-radius: 9px; background: rgba(255, 255, 255, .12); overflow: hidden; }
 .progreso-foto span { display: block; height: 100%; width: 0; border-radius: 9px; background: linear-gradient(90deg, #00c9a7, #00a6ff); transition: width .2s; }
 
