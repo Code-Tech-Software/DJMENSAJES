@@ -304,7 +304,7 @@ hr { border: 0; border-top: 1px solid var(--border); }
 .span-all { grid-column: 1 / -1; }
 @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-sidebar { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) { .grid-3 { grid-template-columns: minmax(0, 1fr); } .grid-2 { grid-template-columns: minmax(0, 1fr); } .span-2 { grid-column: auto; } }
-@media (max-width: 560px) { .grid-4 { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .grid-4 { grid-template-columns: minmax(0, 1fr); } }
 
 .stack { display: flex; flex-direction: column; gap: 20px; }
 .row { display: flex; align-items: center; gap: 10px; }
@@ -490,7 +490,7 @@ i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
 .form-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .form-grid > .span-2, .form-grid > .span-all { grid-column: 1 / -1; }
-@media (max-width: 640px) { .form-grid, .form-grid--3 { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .form-grid, .form-grid--3 { grid-template-columns: minmax(0, 1fr); } }
 .form-section { margin-top: 26px; }
 .form-section:first-child { margin-top: 0; }
 .form-section__title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
@@ -1123,10 +1123,10 @@ kbd {
 .donut > div { grid-area: 1/1; position: relative; text-align: center; line-height: 1.1; }
 .donut strong { font-size: 26px; font-weight: 800; }
 .donut small { display: block; font-size: 11.5px; color: var(--text-3); font-weight: 650; }
-.legend { display: flex; flex-direction: column; gap: 9px; flex: 1; }
+.legend { display: flex; flex-direction: column; gap: 9px; flex: 1 1 150px; min-width: 0; }
 .legend-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
 .legend-item i { width: 10px; height: 10px; border-radius: 4px; background: var(--tipo); flex-shrink: 0; }
-.legend-item span { flex: 1; color: var(--text-2); }
+.legend-item span { flex: 1; min-width: 0; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Spotlight (próximo evento) */
 .spotlight { position: relative; overflow: hidden; border-radius: var(--r-xl); color: #fff; min-height: 290px; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; background: linear-gradient(135deg, #061a2b, #0a3a5c 55%, #0098da); box-shadow: var(--sh); }

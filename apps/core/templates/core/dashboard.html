@@ -104,7 +104,7 @@
             </div>
             <div class="card">
                 <div class="card__head"><div><h3>Por tipo de evento</h3><p>Todos los eventos vigentes</p></div></div>
-                <div class="card__body row" style="gap:22px;align-items:center">
+                <div class="card__body row row-wrap" style="gap:22px;align-items:center;justify-content:center">
                     <div class="donut" style="background:{% if gradiente %}conic-gradient({{ gradiente }}){% else %}var(--surface-3){% endif %}">
                         <div><strong>{{ total_tipos }}</strong><small>eventos</small></div>
                     </div>

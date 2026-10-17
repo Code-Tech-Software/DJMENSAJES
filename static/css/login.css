@@ -125,7 +125,7 @@
 
 @media (max-width: 1180px) { .feed { display: none; } }
 @media (max-width: 900px) {
-  .login { grid-template-columns: 1fr; }
+  .login { grid-template-columns: minmax(0, 1fr); }
   .scene { min-height: 300px; padding: 28px 24px 30px; }
   .scene__hero { margin: 26px 0 0; }
   .scene h1 { font-size: 32px; margin: 16px 0 10px; }

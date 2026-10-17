@@ -92,7 +92,7 @@
         @keyframes latido { 50% { transform: scale(1.12); } }
 
         /* QR en una esquina: mensajes y fotos al centro, más grandes */
-        .qr-esquina .escena { grid-template-columns: 1fr; padding: 6vh 8vw 9vh; }
+        .qr-esquina .escena { grid-template-columns: minmax(0, 1fr); padding: 6vh 8vw 9vh; }
         .qr-esquina .qr-panel { display: none; }
         .qr-esquina .derecha { align-items: center; text-align: center; width: 100%; max-width: 1400px; margin: 0 auto; }
         .qr-esquina .foco, .qr-esquina .instrucciones { width: min(100%, 72vw); }
@@ -109,7 +109,7 @@
 
         @media (max-aspect-ratio: 1/1) {
             html, body { overflow: auto; }
-            .escena { grid-template-columns: 1fr; height: auto; min-height: 100vh; padding: 6vh 6vw 14vh; }
+            .escena { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 100vh; padding: 6vh 6vw 14vh; }
             .qr-caja { width: min(70vw, 420px); }
             .instrucciones { flex-direction: column; }
         }
