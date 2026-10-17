@@ -750,6 +750,14 @@ i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
 .step.is-active::before { background: var(--brand); }
 .step.has-error { color: var(--danger); }
 .step.has-error::before { background: var(--danger); }
+/* Celulares: todos los pasos caben; el activo muestra su nombre y los demás solo el ícono */
+@media (max-width: 560px) {
+  .step { flex: 1 1 0; min-width: 0; transition: flex .3s var(--ease), color .2s; }
+  .step.is-active { flex-grow: 2.6; }
+  .step span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .step:not(.is-active):not(.has-error) span { font-size: 0; gap: 0; }
+  .step:not(.is-active):not(.has-error) span i { font-size: 17px; }
+}
 [data-step-panel] { display: none; }
 [data-step-panel].is-active { display: block; animation: rise .3s var(--ease); }
 
