@@ -736,14 +736,15 @@ i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
 .tab-panel { animation: rise .3s var(--ease); }
 
 /* Steps (wizard) */
-.steps { display: flex; gap: 6px; padding: 0 24px; margin-top: 16px; overflow-x: auto; scrollbar-width: none; }
+/* flex-shrink: 0 — en pantallas bajas el modal no debe aplastar la barra de pasos (solo se desplaza el cuerpo) */
+.steps { display: flex; flex-shrink: 0; gap: 6px; padding: 0 24px; margin-top: 16px; overflow-x: auto; scrollbar-width: none; }
 .steps::-webkit-scrollbar { display: none; }
 .step {
   flex: 1; min-width: 110px; display: flex; flex-direction: column; gap: 8px; padding: 0 0 2px;
   font-size: 12.5px; font-weight: 650; color: var(--text-3); text-align: left; cursor: pointer;
 }
 .step::before { content: ""; height: 4px; border-radius: 4px; background: var(--surface-3); transition: background .3s; }
-.step span { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.step span { display: flex; flex-shrink: 0; align-items: center; gap: 6px; white-space: nowrap; }
 .step i { font-size: 16px; }
 .step.is-done::before { background: color-mix(in srgb, var(--brand) 45%, transparent); }
 .step.is-active { color: var(--brand-strong); }
@@ -836,7 +837,7 @@ i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
 .modal__dialog--sm { max-width: 420px; }
 .modal__dialog--lg { max-width: 760px; }
 .modal__dialog--xl { max-width: 980px; }
-.modal__header { display: flex; align-items: flex-start; gap: 14px; padding: 22px 24px 0; }
+.modal__header { display: flex; flex-shrink: 0; align-items: flex-start; gap: 14px; padding: 22px 24px 0; }
 .modal__icon {
   width: 44px; height: 44px; flex-shrink: 0; border-radius: 13px; display: grid; place-items: center;
   background: var(--brand-soft); color: var(--brand); font-size: 22px;
@@ -848,7 +849,7 @@ i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
 .modal__header .icon-btn { margin: -6px -8px 0 auto; }
 .modal__body { padding: 22px 24px; overflow-y: auto; flex: 1; min-height: 0; }
 .modal__footer {
-  display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+  display: flex; flex-shrink: 0; align-items: center; gap: 10px; justify-content: flex-end;
   padding: 16px 24px; border-top: 1px solid var(--border);
   background: var(--surface-2); border-radius: 0 0 var(--r-xl) var(--r-xl);
 }
