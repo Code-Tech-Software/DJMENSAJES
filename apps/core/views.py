@@ -1,16 +1,19 @@
 from datetime import timedelta
 from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.colaboradores.models import Colaborador
 from apps.core.actividad import actividad_reciente, recordatorios
+from apps.core.forms import AjustesForm
+from apps.core.models import Ajustes
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
 from apps.eventos.models import ICONOS_TIPO, Evento, Pago, TipoEvento
@@ -118,7 +121,7 @@ def buscar(request):
             'titulo': e.nombre_evento,
             'sub': f"{e.tipo_corto} · {timezone.localtime(e.fecha_inicio_evento):%d/%m/%Y}" + (f' · {e.lugar}' if e.lugar else ''),
             'url': e.get_absolute_url(),
-            'icono': ICONOS_TIPO.get(e.tipo_evento, 'ri-calendar-event-line'),
+            'icono': ICONOS_TIPO.get(e.tipo_evento, 'ph ph-calendar-dots'),
             'color': f'var(--t-{e.tipo_evento})',
         } for e in eventos]})
 
@@ -128,19 +131,19 @@ def buscar(request):
             'titulo': i.nombre,
             'sub': f'{i.evento.nombre_evento} · {i.get_estado_display()} · {i.pases} pase(s)',
             'url': f"{reverse('invitaciones:panel', args=[i.evento_id])}?{urlencode({'q': i.nombre})}",
-            'icono': 'ri-user-heart-line',
+            'icono': 'ph ph-user-list',
         } for i in invitados]})
 
         if request.user.ve_todo:
             colaboradores = Colaborador.objects.filter(Q(nombre__icontains=q) | Q(ciudad__icontains=q))[:4]
             grupos.append({'grupo': 'Colaboradores', 'items': [{
-                'titulo': c.nombre, 'sub': c.get_tipo_display(), 'url': c.get_absolute_url(), 'icono': 'ri-team-line',
+                'titulo': c.nombre, 'sub': c.get_tipo_display(), 'url': c.get_absolute_url(), 'icono': 'ph ph-users-three',
             } for c in colaboradores]})
         if request.user.es_admin:
             usuarios = Usuario.objects.filter(
                 Q(username__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q))[:4]
             grupos.append({'grupo': 'Equipo', 'items': [{
-                'titulo': str(u), 'sub': f'@{u.username} · {u.rol_visible}', 'url': reverse('cuentas:usuarios'), 'icono': 'ri-shield-user-line',
+                'titulo': str(u), 'sub': f'@{u.username} · {u.rol_visible}', 'url': reverse('cuentas:usuarios'), 'icono': 'ph ph-shield-check',
             } for u in usuarios]})
     return JsonResponse({'grupos': [g for g in grupos if g['items']]})
 
@@ -166,7 +169,7 @@ def error_403(request, exception=None):
     return render(request, 'errores/error.html', {
         'codigo': 403, 'titulo': 'Acceso restringido',
         'texto': 'Tu rol no tiene permiso para ver esta sección. Si crees que es un error, contacta a un administrador.',
-        'icono': 'ri-lock-2-line',
+        'icono': 'ph ph-lock',
     }, status=403)
 
 
@@ -174,7 +177,7 @@ def error_404(request, exception=None):
     return render(request, 'errores/error.html', {
         'codigo': 404, 'titulo': 'Página no encontrada',
         'texto': 'El enlace que abriste no existe o ya no está disponible.',
-        'icono': 'ri-compass-discover-line',
+        'icono': 'ph ph-compass',
     }, status=404)
 
 
@@ -182,5 +185,34 @@ def error_500(request):
     return render(request, 'errores/error.html', {
         'codigo': 500, 'titulo': 'Algo salió mal',
         'texto': 'Tuvimos un problema al procesar tu solicitud. Intenta de nuevo en unos momentos.',
-        'icono': 'ri-tools-line',
+        'icono': 'ph ph-wrench',
     }, status=500)
+
+
+@login_required
+def ajustes(request):
+    """Ajustes de la plataforma.
+
+    Todos ajustan la apariencia (se guarda en su dispositivo). Los administradores además
+    editan la marca del negocio y los valores con los que nacen los eventos e invitaciones.
+    """
+    form = None
+    seccion = 'apariencia'
+    if request.user.es_admin:
+        form = AjustesForm(request.POST or None, instance=Ajustes.cargar())
+        if request.method == 'POST':
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Ajustes guardados.')
+                destino = request.POST.get('seccion') if request.POST.get('seccion') in ('negocio', 'eventos') else 'negocio'
+                return redirect(f"{reverse('core:ajustes')}#{destino}")
+            # Abre la pestaña donde está el primer error
+            seccion = 'eventos' if set(form.errors) & set(SECCION_EVENTOS) else 'negocio'
+    elif request.method == 'POST':
+        messages.error(request, 'Solo un administrador puede cambiar los ajustes del negocio.')
+        return redirect('core:ajustes')
+    return render(request, 'core/ajustes.html', {'form': form, 'seccion_activa': seccion})
+
+
+SECCION_EVENTOS = ('cooldown', 'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla',
+                   'mensaje_bienvenida', 'plantilla', 'dias_limite_rsvp')

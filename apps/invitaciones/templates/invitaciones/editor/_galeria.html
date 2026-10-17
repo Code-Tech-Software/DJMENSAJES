@@ -4,9 +4,9 @@
     <figure>
         <img src="{{ f.imagen.url }}" alt="" loading="lazy">
         <div class="galeria-editor__acciones">
-            <button type="button" data-post="{% url 'invitaciones:elemento_mover' 'galeria' f.pk 'arriba' %}" {% if forloop.first %}disabled{% endif %} aria-label="Mover antes"><i class="ri-arrow-left-s-line"></i></button>
-            <button type="button" data-post="{% url 'invitaciones:elemento_mover' 'galeria' f.pk 'abajo' %}" {% if forloop.last %}disabled{% endif %} aria-label="Mover después"><i class="ri-arrow-right-s-line"></i></button>
-            <button type="button" class="es-borrar" data-post="{% url 'invitaciones:elemento_eliminar' 'galeria' f.pk %}" data-confirm="¿Quitar esta foto?" data-danger data-confirm-button="Quitar" aria-label="Eliminar"><i class="ri-delete-bin-6-line"></i></button>
+            <button type="button" data-post="{% url 'invitaciones:elemento_mover' 'galeria' f.pk 'arriba' %}" {% if forloop.first %}disabled{% endif %} aria-label="Mover antes"><i class="ph ph-caret-left"></i></button>
+            <button type="button" data-post="{% url 'invitaciones:elemento_mover' 'galeria' f.pk 'abajo' %}" {% if forloop.last %}disabled{% endif %} aria-label="Mover después"><i class="ph ph-caret-right"></i></button>
+            <button type="button" class="es-borrar" data-post="{% url 'invitaciones:elemento_eliminar' 'galeria' f.pk %}" data-confirm="¿Quitar esta foto?" data-danger data-confirm-button="Quitar" aria-label="Eliminar"><i class="ph ph-trash"></i></button>
         </div>
     </figure>
     {% endfor %}

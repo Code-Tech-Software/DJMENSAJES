@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="theme-color" content="#0098da">
-    <title>{% block title %}Panel{% endblock %} · Grupo EM</title>
-    <link rel="icon" type="image/png" href="{% static 'img/isotipo.png' %}">
+    <title>{% block title %}Panel{% endblock %} · {{ ajustes.nombre }}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
     <script>
         (function () {
             try {
@@ -18,7 +20,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/em.css' %}">
     {% block head %}{% endblock %}
 </head>

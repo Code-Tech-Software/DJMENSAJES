@@ -59,6 +59,51 @@
     return json;
   }
 
+  /**
+   * Reduce la foto en el celular antes de subirla (lado mayor de 1600 px, JPEG):
+   * pesa una fracción del original y sube rápido aunque el internet del salón sea lento.
+   * Si el navegador no puede leerla, se manda el archivo original y el servidor decide.
+   */
+  async function comprimirImagen(archivo, lado = 1600, calidad = 0.85) {
+    let fuente;
+    try {
+      fuente = await createImageBitmap(archivo, { imageOrientation: 'from-image' });
+    } catch (e) {
+      fuente = await new Promise((ok, mal) => {
+        const img = new Image();
+        img.onload = () => ok(img);
+        img.onerror = mal;
+        img.src = URL.createObjectURL(archivo);
+      });
+    }
+    const escala = Math.min(1, lado / Math.max(fuente.width, fuente.height));
+    const lienzo = document.createElement('canvas');
+    lienzo.width = Math.round(fuente.width * escala);
+    lienzo.height = Math.round(fuente.height * escala);
+    lienzo.getContext('2d').drawImage(fuente, 0, 0, lienzo.width, lienzo.height);
+    const blob = await new Promise(ok => lienzo.toBlob(ok, 'image/jpeg', calidad));
+    if (!blob) throw new Error('No se pudo procesar la imagen');
+    return blob;
+  }
+
+  /** POST con archivo y avance de subida (fetch no informa el progreso). */
+  function subir(url, datos, alAvanzar) {
+    return new Promise(resolver => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader('X-CSRFToken', csrf());
+      xhr.upload.onprogress = e => { if (e.lengthComputable && alAvanzar) alAvanzar(e.loaded / e.total); };
+      xhr.onload = () => {
+        let json;
+        try { json = JSON.parse(xhr.responseText); } catch (e) { json = { ok: false, msg: 'Respuesta inesperada del servidor.' }; }
+        resolver(json);
+      };
+      xhr.onerror = () => resolver({ ok: false, msg: 'Sin conexión. Revisa tu internet e intenta de nuevo.' });
+      xhr.send(datos);
+    });
+  }
+
   function escapar(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -84,7 +129,7 @@
       else document.exitFullscreen?.();
     });
     document.addEventListener('fullscreenchange', () => {
-      if (icono) icono.className = document.fullscreenElement ? 'ri-fullscreen-exit-line' : 'ri-fullscreen-line';
+      if (icono) icono.className = document.fullscreenElement ? 'ph ph-corners-in' : 'ph ph-corners-out';
     });
   }
 
@@ -99,5 +144,5 @@
     } catch (e) { /* no soportado */ }
   }
 
-  window.EnVivo = { conexion, enviarJSON, escapar, tiempo, haceCuanto, pantallaCompleta, mantenerEncendida, csrf };
+  window.EnVivo = { conexion, enviarJSON, comprimirImagen, subir, escapar, tiempo, haceCuanto, pantallaCompleta, mantenerEncendida, csrf };
 })();

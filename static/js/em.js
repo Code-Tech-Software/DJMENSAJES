@@ -22,7 +22,7 @@
   }
 
   /* ------------------------------------------------------------------ Toasts */
-  const TOAST_ICONS = { success: 'ri-check-line', error: 'ri-close-circle-line', warning: 'ri-error-warning-line', info: 'ri-information-line' };
+  const TOAST_ICONS = { success: 'ph ph-check', error: 'ph ph-x-circle', warning: 'ph ph-warning-circle', info: 'ph ph-info' };
 
   function toast(message, type = 'success', duration = 4200) {
     if (!message) return;
@@ -38,7 +38,7 @@
     el.style.setProperty('--dur', `${duration}ms`);
     el.innerHTML = `<div class="toast__icon"><i class="${TOAST_ICONS[type] || TOAST_ICONS.info}"></i></div>
       <div class="toast__text">${escapeHtml(message)}</div>
-      <button class="toast__close" aria-label="Cerrar"><i class="ri-close-line"></i></button>`;
+      <button class="toast__close" aria-label="Cerrar"><i class="ph ph-x"></i></button>`;
     const remove = () => { el.classList.add('is-leaving'); setTimeout(() => el.remove(), 250); };
     el.querySelector('.toast__close').addEventListener('click', remove);
     box.appendChild(el);
@@ -93,7 +93,7 @@
       el.innerHTML = `
         <div class="modal__dialog modal__dialog--sm" role="alertdialog" aria-modal="true">
           <div class="modal__header">
-            <div class="modal__icon ${danger ? 'modal__icon--danger' : ''}"><i class="${icon || (danger ? 'ri-delete-bin-6-line' : 'ri-question-line')}"></i></div>
+            <div class="modal__icon ${danger ? 'modal__icon--danger' : ''}"><i class="${icon || (danger ? 'ph ph-trash' : 'ph ph-question')}"></i></div>
             <div><h2>${escapeHtml(title)}</h2>${text ? `<p>${escapeHtml(text)}</p>` : ''}</div>
           </div>
           <div class="modal__footer" style="margin-top:22px">
@@ -188,7 +188,7 @@
       entry = entry || this.stack[this.stack.length - 1];
       if (!entry || entry.closing) return;
       if (!force && entry.dirty) {
-        const ok = await confirmDialog({ title: '¿Descartar cambios?', text: 'Tienes cambios sin guardar en este formulario.', confirmText: 'Descartar', danger: true, icon: 'ri-error-warning-line' });
+        const ok = await confirmDialog({ title: '¿Descartar cambios?', text: 'Tienes cambios sin guardar en este formulario.', confirmText: 'Descartar', danger: true, icon: 'ph ph-warning-circle' });
         if (!ok) return;
       }
       entry.closing = true;
@@ -271,7 +271,7 @@
           const small = document.createElement('small');
           small.className = 'field__error';
           small.dataset.client = '1';
-          small.innerHTML = `<i class="ri-error-warning-line"></i>${escapeHtml(message)}`;
+          small.innerHTML = `<i class="ph ph-warning-circle"></i>${escapeHtml(message)}`;
           wrap.appendChild(small);
         }
       };
@@ -439,7 +439,10 @@
       const run = async () => {
         const params = new URLSearchParams(new FormData(form));
         [...params.keys()].forEach(k => { if (!params.get(k)) params.delete(k); });
-        const url = `${form.action || location.pathname}?${params}`;
+        // Sin atributo action, form.action devuelve la URL actual con su "?…": se arma desde la ruta para no encadenar filtros
+        const destino = new URL(form.getAttribute('action') || location.pathname, location.href);
+        destino.search = params.toString();
+        const url = destino.pathname + destino.search;
         if (!target) { location.href = url; return; }
         const selectores = target.split(',').map(x => x.trim());
         const cajas = selectores.map(sel => $(sel));
@@ -513,7 +516,7 @@
       this.el.className = 'modal palette';
       this.el.innerHTML = `
         <div class="modal__dialog" role="dialog" aria-label="Buscar">
-          <div class="palette__input"><i class="ri-search-line"></i>
+          <div class="palette__input"><i class="ph ph-magnifying-glass"></i>
             <input type="search" placeholder="Busca eventos, invitados, colaboradores… o escribe una acción" autocomplete="off">
             <kbd>Esc</kbd></div>
           <div class="palette__results scroll-thin"></div>
@@ -570,11 +573,11 @@
         ${g.items.map(it => {
           const i = this.items.push(it) - 1;
           return `<div class="palette__item" data-i="${i}">
-            <div class="ico-square" style="${it.color ? `--tipo:${it.color}` : ''}"><i class="${escapeHtml(it.icono || 'ri-arrow-right-line')}"></i></div>
+            <div class="ico-square" style="${it.color ? `--tipo:${it.color}` : ''}"><i class="${escapeHtml(it.icono || 'ph ph-arrow-right')}"></i></div>
             <div class="grow"><strong>${escapeHtml(it.titulo)}</strong>${it.sub ? `<small>${escapeHtml(it.sub)}</small>` : ''}</div>
             ${it.atajo ? `<kbd>${escapeHtml(it.atajo)}</kbd>` : ''}</div>`;
         }).join('')}`).join('');
-      this.list.innerHTML = html || '<div class="palette__empty"><i class="ri-search-eye-line" style="font-size:30px"></i><p>Sin resultados</p></div>';
+      this.list.innerHTML = html || '<div class="palette__empty"><i class="ph ph-binoculars" style="font-size:30px"></i><p>Sin resultados</p></div>';
       this.active = 0;
       this.highlight();
     },
@@ -606,7 +609,7 @@
   function setTheme(theme) {
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem('em-theme', theme); } catch (e) { /* sin almacenamiento */ }
-    $$('[data-theme-icon]').forEach(i => { i.className = theme === 'dark' ? 'ri-sun-line' : 'ri-moon-clear-line'; });
+    $$('[data-theme-icon]').forEach(i => { i.className = theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon-stars'; });
     document.dispatchEvent(new CustomEvent('em:theme', { detail: theme }));
   }
 
@@ -737,6 +740,43 @@
     }
   });
 
+  /* ------------------------------------------------------------------ Menú contraído: etiquetas
+     Con el menú en solo íconos, al pasar el mouse (o enfocar con teclado) se muestra el nombre
+     de la sección. Va en <body> porque el menú se desplaza y recortaría una etiqueta interna. */
+  let etiquetaMenu = null;
+  const ocultarEtiquetaMenu = () => { if (etiquetaMenu) etiquetaMenu.hidden = true; };
+  function mostrarEtiquetaMenu(link) {
+    const contraido = link.closest('.app.is-collapsed') && !window.matchMedia('(max-width: 1024px)').matches;
+    const texto = link.querySelector('span')?.textContent.trim();
+    if (!contraido || !texto) { ocultarEtiquetaMenu(); return; }
+    if (!etiquetaMenu) {
+      etiquetaMenu = document.createElement('div');
+      etiquetaMenu.className = 'etiqueta-menu';
+      etiquetaMenu.setAttribute('role', 'tooltip');
+      document.body.appendChild(etiquetaMenu);
+    }
+    const cuenta = link.querySelector('.nav-count')?.textContent.trim();
+    etiquetaMenu.innerHTML = escapeHtml(texto) + (cuenta ? `<span>${escapeHtml(cuenta)}</span>` : '');
+    const r = link.getBoundingClientRect();
+    etiquetaMenu.style.top = `${r.top + r.height / 2}px`;
+    etiquetaMenu.style.left = `${r.right + 12}px`;
+    etiquetaMenu.hidden = false;
+  }
+  document.addEventListener('mouseover', e => {
+    const link = e.target.closest('.sidebar .nav-link');
+    if (link) mostrarEtiquetaMenu(link);
+  });
+  document.addEventListener('mouseout', e => {
+    const link = e.target.closest('.sidebar .nav-link');
+    if (link && !link.contains(e.relatedTarget)) ocultarEtiquetaMenu();
+  });
+  document.addEventListener('focusin', e => {
+    const link = e.target.closest('.sidebar .nav-link');
+    if (link) mostrarEtiquetaMenu(link); else ocultarEtiquetaMenu();
+  });
+  document.addEventListener('scroll', ocultarEtiquetaMenu, true);
+  document.addEventListener('click', ocultarEtiquetaMenu);
+
   /* ------------------------------------------------------------------ Notificaciones */
   document.addEventListener('em:dropdown-open', async e => {
     const wrap = e.target;
@@ -753,8 +793,13 @@
 
   /* ------------------------------------------------------------------ Arranque */
   document.addEventListener('DOMContentLoaded', () => {
-    // El menú contraído se aplica en layouts/app.html, antes de dibujar la página
-    $$('[data-theme-icon]').forEach(i => { i.className = document.documentElement.dataset.theme === 'dark' ? 'ri-sun-line' : 'ri-moon-clear-line'; });
+    // El menú contraído se aplica en layouts/app.html, antes de dibujar la página.
+    // Con solo íconos el texto queda oculto: cada enlace conserva su nombre para lectores de pantalla.
+    $$('.sidebar .nav-link').forEach(l => {
+      const texto = l.querySelector('span')?.textContent.trim();
+      if (texto && !l.hasAttribute('aria-label')) l.setAttribute('aria-label', texto);
+    });
+    $$('[data-theme-icon]').forEach(i => { i.className = document.documentElement.dataset.theme === 'dark' ? 'ph ph-sun' : 'ph ph-moon-stars'; });
 
     const topbar = $('.topbar');
     if (topbar) {

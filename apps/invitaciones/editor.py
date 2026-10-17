@@ -123,7 +123,7 @@ class UbicacionCrear(HijoInvitacionMixin, CreateView):
     template_modal = 'invitaciones/editor/form_ubicacion.html'
     titulo = 'Agregar lugar'
     subtitulo = 'Ceremonia, recepción, fiesta… con su hora y ubicación.'
-    icono = 'ri-map-pin-add-line'
+    icono = 'ph ph-map-pin-plus'
     texto_boton = 'Agregar lugar'
     mensaje_exito = 'Lugar agregado.'
     seccion = 'lugares'
@@ -142,7 +142,7 @@ class UbicacionEditar(HijoInvitacionMixin, UpdateView):
     form_class = UbicacionForm
     template_modal = 'invitaciones/editor/form_ubicacion.html'
     titulo = 'Editar lugar'
-    icono = 'ri-map-pin-line'
+    icono = 'ph ph-map-pin'
     mensaje_exito = 'Lugar actualizado.'
     seccion = 'lugares'
 
@@ -153,7 +153,7 @@ class MencionCrear(HijoInvitacionMixin, CreateView):
     template_modal = 'invitaciones/editor/form_mencion.html'
     titulo = 'Agregar personas especiales'
     subtitulo = 'Padres, padrinos, damas… cada grupo con su título.'
-    icono = 'ri-hearts-line'
+    icono = 'ph ph-hand-heart'
     texto_boton = 'Agregar'
     mensaje_exito = 'Agregado a la invitación.'
     seccion = 'personas'
@@ -164,7 +164,7 @@ class MencionEditar(HijoInvitacionMixin, UpdateView):
     form_class = MencionForm
     template_modal = 'invitaciones/editor/form_mencion.html'
     titulo = 'Editar personas especiales'
-    icono = 'ri-hearts-line'
+    icono = 'ph ph-hand-heart'
     mensaje_exito = 'Cambios guardados.'
     seccion = 'personas'
 

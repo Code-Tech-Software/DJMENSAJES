@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ invitacion.titulo_visible }} · {{ invitacion.nombres_visibles }}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
     <meta name="description" content="{{ evento.fecha_inicio_evento|date:'l j \d\e F \d\e Y' }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% if invitado %}{{ invitado.nombre }}, estás invitado: {% endif %}{{ invitacion.titulo_visible }} · {{ invitacion.nombres_visibles }}">
@@ -13,7 +16,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Great+Vibes&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Jost:wght@300;400;500;600&family=Syne:wght@600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/invitacion.css' %}">
     <style>:root { --acento: {{ invitacion.color_principal }}; }</style>
 </head>
@@ -41,14 +45,14 @@
             {% if invitado %}Para<strong>{{ invitado.nombre }}</strong>
             {% else %}<span data-bind="texto_sobre" data-fallback="Tienes una invitación especial">{{ invitacion.texto_sobre|default:"Tienes una invitación especial" }}</span>{% endif %}
         </p>
-        <button class="sobre__btn" id="abrir-sobre"><i class="ri-mail-open-line"></i>Abrir invitación</button>
+        <button class="sobre__btn" id="abrir-sobre"><i class="ph ph-envelope-open"></i>Abrir invitación</button>
     </div>
 </div>
 
 {% if invitacion.musica %}
 <audio id="musica" src="{{ invitacion.musica.url }}" loop preload="none"></audio>
 <button class="disco" id="disco" aria-label="Reproducir o pausar la música" hidden>
-    <span class="disco__vinilo"><i class="ri-music-2-fill"></i></span>
+    <span class="disco__vinilo"><i class="ph-fill ph-music-notes"></i></span>
     <span class="disco__titulo" data-bind="musica_titulo">{{ invitacion.musica_titulo }}</span>
 </button>
 {% endif %}
@@ -102,7 +106,7 @@
             {% if invitado %}<p class="portada__para">Invitación para <strong>{{ invitado.nombre }}</strong></p>{% endif %}
             {% if p == 'elegante' %}{% include 'invitaciones/publica/_floritura.html' with clase='floritura--abajo' %}{% endif %}
         </div>
-        <a href="#inicio" class="portada__bajar" aria-label="Ver más"><span>Desliza</span><i class="ri-arrow-down-line"></i></a>
+        <a href="#inicio" class="portada__bajar" aria-label="Ver más"><span>Desliza</span><i class="ph ph-arrow-down"></i></a>
     </header>
 
     {% if p == 'moderna' %}
@@ -162,11 +166,11 @@
                     <b>L</b><b>M</b><b>M</b><b>J</b><b>V</b><b>S</b><b>D</b>
                     {% for semana in semanas %}{% for d in semana %}<span class="{% if d == inicio.day %}es-dia{% endif %}">{% if d %}{{ d }}{% endif %}</span>{% endfor %}{% endfor %}
                 </div>
-                <p class="calendario__hora"><i class="ri-time-line"></i>{{ inicio|date:"l j \d\e F"|capfirst }} · {{ inicio|date:"H:i" }} h</p>
+                <p class="calendario__hora"><i class="ph ph-clock"></i>{{ inicio|date:"l j \d\e F"|capfirst }} · {{ inicio|date:"H:i" }} h</p>
             </div>
             <div class="acciones acciones--centro">
-                <a class="boton" href="{{ google_calendar }}" target="_blank" rel="noopener"><i class="ri-google-line"></i>Google Calendar</a>
-                <a class="boton" href="{% url 'invitacion_publica:ics' invitacion.slug %}"><i class="ri-calendar-2-line"></i>iPhone / Outlook</a>
+                <a class="boton" href="{{ google_calendar }}" target="_blank" rel="noopener"><i class="ph ph-google-logo"></i>Google Calendar</a>
+                <a class="boton" href="{% url 'invitacion_publica:ics' invitacion.slug %}"><i class="ph ph-calendar"></i>iPhone / Outlook</a>
             </div>
         </div>
     </section>
@@ -186,8 +190,8 @@
                     <h3 class="lugar__nombre">{{ u.lugar }}</h3>
                     {% if u.fecha and u.fecha != inicio.date %}<p class="lugar__fecha">{{ u.fecha|date:"l j \d\e F"|capfirst }}</p>{% endif %}
                     {% if u.direccion %}<p class="lugar__dir">{{ u.direccion }}</p>{% endif %}
-                    {% if u.notas %}<p class="lugar__notas"><i class="ri-information-line"></i>{{ u.notas }}</p>{% endif %}
-                    <a class="boton boton--lleno" href="{{ u.mapa }}" target="_blank" rel="noopener"><i class="ri-navigation-line"></i>Cómo llegar</a>
+                    {% if u.notas %}<p class="lugar__notas"><i class="ph ph-info"></i>{{ u.notas }}</p>{% endif %}
+                    <a class="boton boton--lleno" href="{{ u.mapa }}" target="_blank" rel="noopener"><i class="ph ph-navigation-arrow"></i>Cómo llegar</a>
                 </article>
                 {% empty %}
                 <article class="lugar">
@@ -196,7 +200,7 @@
                     <div class="lugar__hora">{{ inicio|date:"H:i" }} <small>h</small></div>
                     <h3 class="lugar__nombre">{{ evento.lugar }}</h3>
                     {% if evento.direccion %}<p class="lugar__dir">{{ evento.direccion }}</p>{% endif %}
-                    <a class="boton boton--lleno" target="_blank" rel="noopener" href="{% if evento.url_mapa %}{{ evento.url_mapa }}{% else %}https://www.google.com/maps/search/?api=1&query={{ evento.lugar|add:' '|add:evento.direccion|urlencode }}{% endif %}"><i class="ri-navigation-line"></i>Cómo llegar</a>
+                    <a class="boton boton--lleno" target="_blank" rel="noopener" href="{% if evento.url_mapa %}{{ evento.url_mapa }}{% else %}https://www.google.com/maps/search/?api=1&query={{ evento.lugar|add:' '|add:evento.direccion|urlencode }}{% endif %}"><i class="ph ph-navigation-arrow"></i>Cómo llegar</a>
                 </article>
                 {% endfor %}
             </div>
@@ -239,23 +243,23 @@
             {% include 'invitaciones/publica/_cabecera.html' with etiqueta='Para tomar en cuenta' titulo='Detalles' numero='07' %}
             <div class="detalles">
                 <div class="detalle" data-si="dress_code" {% if not invitacion.dress_code %}hidden{% endif %}>
-                    <span class="detalle__icono"><i class="ri-shirt-line"></i></span>
+                    <span class="detalle__icono"><i class="ph ph-coat-hanger"></i></span>
                     <h3>Código de vestimenta</h3>
                     <p data-bind="dress_code">{{ invitacion.dress_code }}</p>
                 </div>
                 <div class="detalle" data-si="mesa_regalos" {% if not invitacion.mesa_regalos and not invitacion.regalos_url %}hidden{% endif %}>
-                    <span class="detalle__icono"><i class="ri-gift-2-line"></i></span>
+                    <span class="detalle__icono"><i class="ph ph-gift"></i></span>
                     <h3>Mesa de regalos</h3>
                     <p data-bind="mesa_regalos" data-formato="lineas">{{ invitacion.mesa_regalos|linebreaksbr }}</p>
-                    {% if invitacion.regalos_url %}<a class="boton" href="{{ invitacion.regalos_url }}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i>Ver mesa de regalos</a>{% endif %}
+                    {% if invitacion.regalos_url %}<a class="boton" href="{{ invitacion.regalos_url }}" target="_blank" rel="noopener"><i class="ph ph-arrow-square-out"></i>Ver mesa de regalos</a>{% endif %}
                 </div>
                 <div class="detalle detalle--hashtag" data-si="hashtag" {% if not invitacion.hashtag %}hidden{% endif %}>
-                    <span class="detalle__icono"><i class="ri-camera-3-line"></i></span>
+                    <span class="detalle__icono"><i class="ph ph-camera"></i></span>
                     <h3>Comparte tus fotos</h3>
                     <p class="hashtag" data-bind="hashtag">{{ invitacion.hashtag }}</p>
                 </div>
                 <div class="detalle detalle--aviso" data-si="aviso" {% if not invitacion.aviso %}hidden{% endif %}>
-                    <span class="detalle__icono"><i class="ri-information-line"></i></span>
+                    <span class="detalle__icono"><i class="ph ph-info"></i></span>
                     <p data-bind="aviso">{{ invitacion.aviso }}</p>
                 </div>
             </div>
@@ -281,16 +285,16 @@
             {% if colaborador.logo %}<span class="pie__logo-fondo"><img src="{{ colaborador.logo.url }}" alt="{{ colaborador.nombre }}"></span>{% else %}<strong>{{ colaborador.nombre }}</strong>{% endif %}
         </a>
         {% endif %}
-        <p class="pie__creditos">Invitación digital · Grupo EM</p>
+        <p class="pie__creditos">Invitación digital · {{ ajustes.nombre }}</p>
     </footer>
 </main>
 
 {% if fotos %}
 <div class="visor" id="visor" hidden>
-    <button class="visor__cerrar" data-visor="cerrar" aria-label="Cerrar"><i class="ri-close-line"></i></button>
-    <button class="visor__nav visor__nav--prev" data-visor="prev" aria-label="Anterior"><i class="ri-arrow-left-s-line"></i></button>
+    <button class="visor__cerrar" data-visor="cerrar" aria-label="Cerrar"><i class="ph ph-x"></i></button>
+    <button class="visor__nav visor__nav--prev" data-visor="prev" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
     <img alt="">
-    <button class="visor__nav visor__nav--next" data-visor="next" aria-label="Siguiente"><i class="ri-arrow-right-s-line"></i></button>
+    <button class="visor__nav visor__nav--next" data-visor="next" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
     <span class="visor__contador"></span>
 </div>
 {{ fotos_urls|json_script:"datos-fotos" }}

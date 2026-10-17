@@ -82,10 +82,12 @@ button { cursor: pointer; border: 0; background: none; }
 .accion--cancion { --grad: linear-gradient(120deg, #ff7a3d, #ff3d7f 60%, #c13dff); --sombra: rgba(255, 61, 127, .6); }
 .accion--saludo { --grad: linear-gradient(120deg, #00b4ff, #3d6bff 55%, #7c4dff); --sombra: rgba(61, 107, 255, .6); }
 .accion--saludo::after { animation-delay: 2s; }
+.accion--foto { --grad: linear-gradient(120deg, #00c9a7, #00a6ff 60%, #845ef7); --sombra: rgba(0, 166, 255, .6); }
+.accion--foto::after { animation-delay: 1s; }
 .accion__icono { width: 58px; height: 58px; flex-shrink: 0; border-radius: 18px; display: grid; place-items: center; font-size: 28px; background: rgba(255, 255, 255, .2); backdrop-filter: blur(6px); }
 .accion strong { display: block; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
 .accion small { font-size: 13px; opacity: .88; }
-.accion .ri-arrow-right-up-line { margin-left: auto; font-size: 22px; opacity: .85; }
+.accion .ph-arrow-up-right { margin-left: auto; font-size: 22px; opacity: .85; }
 .accion[disabled] { filter: grayscale(.7); opacity: .45; pointer-events: none; }
 
 /* Espera / pausa */
@@ -104,6 +106,7 @@ button { cursor: pointer; border: 0; background: none; }
 .mios { margin-top: 30px; }
 .mios h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--suave); font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .mio { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--vidrio); border: 1px solid var(--vidrio-borde); margin-bottom: 8px; backdrop-filter: blur(10px); animation: entrar .4s; }
+.mio__foto { width: 36px; height: 36px; flex-shrink: 0; border-radius: 11px; object-fit: cover; background: rgba(255, 255, 255, .12); }
 .mio__icono { width: 36px; height: 36px; flex-shrink: 0; border-radius: 11px; display: grid; place-items: center; background: rgba(255, 255, 255, .12); font-size: 17px; }
 .mio__texto { flex: 1; min-width: 0; }
 .mio__texto strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -111,6 +114,36 @@ button { cursor: pointer; border: 0; background: none; }
 .estatus { font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 99px; white-space: nowrap; background: rgba(255, 255, 255, .12); }
 .estatus--atendido { background: rgba(47, 214, 140, .2); color: #6ff0b3; }
 .mio.recien-atendido { animation: celebrar .9s; }
+
+/* Enlace al álbum */
+.enlace-album {
+  display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 14px 16px; border-radius: 18px;
+  background: var(--vidrio); border: 1px solid var(--vidrio-borde); backdrop-filter: blur(12px);
+  color: #fff; font-weight: 700; font-size: 14.5px; text-decoration: none;
+}
+.enlace-album i:first-child { font-size: 20px; color: #7fe3ff; }
+.enlace-album i:last-child { margin-left: auto; opacity: .6; }
+
+/* Elegir foto */
+.foto-zona {
+  position: relative; display: grid; place-items: center; min-height: 190px; border-radius: 20px; overflow: hidden; cursor: pointer;
+  border: 1.5px dashed rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .05); transition: border-color .2s, background .2s;
+}
+.foto-zona:active { background: rgba(255, 255, 255, .09); }
+.foto-zona__vacia { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px; text-align: center; }
+.foto-zona__vacia i { font-size: 40px; color: #7fe3ff; }
+.foto-zona__vacia strong { font-size: 16px; }
+.foto-zona__vacia small { color: var(--suave); font-size: 12.5px; }
+.foto-zona.con-foto { border-style: solid; border-color: transparent; background: #000; }
+.foto-zona.con-foto .foto-zona__vacia { display: none; }
+.foto-zona__previa { width: 100%; max-height: 46svh; object-fit: contain; display: block; }
+.foto-zona__cambiar {
+  position: absolute; right: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px;
+  background: rgba(0, 0, 0, .6); backdrop-filter: blur(8px); font-size: 12.5px; font-weight: 700;
+}
+.foto-zona.procesando::after { content: "Preparando foto…"; position: absolute; inset: 0; display: grid; place-items: center; background: rgba(7, 11, 20, .7); font-weight: 700; }
+.progreso-foto { height: 6px; border-radius: 9px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.progreso-foto span { display: block; height: 100%; width: 0; border-radius: 9px; background: linear-gradient(90deg, #00c9a7, #00a6ff); transition: width .2s; }
 
 /* Pie con la marca */
 .pie-inv { margin-top: auto; padding: 34px 0 max(22px, env(safe-area-inset-bottom)); text-align: center; }

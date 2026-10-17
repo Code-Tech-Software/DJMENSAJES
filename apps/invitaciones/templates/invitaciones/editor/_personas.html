@@ -1,17 +1,17 @@
 {% for m in menciones %}
 <div class="item-lista">
-    <span class="item-lista__icono"><i class="ri-hearts-line"></i></span>
+    <span class="item-lista__icono"><i class="ph ph-hand-heart"></i></span>
     <div class="item-lista__texto">
         <strong>{{ m.titulo }}</strong>
         <small>{{ m.lista|join:" · " }}</small>
     </div>
     <div class="item-lista__acciones">
-        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'personas' m.pk 'arriba' %}" {% if forloop.first %}disabled{% endif %} aria-label="Subir"><i class="ri-arrow-up-s-line"></i></button>
-        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'personas' m.pk 'abajo' %}" {% if forloop.last %}disabled{% endif %} aria-label="Bajar"><i class="ri-arrow-down-s-line"></i></button>
-        <button type="button" class="icon-btn icon-btn--sm" data-modal="{% url 'invitaciones:mencion_editar' m.pk %}" aria-label="Editar"><i class="ri-edit-2-line"></i></button>
-        <button type="button" class="icon-btn icon-btn--sm is-danger" data-post="{% url 'invitaciones:elemento_eliminar' 'personas' m.pk %}" data-confirm="¿Quitar “{{ m.titulo }}”?" data-danger data-confirm-button="Quitar" aria-label="Eliminar"><i class="ri-delete-bin-6-line"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'personas' m.pk 'arriba' %}" {% if forloop.first %}disabled{% endif %} aria-label="Subir"><i class="ph ph-caret-up"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'personas' m.pk 'abajo' %}" {% if forloop.last %}disabled{% endif %} aria-label="Bajar"><i class="ph ph-caret-down"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm" data-modal="{% url 'invitaciones:mencion_editar' m.pk %}" aria-label="Editar"><i class="ph ph-pencil-simple"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm is-danger" data-post="{% url 'invitaciones:elemento_eliminar' 'personas' m.pk %}" data-confirm="¿Quitar “{{ m.titulo }}”?" data-danger data-confirm-button="Quitar" aria-label="Eliminar"><i class="ph ph-trash"></i></button>
     </div>
 </div>
 {% empty %}
-<div class="lista-vacia"><i class="ri-hearts-line"></i>Agrega a los padres, padrinos de anillos, lazo, arras, damas…</div>
+<div class="lista-vacia"><i class="ph ph-hand-heart"></i>Agrega a los padres, padrinos de anillos, lazo, arras, damas…</div>
 {% endfor %}

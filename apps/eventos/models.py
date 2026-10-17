@@ -22,15 +22,15 @@ class TipoEvento(models.TextChoices):
 
 
 ICONOS_TIPO = {
-    'boda': 'ri-heart-2-line',
-    'quinse': 'ri-vip-crown-2-line',
-    'cumple': 'ri-cake-2-line',
-    'fiesta': 'ri-disc-line',
-    'bautizo': 'ri-drop-line',
-    'graduacion': 'ri-graduation-cap-line',
-    'corporativo': 'ri-briefcase-4-line',
-    'aniversario': 'ri-gift-2-line',
-    'otro': 'ri-calendar-event-line',
+    'boda': 'ph ph-heart-straight',
+    'quinse': 'ph ph-crown-simple',
+    'cumple': 'ph ph-cake',
+    'fiesta': 'ph ph-vinyl-record',
+    'bautizo': 'ph ph-drop',
+    'graduacion': 'ph ph-graduation-cap',
+    'corporativo': 'ph ph-briefcase',
+    'aniversario': 'ph ph-gift',
+    'otro': 'ph ph-calendar-dots',
 }
 
 
@@ -73,6 +73,15 @@ class Evento(models.Model):
         COTIZACION = 'cotizacion', 'Cotización'
         CONFIRMADO = 'confirmado', 'Confirmado'
         CANCELADO = 'cancelado', 'Cancelado'
+
+    class ContenidoPantalla(models.TextChoices):
+        TODO = 'todo', 'Mensajes y fotos'
+        MENSAJES = 'mensajes', 'Solo mensajes'
+        FOTOS = 'fotos', 'Solo fotos'
+
+    class TamanoQR(models.TextChoices):
+        GRANDE = 'grande', 'Gigante'
+        ESQUINA = 'esquina', 'En una esquina'
 
     # --- Datos generales
     nombre_evento = models.CharField(
@@ -129,9 +138,21 @@ class Evento(models.Model):
     )
     permitir_saludos = models.BooleanField('recibir saludos', default=True)
     permitir_canciones = models.BooleanField('recibir canciones', default=True)
+    permitir_fotos = models.BooleanField(
+        'recibir fotos', default=True,
+        help_text='Los invitados comparten fotos; el DJ las aprueba para la pantalla y el álbum.',
+    )
     moderar_pantalla = models.BooleanField(
         'moderar proyector', default=True,
         help_text='Los saludos aparecen en el proyector solo cuando el DJ los aprueba.',
+    )
+    pantalla_contenido = models.CharField(
+        'qué muestra el proyector', max_length=10, choices=ContenidoPantalla.choices, default=ContenidoPantalla.TODO,
+        help_text='Las fotos siempre pasan antes por la aprobación del DJ.',
+    )
+    pantalla_qr = models.CharField(
+        'código QR en el proyector', max_length=10, choices=TamanoQR.choices, default=TamanoQR.GRANDE,
+        help_text='Gigante a un lado o pequeño en una esquina para dejarle más espacio a mensajes y fotos.',
     )
     mensaje_bienvenida = models.CharField(
         'mensaje de bienvenida', max_length=255, blank=True,
@@ -224,6 +245,12 @@ class Evento(models.Model):
     def url_dj(self):
         return reverse('envivo:dj', args=[self.token_dj])
 
+    def url_album(self):
+        return reverse('envivo:album', args=[self.codigo])
+
+    def url_pantalla_fotos(self):
+        return reverse('envivo:pantalla_fotos', args=[self.codigo])
+
     def imagen_portada(self):
         invitacion = getattr(self, 'invitacion', None)
         if invitacion and invitacion.portada:
@@ -246,15 +273,15 @@ class ActividadItinerario(models.Model):
         OTRO = 'otro', 'Otro'
 
     ICONOS = {
-        'ceremonia': 'ri-diamond-ring-line',
-        'recepcion': 'ri-door-open-line',
-        'cena': 'ri-restaurant-2-line',
-        'brindis': 'ri-goblet-line',
-        'vals': 'ri-music-2-line',
-        'fotos': 'ri-camera-3-line',
-        'fiesta': 'ri-disc-line',
-        'pastel': 'ri-cake-3-line',
-        'otro': 'ri-star-smile-line',
+        'ceremonia': 'ph ph-church',
+        'recepcion': 'ph ph-door-open',
+        'cena': 'ph ph-fork-knife',
+        'brindis': 'ph ph-wine',
+        'vals': 'ph ph-music-notes',
+        'fotos': 'ph ph-camera',
+        'fiesta': 'ph ph-vinyl-record',
+        'pastel': 'ph ph-cake',
+        'otro': 'ph ph-star',
     }
 
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name='itinerario')

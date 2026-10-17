@@ -1,0 +1,187 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ evento.nombre_evento }} · Fotos</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
+    <style>
+        :root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; --duracion: 8s; }
+        * { box-sizing: border-box; margin: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: #fff; background: #000; -webkit-font-smoothing: antialiased; cursor: none; }
+        body.mostrar-cursor { cursor: default; }
+
+        /* Diapositivas: fondo desenfocado de la misma foto + foto completa encima */
+        .diapo { position: fixed; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
+        .diapo.activa { opacity: 1; }
+        .diapo__fondo { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(40px) brightness(.45) saturate(1.2); }
+        .diapo__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 4vh 4vw 12vh; transform-origin: center; }
+        .diapo.activa .diapo__img { animation: acercar calc(var(--duracion) + 2s) linear forwards; }
+
+        .pie { position: fixed; left: 4vw; bottom: 4vh; max-width: 58vw; display: flex; flex-direction: column; gap: 1vh; z-index: 2; transition: opacity .6s; }
+        .pie__texto { font-size: clamp(20px, 2.4vw, 46px); font-weight: 800; line-height: 1.2; letter-spacing: -.01em; text-shadow: 0 4px 24px rgba(0, 0, 0, .7); overflow-wrap: anywhere; }
+        .pie__de { display: inline-flex; align-items: center; gap: .6vw; width: fit-content; padding: .9vh 1.2vw; border-radius: 99px; background: rgba(0, 0, 0, .45); backdrop-filter: blur(10px); font-size: clamp(14px, 1.3vw, 24px); font-weight: 700; }
+        .pie__de i { color: #7fe3ff; }
+        .nueva { display: none; width: fit-content; padding: .5vh 1vw; border-radius: 99px; background: #ff3d5e; font-size: clamp(12px, 1vw, 18px); font-weight: 800; letter-spacing: .12em; animation: latido 1s 3; }
+        .es-nueva .nueva { display: inline-block; }
+
+        .cabecera { position: fixed; top: 3.4vh; left: 4vw; z-index: 2; text-shadow: 0 4px 24px rgba(0, 0, 0, .6); }
+        .cabecera small { display: block; font-size: clamp(11px, .95vw, 17px); letter-spacing: .35em; text-transform: uppercase; font-weight: 700; opacity: .85; }
+        .cabecera h1 { font-family: "Great Vibes", cursive; font-weight: 400; font-size: clamp(34px, 3.6vw, 72px); line-height: 1.1; }
+        .esquina { position: fixed; top: 3.4vh; right: 3vw; z-index: 3; display: flex; gap: 10px; align-items: center; }
+        .vivo { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; background: rgba(0, 0, 0, .4); border: 1px solid rgba(255, 255, 255, .15); font-size: clamp(11px, .9vw, 15px); font-weight: 800; letter-spacing: .12em; }
+        .vivo::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #ff3d5e; animation: pulso 1.6s infinite; }
+        .vivo.off::before { background: #8b95a7; animation: none; }
+        .btn-completa { width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(0, 0, 0, .4); color: #fff; font-size: 20px; cursor: pointer; opacity: 0; transition: opacity .3s; }
+        .mostrar-cursor .btn-completa { opacity: 1; }
+
+        /* QR pequeño en la esquina */
+        .qr-mini { position: fixed; right: 3vw; bottom: 4vh; z-index: 2; display: flex; align-items: center; gap: 1vw; padding: 1vh; padding-right: 1.4vw; border-radius: 1.4vw; background: rgba(0, 0, 0, .5); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, .14); }
+        .qr-mini__caja { width: 13vh; height: 13vh; padding: .8vh; background: #fff; border-radius: .9vw; }
+        .qr-mini__caja svg { width: 100%; height: 100%; display: block; }
+        .qr-mini strong { display: block; font-size: clamp(14px, 1.2vw, 22px); }
+        .qr-mini small { font-size: clamp(11px, .85vw, 15px); opacity: .7; }
+
+        .progreso { position: fixed; left: 0; bottom: 0; height: 4px; width: 0; z-index: 3; background: linear-gradient(90deg, var(--marca), #7fe3ff); }
+        .progreso.corre { animation: avanzar var(--duracion) linear forwards; }
+
+        /* Sin fotos todavía */
+        .vacio { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 6vh; background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--marca) 45%, #000), #05070d 65%); }
+        .vacio[hidden] { display: none; }
+        .vacio__caja { display: flex; flex-direction: column; align-items: center; gap: 3vh; }
+        .vacio__qr { width: min(34vh, 40vw); padding: 2vh; background: #fff; border-radius: 2vw; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .6); }
+        .vacio__qr svg { width: 100%; height: auto; display: block; }
+        .vacio h2 { font-size: clamp(28px, 3.4vw, 64px); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+        .vacio h2 span { color: #7fe3ff; }
+        .vacio p { font-size: clamp(15px, 1.4vw, 26px); opacity: .75; }
+        .vacio .url { padding: .8vh 1.4vw; border-radius: 99px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); font-weight: 700; font-size: clamp(14px, 1.3vw, 24px); }
+        .sin-fotos .qr-mini, .sin-fotos .pie, .sin-fotos .cabecera { display: none; }
+
+        @keyframes acercar { from { transform: scale(1); } to { transform: scale(1.07); } }
+        @keyframes avanzar { from { width: 0; } to { width: 100%; } }
+        @keyframes pulso { 70% { box-shadow: 0 0 0 9px rgba(255, 61, 94, 0); } 0% { box-shadow: 0 0 0 0 rgba(255, 61, 94, .7); } }
+        @keyframes latido { 50% { transform: scale(1.12); } }
+        @media (prefers-reduced-motion: reduce) { .diapo.activa .diapo__img { animation: none; } }
+    </style>
+</head>
+<body class="sin-fotos">
+<div id="escenario"></div>
+
+<header class="cabecera"><small>{{ evento.tipo_corto }}</small><h1>{{ evento.nombre_evento }}</h1></header>
+<div class="esquina">
+    <span class="vivo" id="vivo">EN VIVO</span>
+    <button class="btn-completa" id="btn-completa" aria-label="Pantalla completa"><i class="ph ph-corners-out"></i></button>
+</div>
+
+<div class="pie" id="pie">
+    <span class="nueva">¡NUEVA!</span>
+    <p class="pie__texto" id="pie-texto"></p>
+    <span class="pie__de"><i class="ph-fill ph-camera"></i><span id="pie-de"></span></span>
+</div>
+
+<div class="qr-mini">
+    <div class="qr-mini__caja">{{ qr|safe }}</div>
+    <div><strong>Comparte tus fotos</strong><small>{{ url_corta }}</small></div>
+</div>
+
+<div class="vacio" id="vacio">
+    <div class="vacio__caja">
+        <div class="vacio__qr">{{ qr|safe }}</div>
+        <h2>Comparte tus fotos de<br><span>{{ evento.nombre_evento }}</span></h2>
+        <p>Escanea el código, toma una foto y aparecerá aquí cuando el DJ la apruebe.</p>
+        <span class="url">{{ url_corta }}</span>
+    </div>
+</div>
+<div class="progreso" id="progreso"></div>
+
+{{ fotos|json_script:"datos-fotos" }}
+<script src="{% static 'js/envivo.js' %}"></script>
+<script>
+    (() => {
+        const DURACION = 8000;
+        const MAX = 80;
+        const $ = s => document.getElementById(s);
+        let fotos = JSON.parse($('datos-fotos').textContent);
+        let indice = -1;
+        let temporizador = null;
+        let turno = 0;  // evita que dos cambios rápidos se encimen
+
+        const precargar = url => new Promise(ok => { const img = new Image(); img.onload = img.onerror = () => ok(); img.src = url; });
+
+        async function mostrar(i, esNueva = false) {
+            clearTimeout(temporizador);
+            document.body.classList.toggle('sin-fotos', !fotos.length);
+            $('vacio').hidden = !!fotos.length;
+            if (!fotos.length) { $('escenario').innerHTML = ''; return; }
+            indice = (i + fotos.length) % fotos.length;
+            const foto = fotos[indice];
+            const mio = ++turno;
+            await precargar(foto.foto);
+            if (mio !== turno) return;
+
+            const diapo = document.createElement('div');
+            diapo.className = 'diapo';
+            const url = encodeURI(foto.foto).replace(/'/g, '%27');
+            diapo.innerHTML = `<div class="diapo__fondo" style="background-image:url('${url}')"></div><img class="diapo__img" src="${EnVivo.escapar(foto.foto)}" alt="">`;
+            $('escenario').appendChild(diapo);
+            requestAnimationFrame(() => requestAnimationFrame(() => diapo.classList.add('activa')));
+            [...$('escenario').children].slice(0, -1).forEach(vieja => { vieja.classList.remove('activa'); setTimeout(() => vieja.remove(), 1300); });
+
+            $('pie-texto').textContent = foto.mensaje || '';
+            $('pie-texto').hidden = !foto.mensaje;
+            $('pie-de').textContent = foto.nombre;
+            $('pie').classList.toggle('es-nueva', esNueva);
+
+            const barra = $('progreso');
+            barra.classList.remove('corre');
+            void barra.offsetWidth;  // reinicia la animación
+            if (fotos.length > 1) barra.classList.add('corre');
+            temporizador = setTimeout(() => mostrar(indice + 1), DURACION);
+        }
+
+        EnVivo.conexion('/ws/envivo/{{ evento.codigo }}/pantalla/', {
+            alCambiarEstado: ok => $('vivo').classList.toggle('off', !ok),
+            alMensaje: datos => {
+                if (datos.tipo === 'mostrar' && datos.mensaje.tipo === 'foto') {
+                    fotos = fotos.filter(f => f.id !== datos.mensaje.id);
+                    fotos.push(datos.mensaje);
+                    if (fotos.length > MAX) fotos.shift();
+                    mostrar(fotos.length - 1, true);  // la nueva sale de inmediato
+                }
+                if (datos.tipo === 'quitar') {
+                    const actual = fotos[indice];
+                    const antes = fotos.length;
+                    fotos = fotos.filter(f => f.id !== datos.id);
+                    if (fotos.length === antes) return;
+                    if (!actual || actual.id === datos.id) mostrar(indice);
+                    else indice = fotos.indexOf(actual);
+                }
+            },
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') mostrar(indice + 1);
+            if (e.key === 'ArrowLeft') mostrar(indice - 1);
+        });
+        let tCursor;
+        document.addEventListener('mousemove', () => {
+            document.body.classList.add('mostrar-cursor');
+            clearTimeout(tCursor);
+            tCursor = setTimeout(() => document.body.classList.remove('mostrar-cursor'), 2500);
+        });
+        EnVivo.pantallaCompleta($('btn-completa'));
+        EnVivo.mantenerEncendida();
+        // Empieza por la más reciente
+        mostrar(fotos.length - 1);
+    })();
+</script>
+</body>
+</html>

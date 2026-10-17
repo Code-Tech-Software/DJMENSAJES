@@ -236,5 +236,21 @@ class Command(BaseCommand):
                                        destinatario=para, vip=i == 1, en_pantalla=i < 3, estatus='atendido' if i < 2 else 'pendiente')
             Mensaje.objects.filter(pk=m.pk).update(fecha_creacion=ahora - timedelta(minutes=60 - i * 9))
 
+        # Fotos de los invitados: las primeras ya aprobadas (pantalla y álbum), las últimas por revisar
+        fotos = [('Andrea', '¡La pista está que arde! 🔥', ((214, 51, 132), (63, 31, 120), (255, 196, 120))),
+                 ('Tío Beto', 'Brindis con toda la familia 🥂', ((24, 46, 92), (198, 120, 54), (255, 226, 160))),
+                 ('Valeria', '', ((12, 74, 110), (130, 40, 160), (120, 220, 255))),
+                 ('Mesa 9', 'La mejor mesa de la noche', ((120, 30, 60), (250, 140, 60), (255, 230, 170))),
+                 ('Karla', 'Sofía brillando ✨', ((40, 20, 90), (210, 70, 160), (255, 170, 230))),
+                 ('Los primos', 'Foto de primos 📸', ((10, 60, 70), (40, 160, 140), (200, 255, 220)))]
+        for i, (nombre, pie, colores) in enumerate(fotos):
+            ancho, alto = (1200, 900) if i % 3 else (900, 1200)
+            m = Mensaje(evento=en_curso, nombre=nombre, tipo='foto', mensaje=pie, foto_ancho=ancho, foto_alto=alto,
+                        estatus='atendido' if i < 4 else 'pendiente', en_pantalla=i < 4)
+            m.foto.save(f'demo-foto-{i}.jpg', _fondo(ancho, alto, colores, 300 + i), save=False)
+            m.miniatura.save(f'demo-foto-{i}.jpg', _fondo(ancho // 3, alto // 3, colores, 300 + i), save=False)
+            m.save()
+            Mensaje.objects.filter(pk=m.pk).update(fecha_creacion=ahora - timedelta(minutes=50 - i * 7))
+
         self.stdout.write(self.style.SUCCESS(
             f'Datos de demostración listos. Inicia sesión con usuario "{USUARIO_DEMO}" y contraseña "{CLAVE_DEMO}".'))

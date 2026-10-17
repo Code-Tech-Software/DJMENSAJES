@@ -6,12 +6,12 @@
         <small>{{ u.lugar }}{% if u.hora %} · {{ u.hora|time:"H:i" }} h{% endif %}</small>
     </div>
     <div class="item-lista__acciones">
-        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'lugares' u.pk 'arriba' %}" {% if forloop.first %}disabled{% endif %} aria-label="Subir"><i class="ri-arrow-up-s-line"></i></button>
-        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'lugares' u.pk 'abajo' %}" {% if forloop.last %}disabled{% endif %} aria-label="Bajar"><i class="ri-arrow-down-s-line"></i></button>
-        <button type="button" class="icon-btn icon-btn--sm" data-modal="{% url 'invitaciones:lugar_editar' u.pk %}" aria-label="Editar"><i class="ri-edit-2-line"></i></button>
-        <button type="button" class="icon-btn icon-btn--sm is-danger" data-post="{% url 'invitaciones:elemento_eliminar' 'lugares' u.pk %}" data-confirm="¿Quitar “{{ u.nombre_visible }}”?" data-danger data-confirm-button="Quitar" aria-label="Eliminar"><i class="ri-delete-bin-6-line"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'lugares' u.pk 'arriba' %}" {% if forloop.first %}disabled{% endif %} aria-label="Subir"><i class="ph ph-caret-up"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm" data-post="{% url 'invitaciones:elemento_mover' 'lugares' u.pk 'abajo' %}" {% if forloop.last %}disabled{% endif %} aria-label="Bajar"><i class="ph ph-caret-down"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm" data-modal="{% url 'invitaciones:lugar_editar' u.pk %}" aria-label="Editar"><i class="ph ph-pencil-simple"></i></button>
+        <button type="button" class="icon-btn icon-btn--sm is-danger" data-post="{% url 'invitaciones:elemento_eliminar' 'lugares' u.pk %}" data-confirm="¿Quitar “{{ u.nombre_visible }}”?" data-danger data-confirm-button="Quitar" aria-label="Eliminar"><i class="ph ph-trash"></i></button>
     </div>
 </div>
 {% empty %}
-<div class="lista-vacia"><i class="ri-map-pin-add-line"></i>Agrega dónde será la ceremonia, la recepción o la fiesta.</div>
+<div class="lista-vacia"><i class="ph ph-map-pin-plus"></i>Agrega dónde será la ceremonia, la recepción o la fiesta.</div>
 {% endfor %}

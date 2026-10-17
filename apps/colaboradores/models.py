@@ -60,13 +60,13 @@ class Colaborador(models.Model):
         return reverse('colaboradores:detalle', args=[self.pk])
 
     ICONOS = {
-        'sonido': 'ri-headphone-line',
-        'agencia': 'ri-briefcase-4-line',
-        'salon': 'ri-building-2-line',
-        'foto': 'ri-camera-3-line',
-        'banquete': 'ri-restaurant-2-line',
-        'decoracion': 'ri-flower-line',
-        'otro': 'ri-store-2-line',
+        'sonido': 'ph ph-headphones',
+        'agencia': 'ph ph-briefcase',
+        'salon': 'ph ph-buildings',
+        'foto': 'ph ph-camera',
+        'banquete': 'ph ph-fork-knife',
+        'decoracion': 'ph ph-flower',
+        'otro': 'ph ph-storefront',
     }
 
     @property

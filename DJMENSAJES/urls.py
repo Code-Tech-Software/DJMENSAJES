@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.shortcuts import redirect
+from django.templatetags.static import static as url_estatica
 from django.urls import include, path
 
 admin.site.site_header = 'Grupo EM · Administración'
@@ -9,6 +11,7 @@ admin.site.index_title = 'Panel técnico'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('favicon.ico', lambda request: redirect(url_estatica('img/favicon.ico'), permanent=True)),
 
     # Panel interno
     path('', include('apps.core.urls')),

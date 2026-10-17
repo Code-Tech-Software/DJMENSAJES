@@ -14,37 +14,37 @@
 {% block content %}
 <div class="page-head">
     <div class="page-head__title">
-        <div class="breadcrumb"><a href="{{ evento.get_absolute_url }}">{{ evento.nombre_evento }}</a><i class="ri-arrow-right-s-line"></i>Entrada</div>
+        <div class="breadcrumb"><a href="{{ evento.get_absolute_url }}">{{ evento.nombre_evento }}</a><i class="ph ph-caret-right"></i>Entrada</div>
         <h1>Registro de entrada</h1>
         <p>Busca al invitado o escanea su pase QR con la cámara del celular.</p>
     </div>
-    <div class="page-head__actions"><a class="btn" href="{% url 'invitaciones:panel' evento.pk %}"><i class="ri-mail-open-line"></i>Invitación</a></div>
+    <div class="page-head__actions"><a class="btn" href="{% url 'invitaciones:panel' evento.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a></div>
 </div>
 
 <div class="grid grid-3 mb-3">
-    <div class="card card--pad row"><span class="stat__icon tone-success"><i class="ri-door-open-line"></i></span><div><div class="ci-counter" id="c-llegaron">{{ resumen.llegaron|default:0 }}</div><div class="small muted">invitaciones registradas</div></div></div>
-    <div class="card card--pad row"><span class="stat__icon"><i class="ri-group-line"></i></span><div><div class="ci-counter"><span id="c-pases">{{ resumen.pases_llegaron|default:0 }}</span><small class="muted" style="font-size:18px"> / {{ resumen.pases_confirmados|default:0 }}</small></div><div class="small muted">personas dentro / confirmadas</div></div></div>
-    <div class="card card--pad row"><span class="stat__icon tone-live"><i class="ri-qr-scan-2-line"></i></span><div class="small text-2">Al escanear el pase con la cámara se abre la ficha del invitado para registrarlo en un toque.</div></div>
+    <div class="card card--pad row"><span class="stat__icon tone-success"><i class="ph ph-door-open"></i></span><div><div class="ci-counter" id="c-llegaron">{{ resumen.llegaron|default:0 }}</div><div class="small muted">invitaciones registradas</div></div></div>
+    <div class="card card--pad row"><span class="stat__icon"><i class="ph ph-users"></i></span><div><div class="ci-counter"><span id="c-pases">{{ resumen.pases_llegaron|default:0 }}</span><small class="muted" style="font-size:18px"> / {{ resumen.pases_confirmados|default:0 }}</small></div><div class="small muted">personas dentro / confirmadas</div></div></div>
+    <div class="card card--pad row"><span class="stat__icon tone-live"><i class="ph ph-scan"></i></span><div class="small text-2">Al escanear el pase con la cámara se abre la ficha del invitado para registrarlo en un toque.</div></div>
 </div>
 
 <div class="card">
     <div style="padding:16px 18px;border-bottom:1px solid var(--border)">
-        <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" id="ci-buscar" placeholder="Buscar invitado o mesa…" autofocus></div>
+        <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" id="ci-buscar" placeholder="Buscar invitado o mesa…" autofocus></div>
     </div>
     <div id="ci-lista">
         {% for i in invitados %}
         <div class="ci-item {% if i.check_in_en %}is-in{% endif %}" data-nombre="{{ i.nombre|lower }} {{ i.mesa|lower }}">
-            {% if i.check_in_en %}<span class="avatar" style="background:var(--success-soft);color:var(--success)"><i class="ri-check-line"></i></span>{% else %}<span class="avatar">{{ i.nombre|iniciales }}</span>{% endif %}
+            {% if i.check_in_en %}<span class="avatar" style="background:var(--success-soft);color:var(--success)"><i class="ph ph-check"></i></span>{% else %}<span class="avatar">{{ i.nombre|iniciales }}</span>{% endif %}
             <div class="grow" style="min-width:0">
                 <div class="strong truncate">{{ i.nombre }}</div>
                 <div class="small muted">{% if i.estado == 'confirmado' %}{{ i.pases_confirmados }} pase{{ i.pases_confirmados|pluralize }}{% else %}{{ i.pases }} pase{{ i.pases|pluralize }} · sin confirmar{% endif %}{% if i.mesa %} · Mesa {{ i.mesa }}{% endif %}</div>
             </div>
             <button class="btn ci-btn {% if not i.check_in_en %}btn--primary{% endif %}" data-checkin="{% url 'invitaciones:checkin_marcar' i.pk %}">
-                {% if i.check_in_en %}<i class="ri-check-double-line"></i>{{ i.check_in_en|time:"H:i" }}{% else %}<i class="ri-login-box-line"></i>Registrar{% endif %}
+                {% if i.check_in_en %}<i class="ph ph-checks"></i>{{ i.check_in_en|time:"H:i" }}{% else %}<i class="ph ph-sign-in"></i>Registrar{% endif %}
             </button>
         </div>
         {% empty %}
-        {% include 'components/vacio.html' with icono='ri-user-heart-line' titulo='Sin invitados' texto='Agrega invitados desde el panel de la invitación.' %}
+        {% include 'components/vacio.html' with icono='ph ph-user-list' titulo='Sin invitados' texto='Agrega invitados desde el panel de la invitación.' %}
         {% endfor %}
     </div>
 </div>
@@ -71,9 +71,9 @@
                 const r = await EM.post(btn.dataset.checkin, datos);
                 item.classList.toggle('is-in', r.llego);
                 btn.classList.toggle('btn--primary', !r.llego);
-                btn.innerHTML = r.llego ? `<i class="ri-check-double-line"></i>${r.hora}` : '<i class="ri-login-box-line"></i>Registrar';
+                btn.innerHTML = r.llego ? `<i class="ph ph-checks"></i>${r.hora}` : '<i class="ph ph-sign-in"></i>Registrar';
                 const av = item.querySelector('.avatar');
-                if (r.llego) { av.style.cssText = 'background:var(--success-soft);color:var(--success)'; av.innerHTML = '<i class="ri-check-line"></i>'; }
+                if (r.llego) { av.style.cssText = 'background:var(--success-soft);color:var(--success)'; av.innerHTML = '<i class="ph ph-check"></i>'; }
                 document.getElementById('c-llegaron').textContent = r.llegaron;
                 document.getElementById('c-pases').textContent = r.pases_llegaron;
                 if (r.llego) EM.toast('Entrada registrada');

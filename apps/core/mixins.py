@@ -43,7 +43,7 @@ class FormularioModalMixin:
     template_modal = None
     titulo = ''
     subtitulo = ''
-    icono = 'ri-edit-2-line'
+    icono = 'ph ph-pencil-simple'
     tamano = ''
     texto_boton = 'Guardar'
     mensaje_exito = 'Cambios guardados.'

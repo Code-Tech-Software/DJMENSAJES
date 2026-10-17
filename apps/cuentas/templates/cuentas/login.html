@@ -21,17 +21,17 @@
         <div class="feed">
             <div class="feed__track">
                 {% for _ in "12" %}
-                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ri-music-2-line"></i></div>
+                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ph ph-music-notes"></i></div>
                     <div><strong>Mesa 7 pidió una canción</strong><p>“Payaso de Rodeo” · Caballo Dorado</p></div></div>
-                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ri-user-follow-line"></i></div>
+                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ph ph-user-check"></i></div>
                     <div><strong>Familia Pérez confirmó</strong><p>4 pases · Mesa 12</p></div></div>
-                <div class="bubble bubble--hi"><div class="bubble__icon"><i class="ri-chat-heart-line"></i></div>
+                <div class="bubble bubble--hi"><div class="bubble__icon"><i class="ph ph-chat-teardrop-text"></i></div>
                     <div><strong>Saludo para los novios</strong><p>“¡Que vivan Ana y Luis! Los queremos” — Tía Rosy</p></div></div>
-                <div class="bubble bubble--vip"><div class="bubble__icon"><i class="ri-vip-crown-2-line"></i></div>
+                <div class="bubble bubble--vip"><div class="bubble__icon"><i class="ph ph-crown-simple"></i></div>
                     <div><strong>VIP · Padrinos</strong><p>“El Triste” para el vals de los novios</p></div></div>
-                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ri-disc-line"></i></div>
+                <div class="bubble bubble--song"><div class="bubble__icon"><i class="ph ph-vinyl-record"></i></div>
                     <div><strong>Sofía pidió una canción</strong><p>“Tusa” · Karol G</p></div></div>
-                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ri-qr-scan-2-line"></i></div>
+                <div class="bubble bubble--ok"><div class="bubble__icon"><i class="ph ph-scan"></i></div>
                     <div><strong>Entrada registrada</strong><p>Familia Ruiz llegó con 3 pases</p></div></div>
                 {% endfor %}
             </div>
@@ -40,15 +40,15 @@
         <div class="scene__foot">
             <div class="eq"><span></span><span></span><span></span><span></span><span></span></div>
             <div class="scene__pills">
-                <span><i class="ri-mail-open-line"></i>Invitaciones digitales</span>
-                <span><i class="ri-slideshow-3-line"></i>Pantalla en vivo</span>
-                <span><i class="ri-headphone-line"></i>Panel DJ</span>
+                <span><i class="ph ph-envelope-open"></i>Invitaciones digitales</span>
+                <span><i class="ph ph-projector-screen"></i>Pantalla en vivo</span>
+                <span><i class="ph ph-headphones"></i>Panel DJ</span>
             </div>
         </div>
     </section>
 
     <section class="access">
-        <button class="icon-btn icon-btn--bordered theme-float" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ri-moon-clear-line"></i></button>
+        <button class="icon-btn icon-btn--bordered theme-float" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
 
         <div class="access__card">
             <div class="access__badge"><img src="{% static 'img/isotipo.png' %}" alt=""></div>
@@ -57,7 +57,7 @@
 
             {% if form.non_field_errors %}
             <div class="alert alert--danger access__error mb-3" role="alert">
-                <i class="ri-error-warning-line"></i>
+                <i class="ph ph-warning-circle"></i>
                 <div>{{ form.non_field_errors.0 }}</div>
             </div>
             {% endif %}
@@ -69,7 +69,7 @@
                 <div class="field">
                     <label class="field__label" for="id_username">Usuario</label>
                     <div class="field__control has-icon">
-                        <i class="ri-user-3-line field__icon"></i>
+                        <i class="ph ph-user field__icon"></i>
                         {{ form.username }}
                     </div>
                 </div>
@@ -77,13 +77,13 @@
                 <div class="field">
                     <label class="field__label" for="id_password">Contraseña</label>
                     <div class="field__control has-icon">
-                        <i class="ri-lock-2-line field__icon"></i>
+                        <i class="ph ph-lock field__icon"></i>
                         {{ form.password }}
                         <button type="button" class="icon-btn icon-btn--sm pass-toggle" id="pass-toggle" aria-label="Mostrar contraseña">
-                            <i class="ri-eye-line"></i>
+                            <i class="ph ph-eye"></i>
                         </button>
                     </div>
-                    <small class="caps" id="caps"><i class="ri-arrow-up-circle-line"></i>Bloq Mayús está activado</small>
+                    <small class="caps" id="caps"><i class="ph ph-arrow-circle-up"></i>Bloq Mayús está activado</small>
                 </div>
 
                 <div class="access__row">
@@ -95,17 +95,17 @@
                 </div>
 
                 <div class="alert access__help" id="ayuda">
-                    <i class="ri-customer-service-2-line"></i>
+                    <i class="ph ph-headset"></i>
                     <div><strong>Te ayudamos</strong>Pide a un administrador que la restablezca desde <em>Equipo</em>. Después podrás cambiarla en tu perfil.</div>
                 </div>
 
                 <button type="submit" class="btn btn--primary btn--lg" id="login-btn">
-                    Entrar al panel <i class="ri-arrow-right-line"></i>
+                    Entrar al panel <i class="ph ph-arrow-right"></i>
                 </button>
             </form>
         </div>
 
-        <p class="access__foot">© {% now "Y" %} Grupo EM · Plataforma de eventos</p>
+        <p class="access__foot">© {% now "Y" %} {{ ajustes.nombre }} · Plataforma de eventos</p>
     </section>
 </div>
 {% endblock %}
@@ -119,7 +119,7 @@
         toggle.addEventListener('click', () => {
             const visible = pass.type === 'text';
             pass.type = visible ? 'password' : 'text';
-            toggle.innerHTML = `<i class="${visible ? 'ri-eye-line' : 'ri-eye-off-line'}"></i>`;
+            toggle.innerHTML = `<i class="${visible ? 'ph ph-eye' : 'ph ph-eye-slash'}"></i>`;
             pass.focus();
         });
         const caps = document.getElementById('caps');

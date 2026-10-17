@@ -67,7 +67,7 @@ class ColaboradorCrear(CatalogosRequeridoMixin, FormularioModalMixin, CreateView
     template_modal = 'colaboradores/partials/form.html'
     titulo = 'Nuevo colaborador'
     subtitulo = 'Registra una sub-agencia o proveedor aliado.'
-    icono = 'ri-team-line'
+    icono = 'ph ph-users-three'
     tamano = 'lg'
     texto_boton = 'Registrar'
     mensaje_exito = 'Colaborador registrado.'
@@ -78,7 +78,7 @@ class ColaboradorEditar(CatalogosRequeridoMixin, FormularioModalMixin, UpdateVie
     form_class = ColaboradorForm
     template_modal = 'colaboradores/partials/form.html'
     titulo = 'Editar colaborador'
-    icono = 'ri-team-line'
+    icono = 'ph ph-users-three'
     tamano = 'lg'
     mensaje_exito = 'Colaborador actualizado.'
 

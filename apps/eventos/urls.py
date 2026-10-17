@@ -14,6 +14,7 @@ urlpatterns = [
     path('<int:pk>/', views.detalle, name='detalle'),
     path('<int:pk>/vista-rapida/', views.vista_rapida, name='vista_rapida'),
     path('<int:pk>/editar/', views.EventoEditar.as_view(), name='editar'),
+    path('<int:pk>/proyector/', views.ProyectorEditar.as_view(), name='proyector'),
     path('<int:pk>/eliminar/', views.eliminar, name='eliminar'),
     path('<int:pk>/duplicar/', views.duplicar, name='duplicar'),
     path('<int:pk>/interaccion/', views.alternar_estado, name='alternar_estado'),

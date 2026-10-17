@@ -10,19 +10,19 @@
         <div class="date-block ev-card__date"><small>{{ e.fecha_inicio_evento|date:"M" }}</small><strong>{{ e.fecha_inicio_evento|date:"d" }}</strong></div>
     </a>
     <div class="ev-card__menu dropdown">
-        <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones" style="background:rgba(255,255,255,.9);color:#0e1726"><i class="ri-more-2-fill"></i></button>
+        <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ph ph-dots-three-vertical"></i></button>
         <div class="dropdown__menu">
-            <a class="menu-item" href="{{ e.get_absolute_url }}"><i class="ri-eye-line"></i>Ver detalle</a>
-            <button class="menu-item" data-modal="{% url 'eventos:editar' e.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
-            <a class="menu-item" href="{% url 'invitaciones:panel' e.pk %}"><i class="ri-mail-open-line"></i>Invitación e invitados</a>
+            <a class="menu-item" href="{{ e.get_absolute_url }}"><i class="ph ph-eye"></i>Ver detalle</a>
+            <button class="menu-item" data-modal="{% url 'eventos:editar' e.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
+            <a class="menu-item" href="{% url 'invitaciones:panel' e.pk %}"><i class="ph ph-envelope-open"></i>Invitación e invitados</a>
             <div class="menu-sep"></div>
-            <a class="menu-item" href="{{ e.url_pantalla }}" target="_blank"><i class="ri-qr-code-line"></i>Pantalla QR</a>
-            <a class="menu-item" href="{{ e.url_dj }}" target="_blank"><i class="ri-headphone-line"></i>Panel DJ</a>
-            <button class="menu-item" data-copy="{{ e.url_invitados }}"><i class="ri-link"></i>Copiar enlace invitados</button>
+            <a class="menu-item" href="{{ e.url_pantalla }}" target="_blank"><i class="ph ph-qr-code"></i>Pantalla QR</a>
+            <a class="menu-item" href="{{ e.url_dj }}" target="_blank"><i class="ph ph-headphones"></i>Panel DJ</a>
+            <button class="menu-item" data-copy="{{ e.url_invitados }}"><i class="ph ph-link"></i>Copiar enlace invitados</button>
             <div class="menu-sep"></div>
-            <button class="menu-item" data-post="{% url 'eventos:duplicar' e.pk %}" data-confirm="¿Duplicar este evento?" data-confirm-text="Se copiarán los datos y el itinerario como una nueva cotización."><i class="ri-file-copy-line"></i>Duplicar</button>
+            <button class="menu-item" data-post="{% url 'eventos:duplicar' e.pk %}" data-confirm="¿Duplicar este evento?" data-confirm-text="Se copiarán los datos y el itinerario como una nueva cotización."><i class="ph ph-copy"></i>Duplicar</button>
             {% if ve_todo or e.creado_por_id == user.pk %}
-            <button class="menu-item menu-item--danger" data-post="{% url 'eventos:eliminar' e.pk %}" data-danger data-confirm="¿Eliminar “{{ e.nombre_evento }}”?" data-confirm-text="Se eliminarán también sus invitados, mensajes y pagos. Esta acción no se puede deshacer."><i class="ri-delete-bin-6-line"></i>Eliminar</button>
+            <button class="menu-item menu-item--danger" data-post="{% url 'eventos:eliminar' e.pk %}" data-danger data-confirm="¿Eliminar “{{ e.nombre_evento }}”?" data-confirm-text="Se eliminarán también sus invitados, mensajes y pagos. Esta acción no se puede deshacer."><i class="ph ph-trash"></i>Eliminar</button>
             {% endif %}
         </div>
     </div>
@@ -31,9 +31,9 @@
             <a href="{{ e.get_absolute_url }}" class="ev-card__title">{{ e.nombre_evento }}</a>
         </div>
         <div class="ev-card__meta">
-            <span><i class="ri-time-line"></i>{{ e.fecha_inicio_evento|date:"D j M · H:i" }} h</span>
-            {% if e.lugar %}<span class="truncate"><i class="ri-map-pin-2-line"></i>{{ e.lugar }}</span>{% endif %}
-            {% if e.colaborador %}<span class="truncate"><i class="ri-store-2-line"></i>{{ e.colaborador }}</span>{% endif %}
+            <span><i class="ph ph-clock"></i>{{ e.fecha_inicio_evento|date:"D j M · H:i" }} h</span>
+            {% if e.lugar %}<span class="truncate"><i class="ph ph-map-pin"></i>{{ e.lugar }}</span>{% endif %}
+            {% if e.colaborador %}<span class="truncate"><i class="ph ph-storefront"></i>{{ e.colaborador }}</span>{% endif %}
         </div>
         {% if e.n_invitados %}
         <div>
@@ -48,7 +48,7 @@
         </span>
         <div class="row" style="gap:6px">
             {% if e.etapa == 'cotizacion' %}<span class="chip chip--warning">Cotización</span>{% endif %}
-            {% if not e.estado %}<span class="chip chip--muted" data-tip="Interacción en vivo pausada"><i class="ri-pause-circle-line"></i></span>{% endif %}
+            {% if not e.estado %}<span class="chip chip--muted" data-tip="Interacción en vivo pausada"><i class="ph ph-pause-circle"></i></span>{% endif %}
         </div>
     </div>
 </article>

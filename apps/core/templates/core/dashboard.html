@@ -9,45 +9,45 @@
         <p>{% if stats.proximos_30 %}Tienes <strong>{{ stats.proximos_30 }} evento{{ stats.proximos_30|pluralize }}</strong> en los próximos 30 días.{% else %}No hay eventos en los próximos 30 días. ¡Buen momento para registrar uno!{% endif %}</p>
     </div>
     <div class="page-head__actions">
-        <a class="btn" href="{% url 'eventos:calendario' %}"><i class="ri-calendar-2-line"></i>Calendario</a>
-        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ri-add-line"></i>Nuevo evento</button>
+        <a class="btn" href="{% url 'eventos:calendario' %}"><i class="ph ph-calendar"></i>Calendario</a>
+        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo evento</button>
     </div>
 </div>
 
 {% if en_curso %}
 <div class="alert alert--live mb-3 reveal">
-    <i class="ri-broadcast-line"></i>
+    <i class="ph ph-broadcast"></i>
     <div class="grow"><strong>{{ en_curso|length }} evento{{ en_curso|pluralize }} en curso ahora mismo</strong>
         {% for e in en_curso %}<a class="text-brand strong" href="{{ e.get_absolute_url }}">{{ e.nombre_evento }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
-    <a class="btn btn--live btn--sm" href="{% url 'eventos:centro_envivo' %}"><i class="ri-headphone-line"></i>Centro en vivo</a>
+    <a class="btn btn--live btn--sm" href="{% url 'eventos:centro_envivo' %}"><i class="ph ph-headphones"></i>Centro en vivo</a>
 </div>
 {% endif %}
 
 <div class="grid grid-4 reveal">
     <div class="card stat">
-        <div class="stat__top"><span class="stat__label">Próximos 30 días</span><span class="stat__icon"><i class="ri-calendar-event-line"></i></span></div>
+        <div class="stat__top"><span class="stat__label">Próximos 30 días</span><span class="stat__icon"><i class="ph ph-calendar-dots"></i></span></div>
         <div class="stat__value">{{ stats.proximos_30 }}</div>
         <div class="stat__meta">{{ stats.este_mes }} este mes · {{ stats.total_eventos }} en total</div>
     </div>
     <div class="card stat tone-success">
-        <div class="stat__top"><span class="stat__label">Pases confirmados</span><span class="stat__icon"><i class="ri-user-follow-line"></i></span></div>
+        <div class="stat__top"><span class="stat__label">Pases confirmados</span><span class="stat__icon"><i class="ph ph-user-check"></i></span></div>
         <div class="stat__value">{{ stats.confirmados|intcomma }}<small> / {{ stats.pases|intcomma }}</small></div>
         <div class="stat__meta">{{ stats.pendientes_rsvp }} invitación{{ stats.pendientes_rsvp|pluralize:"es" }} sin responder</div>
     </div>
     <div class="card stat tone-live">
-        <div class="stat__top"><span class="stat__label">Mensajes en vivo</span><span class="stat__icon"><i class="ri-chat-voice-line"></i></span></div>
+        <div class="stat__top"><span class="stat__label">Mensajes en vivo</span><span class="stat__icon"><i class="ph ph-chats"></i></span></div>
         <div class="stat__value">{{ stats.mensajes|intcomma }}</div>
-        <div class="stat__meta"><i class="ri-music-2-line"></i>{{ stats.canciones }} canciones · últimos 30 días</div>
+        <div class="stat__meta"><i class="ph ph-music-notes"></i>{{ stats.canciones }} canciones · últimos 30 días</div>
     </div>
     {% if stats.por_cobrar is not None %}
     <div class="card stat tone-warning">
-        <div class="stat__top"><span class="stat__label">Por cobrar</span><span class="stat__icon"><i class="ri-wallet-3-line"></i></span></div>
+        <div class="stat__top"><span class="stat__label">Por cobrar</span><span class="stat__icon"><i class="ph ph-wallet"></i></span></div>
         <div class="stat__value">{{ stats.por_cobrar|moneda }}</div>
         <div class="stat__meta">Saldo de eventos confirmados próximos</div>
     </div>
     {% else %}
     <div class="card stat tone-gold">
-        <div class="stat__top"><span class="stat__label">Este mes</span><span class="stat__icon"><i class="ri-star-smile-line"></i></span></div>
+        <div class="stat__top"><span class="stat__label">Este mes</span><span class="stat__icon"><i class="ph ph-star"></i></span></div>
         <div class="stat__value">{{ stats.este_mes }}</div>
         <div class="stat__meta">Eventos programados en {% now "F" %}</div>
     </div>
@@ -63,8 +63,8 @@
             <h2>{{ destacado.nombre_evento }}</h2>
             <div class="hero__meta">
                 <span><i class="{{ destacado.icono }}"></i>{{ destacado.tipo_corto }}</span>
-                <span><i class="ri-time-line"></i>{{ destacado.fecha_inicio_evento|date:"l j \d\e F · H:i" }} h</span>
-                {% if destacado.lugar %}<span><i class="ri-map-pin-2-line"></i>{{ destacado.lugar }}</span>{% endif %}
+                <span><i class="ph ph-clock"></i>{{ destacado.fecha_inicio_evento|date:"l j \d\e F · H:i" }} h</span>
+                {% if destacado.lugar %}<span><i class="ph ph-map-pin"></i>{{ destacado.lugar }}</span>{% endif %}
             </div>
             {% if destacado.estado_temporal == 'proximo' %}
             <div class="countdown" data-countdown="{{ destacado.fecha_inicio_evento|date:'c' }}">
@@ -75,16 +75,16 @@
             </div>
             {% else %}<div style="height:16px"></div>{% endif %}
             <div class="row row-wrap">
-                <a class="btn btn--primary" href="{{ destacado.get_absolute_url }}"><i class="ri-eye-line"></i>Ver evento</a>
-                <a class="btn" href="{% url 'invitaciones:panel' destacado.pk %}"><i class="ri-mail-open-line"></i>Invitación</a>
-                <a class="btn" href="{{ destacado.url_pantalla }}" target="_blank"><i class="ri-qr-code-line"></i>Pantalla QR</a>
-                <a class="btn" href="{{ destacado.url_dj }}" target="_blank"><i class="ri-headphone-line"></i>Panel DJ</a>
+                <a class="btn btn--primary" href="{{ destacado.get_absolute_url }}"><i class="ph ph-eye"></i>Ver evento</a>
+                <a class="btn" href="{% url 'invitaciones:panel' destacado.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a>
+                <a class="btn" href="{{ destacado.url_pantalla }}" target="_blank"><i class="ph ph-qr-code"></i>Pantalla QR</a>
+                <a class="btn" href="{{ destacado.url_dj }}" target="_blank"><i class="ph ph-headphones"></i>Panel DJ</a>
             </div>
         </div>
         {% else %}
         <div class="card">
             {% url 'eventos:crear' as url_crear %}
-            {% include 'components/vacio.html' with icono='ri-calendar-event-line' titulo='Aún no hay eventos próximos' texto='Registra tu primer evento: genera su invitación digital, el QR para invitados y el panel del DJ automáticamente.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
+            {% include 'components/vacio.html' with icono='ph ph-calendar-dots' titulo='Aún no hay eventos próximos' texto='Registra tu primer evento: genera su invitación digital, el QR para invitados y el panel del DJ automáticamente.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
         </div>
         {% endif %}
 
@@ -119,8 +119,8 @@
 
         <div class="card">
             <div class="card__head">
-                <div class="card-title"><span class="ico"><i class="ri-calendar-schedule-line"></i></span><div><h3>Agenda</h3><p>Siguientes eventos</p></div></div>
-                <a class="btn btn--ghost btn--sm" href="{% url 'eventos:lista' %}">Ver todos <i class="ri-arrow-right-line"></i></a>
+                <div class="card-title"><span class="ico"><i class="ph ph-calendar-dot"></i></span><div><h3>Agenda</h3><p>Siguientes eventos</p></div></div>
+                <a class="btn btn--ghost btn--sm" href="{% url 'eventos:lista' %}">Ver todos <i class="ph ph-arrow-right"></i></a>
             </div>
             <div class="list mt-2">
                 {% for e in agenda %}
@@ -143,7 +143,7 @@
     <div class="stack">
         {% if recordatorios %}
         <div class="card card--pad" style="border-color:color-mix(in srgb,var(--warning) 35%,transparent)">
-            <div class="card-title mb-2"><span class="ico" style="background:var(--warning-soft);color:var(--warning)"><i class="ri-alarm-warning-line"></i></span><div><h3 style="font-size:15px">Próximas 48 horas</h3><p class="muted small">Revisa que todo esté listo</p></div></div>
+            <div class="card-title mb-2"><span class="ico" style="background:var(--warning-soft);color:var(--warning)"><i class="ph ph-siren"></i></span><div><h3 style="font-size:15px">Próximas 48 horas</h3><p class="muted small">Revisa que todo esté listo</p></div></div>
             {% for e in recordatorios %}
             <a class="row between mt-2" href="{{ e.get_absolute_url }}">
                 <span class="truncate strong small">{{ e.nombre_evento }}</span>
@@ -154,7 +154,7 @@
         {% endif %}
 
         <div class="card">
-            <div class="card__head"><div class="card-title"><span class="ico" style="background:var(--live-soft);color:var(--live)"><i class="ri-pulse-line"></i></span><div><h3>Actividad reciente</h3><p>Confirmaciones, VIP y registros</p></div></div></div>
+            <div class="card__head"><div class="card-title"><span class="ico" style="background:var(--live-soft);color:var(--live)"><i class="ph ph-pulse"></i></span><div><h3>Actividad reciente</h3><p>Confirmaciones, VIP y registros</p></div></div></div>
             <div class="card__body">
                 {% for a in actividad %}
                 <a class="feed-item {{ a.tono }}" href="{{ a.url }}">
@@ -162,19 +162,19 @@
                     <div><div class="feed-item__text">{{ a.texto|safe }}</div><div class="feed-item__time">{{ a.fecha|hace }}</div></div>
                 </a>
                 {% empty %}
-                <div class="empty" style="padding:20px 0"><div class="empty__art" style="width:60px;height:60px;font-size:26px"><i class="ri-pulse-line"></i></div><p class="small">Aquí verás confirmaciones de invitados, mensajes VIP y eventos nuevos.</p></div>
+                <div class="empty" style="padding:20px 0"><div class="empty__art" style="width:60px;height:60px;font-size:26px"><i class="ph ph-pulse"></i></div><p class="small">Aquí verás confirmaciones de invitados, mensajes VIP y eventos nuevos.</p></div>
                 {% endfor %}
             </div>
         </div>
 
         <div class="card card--pad">
-            <div class="card-title mb-2"><span class="ico"><i class="ri-flashlight-line"></i></span><div><h3 style="font-size:15px">Accesos rápidos</h3></div></div>
+            <div class="card-title mb-2"><span class="ico"><i class="ph ph-lightning"></i></span><div><h3 style="font-size:15px">Accesos rápidos</h3></div></div>
             <div class="grid grid-2" style="gap:10px">
-                <button class="btn btn--soft" data-modal="{% url 'eventos:crear' %}"><i class="ri-add-circle-line"></i>Evento</button>
-                <a class="btn btn--soft" href="{% url 'invitaciones:indice' %}"><i class="ri-mail-send-line"></i>Invitaciones</a>
+                <button class="btn btn--soft" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus-circle"></i>Evento</button>
+                <a class="btn btn--soft" href="{% url 'invitaciones:indice' %}"><i class="ph ph-paper-plane-right"></i>Invitaciones</a>
                 {% if ve_todo %}
-                <button class="btn btn--soft" data-modal="{% url 'colaboradores:crear' %}"><i class="ri-team-line"></i>Colaborador</button>
-                <button class="btn btn--soft" data-modal="{% url 'banners:crear' %}"><i class="ri-image-add-line"></i>Banner</button>
+                <button class="btn btn--soft" data-modal="{% url 'colaboradores:crear' %}"><i class="ph ph-users-three"></i>Colaborador</button>
+                <button class="btn btn--soft" data-modal="{% url 'banners:crear' %}"><i class="ph ph-image"></i>Banner</button>
                 {% endif %}
             </div>
         </div>

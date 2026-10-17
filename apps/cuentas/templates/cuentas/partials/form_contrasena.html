@@ -2,8 +2,8 @@
 {% load ui %}
 {% block cuerpo %}
 <div class="stack" style="gap:16px">
-    {% if form.old_password %}{% campo form.old_password icono="ri-lock-line" %}{% endif %}
-    {% campo form.new_password1 icono="ri-lock-password-line" %}
-    {% campo form.new_password2 icono="ri-checkbox-circle-line" %}
+    {% if form.old_password %}{% campo form.old_password icono="ph ph-lock-simple" %}{% endif %}
+    {% campo form.new_password1 icono="ph ph-password" %}
+    {% campo form.new_password2 icono="ph ph-check-circle" %}
 </div>
 {% endblock %}

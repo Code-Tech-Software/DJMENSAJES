@@ -2,18 +2,18 @@
 {% load ui %}
 {% block cuerpo %}
 <div class="form-section">
-    <div class="form-section__title"><i class="ri-id-card-line"></i>Datos personales</div>
+    <div class="form-section__title"><i class="ph ph-identification-card"></i>Datos personales</div>
     <div class="form-grid">
-        {% campo form.first_name icono="ri-user-3-line" %}
+        {% campo form.first_name icono="ph ph-user" %}
         {% campo form.last_name %}
-        {% campo form.email icono="ri-mail-line" %}
-        {% campo form.telefono icono="ri-phone-line" %}
-        {% campo form.cargo icono="ri-briefcase-4-line" clase="span-2" %}
+        {% campo form.email icono="ph ph-envelope-simple" %}
+        {% campo form.telefono icono="ph ph-phone" %}
+        {% campo form.cargo icono="ph ph-briefcase" clase="span-2" %}
     </div>
 </div>
 
 <div class="form-section">
-    <div class="form-section__title"><i class="ri-shield-keyhole-line"></i>Rol y acceso</div>
+    <div class="form-section__title"><i class="ph ph-lock-key"></i>Rol y acceso</div>
     <div class="field {% if form.rol.errors %}field--error{% endif %}">
         <span class="field__label">Rol<span class="req">*</span></span>
         <div class="tiles tiles--compact" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))">
@@ -21,9 +21,9 @@
             <label class="tile">
                 {{ radio.tag }}
                 <span class="tile__body">
-                    {% if radio.data.value == 'admin' %}<i class="ri-shield-star-line" style="--tipo:var(--live)"></i>
-                    {% elif radio.data.value == 'coordinador' %}<i class="ri-compass-3-line"></i>
-                    {% else %}<i class="ri-store-2-line" style="--tipo:var(--t-fiesta)"></i>{% endif %}
+                    {% if radio.data.value == 'admin' %}<i class="ph ph-shield-star" style="--tipo:var(--live)"></i>
+                    {% elif radio.data.value == 'coordinador' %}<i class="ph ph-compass"></i>
+                    {% else %}<i class="ph ph-storefront" style="--tipo:var(--t-fiesta)"></i>{% endif %}
                     <span>
                         <strong style="display:block">{{ radio.choice_label }}</strong>
                         <small class="muted" style="font-weight:500">
@@ -36,21 +36,21 @@
             </label>
             {% endfor %}
         </div>
-        {% for e in form.rol.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+        {% for e in form.rol.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
     </div>
     <div class="form-grid mt-2">
-        {% campo form.colaborador icono="ri-store-2-line" clase="span-2" %}
-        {% campo form.username icono="ri-at-line" %}
+        {% campo form.colaborador icono="ph ph-storefront" clase="span-2" %}
+        {% campo form.username icono="ph ph-at" %}
         {% campo form.is_active %}
     </div>
 </div>
 
 <div class="form-section">
-    <div class="form-section__title"><i class="ri-key-2-line"></i>Contraseña
+    <div class="form-section__title"><i class="ph ph-key"></i>Contraseña
         {% if not form.es_nuevo %}<small>· déjala vacía para conservar la actual</small>{% endif %}</div>
     <div class="form-grid">
-        {% campo form.password1 icono="ri-lock-password-line" %}
-        {% campo form.password2 icono="ri-checkbox-circle-line" %}
+        {% campo form.password1 icono="ph ph-password" %}
+        {% campo form.password2 icono="ph ph-check-circle" %}
     </div>
 </div>
 {% endblock %}

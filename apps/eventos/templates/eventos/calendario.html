@@ -4,22 +4,22 @@
 {% block content %}
 <div class="page-head">
     <div class="page-head__title">
-        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ri-arrow-right-s-line"></i>Calendario</div>
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ph ph-caret-right"></i>Calendario</div>
         <h1 id="cal-titulo">Calendario</h1>
         <p>Haz clic en un día para registrar un evento, o en un evento para ver su resumen.</p>
     </div>
     <div class="page-head__actions">
         <div class="row">
-            <button class="icon-btn icon-btn--bordered" id="cal-prev" aria-label="Anterior"><i class="ri-arrow-left-s-line"></i></button>
+            <button class="icon-btn icon-btn--bordered" id="cal-prev" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
             <button class="btn" id="cal-hoy">Hoy</button>
-            <button class="icon-btn icon-btn--bordered" id="cal-next" aria-label="Siguiente"><i class="ri-arrow-right-s-line"></i></button>
+            <button class="icon-btn icon-btn--bordered" id="cal-next" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
         </div>
         <div class="segmented" id="cal-vistas">
             <button data-vista="dayGridMonth" aria-pressed="true">Mes</button>
             <button data-vista="timeGridWeek" aria-pressed="false">Semana</button>
             <button data-vista="listMonth" aria-pressed="false">Agenda</button>
         </div>
-        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ri-add-line"></i>Nuevo</button>
+        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo</button>
     </div>
 </div>
 

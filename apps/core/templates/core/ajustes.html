@@ -1,0 +1,205 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Ajustes{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ph ph-caret-right"></i>Ajustes</div>
+        <h1>Ajustes</h1>
+        <p>Cómo se ve la plataforma{% if form %}, los datos de tu negocio y cómo nacen los eventos nuevos{% endif %}.</p>
+    </div>
+</div>
+
+<div class="ajustes">
+    <div class="tabs mb-3" data-tabs data-tabs-hash>
+        <a href="#apariencia" class="tab {% if seccion_activa == 'apariencia' %}is-active{% endif %}" data-tab="apariencia"><i class="ph ph-palette"></i>Apariencia</a>
+        {% if form %}
+        <a href="#negocio" class="tab {% if seccion_activa == 'negocio' %}is-active{% endif %}" data-tab="negocio"><i class="ph ph-storefront"></i>Negocio</a>
+        <a href="#eventos" class="tab {% if seccion_activa == 'eventos' %}is-active{% endif %}" data-tab="eventos"><i class="ph ph-sparkle"></i>Eventos nuevos</a>
+        {% endif %}
+    </div>
+
+    {# ---------------- Apariencia (cada usuario, en su dispositivo) ---------------- #}
+    <section data-panel="apariencia">
+        <div class="card">
+            <div class="card__body">
+                <div class="ajuste">
+                    <span class="ajuste__ico"><i class="ph ph-sun"></i></span>
+                    <div class="ajuste__texto"><strong>Tema del panel</strong><small>Colores claros u oscuros en todas las pantallas de administración.</small></div>
+                    <div class="segmented" data-ajuste="tema">
+                        <button type="button" data-valor="light"><i class="ph ph-sun"></i>Claro</button>
+                        <button type="button" data-valor="dark"><i class="ph ph-moon-stars"></i>Oscuro</button>
+                    </div>
+                </div>
+                <div class="ajuste">
+                    <span class="ajuste__ico"><i class="ph ph-sidebar-simple"></i></span>
+                    <div class="ajuste__texto"><strong>Menú lateral</strong><small>Completo con nombres o compacto solo con íconos (en computadora).</small></div>
+                    <div class="segmented" data-ajuste="menu">
+                        <button type="button" data-valor="full">Completo</button>
+                        <button type="button" data-valor="min">Compacto</button>
+                    </div>
+                </div>
+                <div class="ajuste">
+                    <span class="ajuste__ico"><i class="ph ph-headphones"></i></span>
+                    <div class="ajuste__texto"><strong>Panel del DJ</strong><small>Cómo abre el panel en vivo; el DJ puede cambiarlo desde ahí.</small></div>
+                    <div class="segmented" data-ajuste="dj">
+                        <button type="button" data-valor="claro"><i class="ph ph-sun"></i>Claro</button>
+                        <button type="button" data-valor="oscuro"><i class="ph ph-moon-stars"></i>Oscuro</button>
+                    </div>
+                </div>
+                <div class="ajuste">
+                    <span class="ajuste__ico"><i class="ph ph-squares-four"></i></span>
+                    <div class="ajuste__texto"><strong>Lista de eventos</strong><small>Vista con la que se abre la sección Eventos.</small></div>
+                    <div class="segmented" data-ajuste="vista">
+                        <button type="button" data-valor="tarjetas"><i class="ph ph-grid-four"></i>Tarjetas</button>
+                        <button type="button" data-valor="tabla"><i class="ph ph-list-checks"></i>Tabla</button>
+                    </div>
+                </div>
+                <p class="ajustes__nota"><i class="ph ph-device-mobile"></i>Estas preferencias se guardan en este dispositivo y se aplican al instante.</p>
+            </div>
+        </div>
+    </section>
+
+    {% if form %}
+    <form method="post" novalidate id="form-ajustes">
+        {% csrf_token %}
+        <input type="hidden" name="seccion" value="{{ seccion_activa }}">
+        {% if form.non_field_errors %}<div class="alert alert--danger mb-3"><i class="ph ph-warning-circle"></i><div>{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+
+        {# ---------------- Negocio ---------------- #}
+        <section data-panel="negocio" hidden>
+            <div class="ajustes__columnas">
+                <div class="card">
+                    <div class="card__body">
+                        <div class="form-section">
+                            <div class="form-section__title"><i class="ph ph-storefront"></i>Marca</div>
+                            <div class="form-grid">
+                                {% campo form.nombre icono="ph ph-buildings" %}
+                                {% campo form.eslogan icono="ph ph-quotes" %}
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="form-section__title"><i class="ph ph-address-book"></i>Contacto</div>
+                            <div class="form-grid">
+                                {% campo form.whatsapp icono="ph ph-whatsapp-logo" %}
+                                {% campo form.telefono icono="ph ph-phone" %}
+                                {% campo form.email icono="ph ph-envelope-simple" %}
+                                {% campo form.sitio_web icono="ph ph-globe" %}
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <div class="form-section__title"><i class="ph ph-share-network"></i>Redes sociales</div>
+                            <div class="form-grid">
+                                {% campo form.instagram icono="ph ph-instagram-logo" %}
+                                {% campo form.facebook icono="ph ph-facebook-logo" %}
+                                {% campo form.tiktok icono="ph ph-tiktok-logo" clase="span-2" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="ajustes__previa">
+                    <p class="ajustes__previa-titulo"><i class="ph ph-eye"></i>Así lo ven los invitados</p>
+                    <div class="pie-muestra" id="pie-muestra">
+                        <strong class="pie-muestra__marca" data-m="nombre">{{ form.nombre.value|default:"Grupo EM" }}</strong>
+                        <p class="pie-muestra__eslogan" data-m="eslogan">{{ form.eslogan.value|default:"" }}</p>
+                        <span class="pie-muestra__cotizar" data-m="whatsapp"><i class="ph ph-whatsapp-logo"></i>Cotiza tu evento</span>
+                        <div class="pie-muestra__redes">
+                            <i class="ph ph-instagram-logo" data-m="instagram"></i>
+                            <i class="ph-fill ph-facebook-logo" data-m="facebook"></i>
+                            <i class="ph-fill ph-tiktok-logo" data-m="tiktok"></i>
+                        </div>
+                        <small class="pie-muestra__creditos">Experiencia en vivo por <span data-m="nombre">{{ form.nombre.value|default:"Grupo EM" }}</span></small>
+                    </div>
+                    <p class="ajustes__nota">Aparece en la pantalla de invitados de los eventos <strong>sin sub-agencia</strong>; las sub-agencias muestran su propia marca. El nombre también se usa en el menú, los créditos de las invitaciones y la orden de servicio.</p>
+                </aside>
+            </div>
+            <div class="ajustes__pie"><button type="submit" class="btn btn--primary"><i class="ph ph-check"></i>Guardar ajustes</button></div>
+        </section>
+
+        {# ---------------- Eventos nuevos ---------------- #}
+        <section data-panel="eventos" hidden>
+            <div class="card">
+                <div class="card__body">
+                    <div class="form-section">
+                        <div class="form-section__title"><i class="ph ph-broadcast"></i>Experiencia en vivo</div>
+                        <div class="form-grid">
+                            {% campo form.cooldown icono="ph ph-timer" %}
+                            {% campo form.mensaje_bienvenida icono="ph ph-hand-waving" %}
+                        </div>
+                        <div class="ajustes__switches">
+                            {% campo form.permitir_canciones %}
+                            {% campo form.permitir_saludos %}
+                            {% campo form.permitir_fotos %}
+                            {% campo form.moderar_pantalla %}
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section__title"><i class="ph ph-envelope-open"></i>Invitaciones</div>
+                        <div class="form-grid">
+                            {% campo form.plantilla icono="ph ph-palette" %}
+                            {% campo form.dias_limite_rsvp icono="ph ph-calendar-x" %}
+                        </div>
+                    </div>
+                    <div class="alert mt-3"><i class="ph ph-info"></i><div>Solo aplica a los eventos e invitaciones que se creen de aquí en adelante; los existentes conservan su configuración y se pueden ajustar uno por uno.</div></div>
+                </div>
+            </div>
+            <div class="ajustes__pie"><button type="submit" class="btn btn--primary"><i class="ph ph-check"></i>Guardar ajustes</button></div>
+        </section>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (() => {
+        const app = document.querySelector('.app');
+        const leer = (clave, defecto) => { try { return localStorage.getItem(clave) || defecto; } catch (e) { return defecto; } };
+        const guardar = (clave, valor) => { try { localStorage.setItem(clave, valor); } catch (e) { /* sin almacenamiento */ } };
+        const marcar = (nombre, valor) => document.querySelectorAll(`[data-ajuste="${nombre}"] [data-valor]`)
+            .forEach(b => b.setAttribute('aria-pressed', b.dataset.valor === valor));
+
+        // Cada preferencia: cómo leerla y cómo aplicarla al momento
+        const preferencias = {
+            tema: { actual: () => document.documentElement.dataset.theme, aplicar: v => EM.setTheme(v) },
+            menu: {
+                actual: () => (app.classList.contains('is-collapsed') ? 'min' : 'full'),
+                aplicar: v => { app.classList.toggle('is-collapsed', v === 'min'); guardar('em-sidebar', v); },
+            },
+            dj: { actual: () => leer('dj-tema', 'claro'), aplicar: v => guardar('dj-tema', v) },
+            vista: { actual: () => leer('em-vista-eventos', 'tarjetas'), aplicar: v => guardar('em-vista-eventos', v) },
+        };
+        Object.entries(preferencias).forEach(([nombre, p]) => {
+            marcar(nombre, p.actual());
+            document.querySelector(`[data-ajuste="${nombre}"]`).addEventListener('click', e => {
+                const b = e.target.closest('[data-valor]');
+                if (!b) return;
+                p.aplicar(b.dataset.valor);
+                marcar(nombre, b.dataset.valor);
+            });
+        });
+        // Si se cambia desde la barra superior, los botones lo reflejan
+        document.addEventListener('em:theme', e => marcar('tema', e.detail));
+        new MutationObserver(() => marcar('menu', preferencias.menu.actual())).observe(app, { attributes: true, attributeFilter: ['class'] });
+
+        const form = document.getElementById('form-ajustes');
+        if (!form) return;
+        // Al guardar se regresa a la misma pestaña
+        form.addEventListener('submit', () => { form.elements.seccion.value = location.hash.slice(1) || form.elements.seccion.value; });
+
+        // Vista previa del pie de la pantalla de invitados
+        const muestra = document.getElementById('pie-muestra');
+        const pintar = () => {
+            const v = n => (form.elements[n] ? form.elements[n].value.trim() : '');
+            muestra.querySelectorAll('[data-m="nombre"]').forEach(el => { el.textContent = v('nombre') || 'Grupo EM'; });
+            const eslogan = muestra.querySelector('[data-m="eslogan"]');
+            eslogan.textContent = v('eslogan');
+            eslogan.hidden = !v('eslogan');
+            ['whatsapp', 'instagram', 'facebook', 'tiktok'].forEach(n => { muestra.querySelector(`[data-m="${n}"]`).hidden = !v(n); });
+        };
+        form.addEventListener('input', pintar);
+        pintar();
+    })();
+</script>
+{% endblock %}

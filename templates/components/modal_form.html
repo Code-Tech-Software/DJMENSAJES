@@ -7,12 +7,12 @@
                 <h2 id="modal-titulo">{{ titulo }}</h2>
                 {% if subtitulo %}<p>{{ subtitulo }}</p>{% endif %}
             </div>
-            <button type="button" class="icon-btn" data-close aria-label="Cerrar"><i class="ri-close-line"></i></button>
+            <button type="button" class="icon-btn" data-close aria-label="Cerrar"><i class="ph ph-x"></i></button>
         </header>
         {% block pasos %}{% endblock %}
         <div class="modal__body scroll-thin">
             {% if form.non_field_errors %}
-            <div class="alert alert--danger mb-3"><i class="ri-error-warning-line"></i>
+            <div class="alert alert--danger mb-3"><i class="ph ph-warning-circle"></i>
                 <div>{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
             </div>
             {% endif %}
@@ -23,7 +23,7 @@
             {% block pie %}
             {% block pie_ayuda %}{% endblock %}
             <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
-            <button type="submit" class="btn btn--primary"><i class="ri-check-line"></i>{{ texto_boton }}</button>
+            <button type="submit" class="btn btn--primary"><i class="ph ph-check"></i>{{ texto_boton }}</button>
             {% endblock %}
         </footer>
     </form>

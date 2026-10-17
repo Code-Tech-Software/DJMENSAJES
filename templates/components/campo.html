@@ -7,7 +7,7 @@
         </span>
         <span class="switch">{{ field }}<span class="switch__track"></span></span>
     </label>
-    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+    {% for e in field.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
 </div>
 {% elif tipo == 'archivo' %}
 <div class="field {{ clase }} {% if field.errors %}field--error{% endif %}" data-field="{{ field.name }}">
@@ -15,7 +15,7 @@
     <div class="dropzone">
         <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*">
         <div class="dropzone__preview {% if oscuro %}is-dark{% endif %}">
-            {% if archivo_url %}<img src="{{ archivo_url }}" alt="">{% else %}<i class="ri-image-add-line"></i>{% endif %}
+            {% if archivo_url %}<img src="{{ archivo_url }}" alt="">{% else %}<i class="ph ph-image"></i>{% endif %}
         </div>
         <div class="dropzone__text">
             <strong>{% if archivo_url %}Cambiar imagen{% else %}Arrastra o elige una imagen{% endif %}</strong>
@@ -25,7 +25,7 @@
         <label class="dropzone__clear"><input type="checkbox" name="{{ field.html_name }}-clear"> Quitar</label>
         {% endif %}
     </div>
-    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+    {% for e in field.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
 </div>
 {% elif tipo == 'color' %}
 <div class="field {{ clase }} {% if field.errors %}field--error{% endif %}" data-field="{{ field.name }}">
@@ -47,7 +47,7 @@
         <button data-swatch="#0E1726" style="background:#0E1726" aria-label="Negro"></button>
     </div>
     {% if field.help_text %}<small class="field__help">{{ field.help_text }}</small>{% endif %}
-    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+    {% for e in field.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
 </div>
 {% else %}
 <div class="field {{ clase }} {% if field.errors %}field--error{% endif %}" data-field="{{ field.name }}">
@@ -59,6 +59,6 @@
         {{ field }}
     </div>
     {% if field.help_text %}<small class="field__help">{{ field.help_text }}</small>{% endif %}
-    {% for e in field.errors %}<small class="field__error"><i class="ri-error-warning-line"></i>{{ e }}</small>{% endfor %}
+    {% for e in field.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
 </div>
 {% endif %}

@@ -24,7 +24,8 @@ class EventoForm(forms.ModelForm):
             'fecha_inicio_evento', 'fecha_fin_evento', 'lugar', 'direccion', 'url_mapa', 'num_invitados',
             'cliente_nombre', 'cliente_telefono', 'cliente_email', 'precio_total', 'servicios', 'notas',
             'banner', 'estado', 'mensaje_bienvenida', 'password_vip', 'cooldown',
-            'permitir_saludos', 'permitir_canciones', 'moderar_pantalla',
+            'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla',
+            'pantalla_contenido', 'pantalla_qr',
         ]
         widgets = {
             'nombre_evento': forms.TextInput(attrs={'placeholder': 'Ej. Ana & Luis', 'maxlength': 200}),
@@ -69,6 +70,9 @@ class EventoForm(forms.ModelForm):
         self.fields['banner'].required = False
         self.fields['tipo_evento'].choices = [c for c in self.fields['tipo_evento'].choices if c[0]]
         self.fields['etapa'].choices = [c for c in self.fields['etapa'].choices if c[0]]
+        # Opciones del proyector: si no llegan en el envío se conserva el valor actual (o el de fábrica)
+        for campo in ('pantalla_contenido', 'pantalla_qr'):
+            self.fields[campo].required = False
 
         if not self.instance.pk and not self.is_bound:
             dia = None
@@ -85,6 +89,9 @@ class EventoForm(forms.ModelForm):
             self.initial.setdefault('fecha_fin_evento', inicio + timedelta(hours=7))
 
     def clean(self):
+        for campo in ('pantalla_contenido', 'pantalla_qr'):
+            if not self.cleaned_data.get(campo):
+                self.cleaned_data[campo] = getattr(self.instance, campo)
         datos = super().clean()
         inicio, fin = datos.get('fecha_inicio_evento'), datos.get('fecha_fin_evento')
         if inicio and fin and fin <= inicio:
@@ -125,3 +132,12 @@ class PagoForm(forms.ModelForm):
         if monto <= 0:
             raise forms.ValidationError('El monto debe ser mayor a cero.')
         return monto
+
+
+class ProyectorForm(forms.ModelForm):
+    """Ajuste rápido de la pantalla del proyector (desde el detalle del evento)."""
+
+    class Meta:
+        model = Evento
+        fields = ['pantalla_contenido', 'pantalla_qr', 'moderar_pantalla']
+        widgets = {'pantalla_contenido': forms.RadioSelect, 'pantalla_qr': forms.RadioSelect}

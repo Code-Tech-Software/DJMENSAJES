@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.core.utils import ip_cliente, qr_svg
 from apps.eventos.models import Evento
 
+from .fotos import FotoInvalida, procesar_foto
 from .models import Mensaje
 from .servicios import notificar_cambio, notificar_evento, notificar_nuevo
 
@@ -79,6 +80,7 @@ def invitado(request, codigo):
         'espera_total': int(evento.cooldown * 60),
         'mis_mensajes': [m.a_dict() for m in mios],
         'invitacion': getattr(evento, 'invitacion', None),
+        'url_album': evento.url_album(),
     })
 
 
@@ -99,13 +101,9 @@ def enviar(request, codigo):
         return JsonResponse({'ok': False, 'msg': 'Escribe tu mensaje.' if tipo == 'saludo' else 'Escribe el nombre de la canción.'}, status=400)
     nombre = _limpiar(datos.get('nombre'), 60) or request.session.get('envivo_nombre') or 'Anónimo'
 
-    restante = _espera_restante(request, evento)
-    if restante > 0:
-        minutos, segundos = divmod(restante, 60)
-        return JsonResponse({
-            'ok': False, 'espera': restante,
-            'msg': f'Podrás enviar otro mensaje en {minutos}:{segundos:02d} min.',
-        }, status=429)
+    espera = _respuesta_espera(request, evento)
+    if espera:
+        return espera
 
     vip = _es_vip(request, evento)
     mensaje = Mensaje.objects.create(
@@ -125,6 +123,53 @@ def enviar(request, codigo):
     return JsonResponse({
         'ok': True,
         'msg': '¡Tu canción llegó al DJ! 🎶' if tipo == 'cancion' else '¡Tu saludo llegó al DJ! 💌',
+        'mensaje': mensaje.a_dict(),
+        'espera': 0 if vip else int(evento.cooldown * 60),
+    })
+
+
+def _respuesta_espera(request, evento):
+    """Respuesta 429 si el invitado aún debe esperar para enviar otra cosa."""
+    restante = _espera_restante(request, evento)
+    if restante <= 0:
+        return None
+    minutos, segundos = divmod(restante, 60)
+    return JsonResponse({
+        'ok': False, 'espera': restante,
+        'msg': f'Podrás enviar otro mensaje en {minutos}:{segundos:02d} min.',
+    }, status=429)
+
+
+@require_POST
+def enviar_foto(request, codigo):
+    """Foto de un invitado: llega al DJ y solo sale en pantalla y álbum cuando él la aprueba."""
+    evento = _evento(codigo)
+    if not evento.estado:
+        return JsonResponse({'ok': False, 'msg': 'En este momento el DJ no está recibiendo fotos.'}, status=403)
+    if not evento.permitir_fotos:
+        return JsonResponse({'ok': False, 'msg': 'Este evento no recibe fotos.'}, status=403)
+    espera = _respuesta_espera(request, evento)
+    if espera:
+        return espera
+    try:
+        base, foto, miniatura, ancho, alto = procesar_foto(request.FILES.get('foto'))
+    except FotoInvalida as error:
+        return JsonResponse({'ok': False, 'msg': str(error)}, status=400)
+
+    nombre = _limpiar(request.POST.get('nombre'), 60) or request.session.get('envivo_nombre') or 'Anónimo'
+    vip = _es_vip(request, evento)
+    mensaje = Mensaje(
+        evento=evento, nombre=nombre, tipo=Mensaje.Tipo.FOTO, mensaje=_limpiar(request.POST.get('mensaje'), 140),
+        foto_ancho=ancho, foto_alto=alto, vip=vip, sesion=_sesion(request), ip=ip_cliente(request),
+    )
+    mensaje.foto.save(f'{base}.jpg', foto, save=False)
+    mensaje.miniatura.save(f'{base}.jpg', miniatura, save=False)
+    mensaje.save()
+    request.session['envivo_nombre'] = nombre
+    notificar_nuevo(mensaje)
+    return JsonResponse({
+        'ok': True,
+        'msg': '¡Tu foto llegó! 📸 Cuando el DJ la apruebe saldrá en la pantalla.',
         'mensaje': mensaje.a_dict(),
         'espera': 0 if vip else int(evento.cooldown * 60),
     })
@@ -180,8 +225,12 @@ def mis_mensajes(request, codigo):
 def pantalla(request, codigo):
     evento = _evento(codigo)
     url_invitados = request.build_absolute_uri(evento.url_invitados())
-    saludos = (Mensaje.objects.filter(evento=evento, en_pantalla=True)
-               .exclude(estatus=Mensaje.Estatus.DESCARTADO).order_by('-fecha_creacion')[:16])
+    # Lo que el evento eligió proyectar: mensajes, fotos o ambos
+    tipos = {
+        Evento.ContenidoPantalla.MENSAJES: [Mensaje.Tipo.SALUDO],
+        Evento.ContenidoPantalla.FOTOS: [Mensaje.Tipo.FOTO],
+    }.get(evento.pantalla_contenido, [Mensaje.Tipo.SALUDO, Mensaje.Tipo.FOTO])
+    elementos = evento.mensajes.en_proyector().filter(tipo__in=tipos)
     return render(request, 'envivo/pantalla.html', {
         'evento': evento,
         'colaborador': evento.colaborador,
@@ -189,7 +238,37 @@ def pantalla(request, codigo):
         'url_invitados': url_invitados,
         'url_corta': url_invitados.split('://', 1)[-1],
         'qr': qr_svg(url_invitados, color='#0b1220'),
-        'saludos': [m.a_dict_pantalla() for m in reversed(list(saludos))],
+        'saludos': [m.a_dict_pantalla() for m in reversed(list(elementos.order_by('-fecha_creacion')[:30]))],
+    })
+
+
+def pantalla_fotos(request, codigo):
+    """Carrusel de fotos a pantalla completa (ideal para una segunda pantalla)."""
+    evento = _evento(codigo)
+    url_invitados = request.build_absolute_uri(evento.url_invitados())
+    fotos = evento.mensajes.en_proyector().filter(tipo=Mensaje.Tipo.FOTO).order_by('-fecha_creacion')[:80]
+    return render(request, 'envivo/pantalla_fotos.html', {
+        'evento': evento,
+        'colaborador': evento.colaborador,
+        'url_corta': url_invitados.split('://', 1)[-1],
+        'qr': qr_svg(url_invitados, color='#0b1220'),
+        'fotos': [m.a_dict_pantalla() for m in reversed(list(fotos))],
+    })
+
+
+def album(request, codigo):
+    """Álbum digital del evento: fotos aprobadas por el DJ y saludos de los invitados."""
+    evento = _evento(codigo)
+    fotos = list(evento.mensajes.fotos_album().order_by('fecha_creacion'))
+    saludos = list(evento.mensajes.saludos_album().order_by('fecha_creacion'))
+    return render(request, 'envivo/album.html', {
+        'evento': evento,
+        'colaborador': evento.colaborador,
+        'fotos': fotos,
+        'saludos': saludos,
+        'datos_fotos': [m.a_dict() for m in fotos],
+        'url_invitados': evento.url_invitados(),
+        'portada': fotos[0].foto.url if fotos else '',
     })
 
 
@@ -201,6 +280,9 @@ def dj(request, token):
     url_invitados = request.build_absolute_uri(evento.url_invitados())
     return render(request, 'envivo/dj.html', {
         'evento': evento,
+        'mostrar_fotos': evento.permitir_fotos or evento.mensajes.filter(tipo=Mensaje.Tipo.FOTO).exists(),
+        'url_fotos': request.build_absolute_uri(evento.url_pantalla_fotos()),
+        'url_album': request.build_absolute_uri(evento.url_album()),
         'mensajes': [m.a_dict() for m in mensajes],
         'url_invitados': url_invitados,
         'qr': qr_svg(url_invitados),
@@ -224,7 +306,10 @@ ACCIONES = {
     'restaurar': {'estatus': Mensaje.Estatus.PENDIENTE},
     'mostrar': {'en_pantalla': True},
     'ocultar': {'en_pantalla': False},
+    # Fotos: aprobar = va a la pantalla y al álbum
+    'aprobar': {'estatus': Mensaje.Estatus.ATENDIDO, 'en_pantalla': True},
 }
+CON_PANTALLA = (Mensaje.Tipo.SALUDO, Mensaje.Tipo.FOTO)
 
 
 @require_POST
@@ -234,13 +319,17 @@ def dj_accion(request, token, pk, accion):
         return JsonResponse({'ok': False, 'msg': 'Acción no válida.'}, status=400)
     mensaje = get_object_or_404(Mensaje, pk=pk, evento=evento)
     cambios = ACCIONES[accion]
-    if cambios.get('en_pantalla') and mensaje.tipo != Mensaje.Tipo.SALUDO:
-        return JsonResponse({'ok': False, 'msg': 'Solo los saludos se muestran en el proyector.'}, status=400)
+    if accion == 'aprobar' and not mensaje.es_foto:
+        return JsonResponse({'ok': False, 'msg': 'Solo las fotos se aprueban.'}, status=400)
+    if cambios.get('en_pantalla') and mensaje.tipo not in CON_PANTALLA:
+        return JsonResponse({'ok': False, 'msg': 'Solo los saludos y las fotos se muestran en el proyector.'}, status=400)
     pantalla_antes = mensaje.en_pantalla
     if 'estatus' in cambios:
         mensaje.marcar(cambios['estatus'])
     if 'en_pantalla' in cambios:
         mensaje.en_pantalla = cambios['en_pantalla']
+    if mensaje.es_foto and mensaje.estatus == Mensaje.Estatus.PENDIENTE:
+        mensaje.en_pantalla = False  # una foto sin aprobar nunca sale en la pantalla
     mensaje.save(update_fields=['estatus', 'atendido_en', 'en_pantalla'])
     notificar_cambio(mensaje, pantalla_cambio=pantalla_antes != mensaje.en_pantalla)
     return JsonResponse({'ok': True, 'mensaje': mensaje.a_dict()})

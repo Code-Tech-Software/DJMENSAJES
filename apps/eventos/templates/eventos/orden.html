@@ -89,16 +89,16 @@
         </div>
 
         <p class="legal">El saldo deberá liquidarse a más tardar el día del evento antes de su inicio. Cualquier cambio de fecha
-            u horario está sujeto a disponibilidad. Este documento resume los servicios acordados entre el cliente y Grupo EM.</p>
+            u horario está sujeto a disponibilidad. Este documento resume los servicios acordados entre el cliente y {{ evento.colaborador|default:ajustes.nombre }}.</p>
 
         <div class="firmas">
             <div>{{ evento.cliente_nombre|default:"Cliente" }}<br><small>Firma de conformidad</small></div>
-            <div>{{ evento.colaborador|default:"Grupo EM" }}<br><small>Firma del prestador</small></div>
+            <div>{{ evento.colaborador|default:ajustes.nombre }}<br><small>Firma del prestador</small></div>
         </div>
     </div>
 </article>
 <div class="acciones">
-    <a class="btn" href="{{ evento.get_absolute_url }}"><i class="ri-arrow-left-line"></i>Volver</a>
-    <button class="btn btn--primary" onclick="window.print()"><i class="ri-printer-line"></i>Imprimir / PDF</button>
+    <a class="btn" href="{{ evento.get_absolute_url }}"><i class="ph ph-arrow-left"></i>Volver</a>
+    <button class="btn btn--primary" onclick="window.print()"><i class="ph ph-printer"></i>Imprimir / PDF</button>
 </div>
 {% endblock %}

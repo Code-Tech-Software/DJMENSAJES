@@ -1,10 +1,10 @@
 {% if page_obj.has_other_pages %}
 <nav class="pagination" aria-label="Paginación">
-    {% if page_obj.has_previous %}<a href="?{% if query %}{{ query }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Anterior"><i class="ri-arrow-left-s-line"></i></a>{% endif %}
+    {% if page_obj.has_previous %}<a href="?{% if query %}{{ query }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Anterior"><i class="ph ph-caret-left"></i></a>{% endif %}
     {% for n in page_obj.paginator.page_range %}
         {% if n == page_obj.number %}<span class="is-current">{{ n }}</span>
         {% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}<a href="?{% if query %}{{ query }}&{% endif %}page={{ n }}">{{ n }}</a>{% endif %}
     {% endfor %}
-    {% if page_obj.has_next %}<a href="?{% if query %}{{ query }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Siguiente"><i class="ri-arrow-right-s-line"></i></a>{% endif %}
+    {% if page_obj.has_next %}<a href="?{% if query %}{{ query }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Siguiente"><i class="ph ph-caret-right"></i></a>{% endif %}
 </nav>
 {% endif %}

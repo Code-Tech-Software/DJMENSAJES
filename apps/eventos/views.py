@@ -18,12 +18,13 @@ from django.views.generic import CreateView, UpdateView
 
 from apps.colaboradores.models import Colaborador
 from apps.core.mixins import FormularioModalMixin, es_ajax, respuesta_ok
+from apps.core.models import Ajustes
 from apps.core.utils import generar_codigo, generar_token, qr_svg
 from apps.envivo.models import Mensaje
-from apps.envivo.servicios import notificar_evento
+from apps.envivo.servicios import notificar_evento, notificar_proyector
 from apps.invitaciones.models import Invitado
 
-from .forms import ActividadForm, EventoForm, PagoForm
+from .forms import ActividadForm, EventoForm, PagoForm, ProyectorForm
 from .models import ActividadItinerario, Evento, Pago, TipoEvento
 
 
@@ -44,10 +45,10 @@ def puede_eliminar(usuario, evento):
 # --- Listado, calendario y detalle -----------------------------------------------------------
 
 CUANDO = {
-    'proximos': ('Próximos', 'ri-calendar-event-line'),
-    'en_curso': ('En curso', 'ri-broadcast-line'),
-    'pasados': ('Pasados', 'ri-history-line'),
-    'todos': ('Todos', 'ri-apps-2-line'),
+    'proximos': ('Próximos', 'ph ph-calendar-dots'),
+    'en_curso': ('En curso', 'ph ph-broadcast'),
+    'pasados': ('Pasados', 'ph ph-clock-counter-clockwise'),
+    'todos': ('Todos', 'ph ph-squares-four'),
 }
 
 
@@ -147,6 +148,9 @@ def _resumen_mensajes(evento):
         total=Count('id'),
         canciones=Count('id', filter=Q(tipo='cancion')),
         saludos=Count('id', filter=Q(tipo='saludo')),
+        fotos=Count('id', filter=Q(tipo='foto')),
+        fotos_album=Count('id', filter=Q(tipo='foto', estatus='atendido')),
+        fotos_por_revisar=Count('id', filter=Q(tipo='foto', estatus='pendiente')),
         pendientes=Count('id', filter=Q(estatus='pendiente')),
         vip=Count('id', filter=Q(vip=True)),
     )
@@ -172,6 +176,8 @@ def detalle(request, pk):
         'url_invitados': url_invitados,
         'url_pantalla': request.build_absolute_uri(evento.url_pantalla()),
         'url_dj': request.build_absolute_uri(evento.url_dj()),
+        'url_album': request.build_absolute_uri(evento.url_album()),
+        'url_pantalla_fotos': request.build_absolute_uri(evento.url_pantalla_fotos()),
         'qr': qr_svg(url_invitados),
         'puede_eliminar': puede_eliminar(request.user, evento),
     })
@@ -234,7 +240,7 @@ class EventoFormMixin(LoginRequiredMixin, FormularioModalMixin):
     form_class = EventoForm
     template_modal = 'eventos/partials/form_evento.html'
     tamano = 'lg'
-    icono = 'ri-sparkling-2-line'
+    icono = 'ph ph-sparkle'
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -247,6 +253,19 @@ class EventoCrear(EventoFormMixin, CreateView):
     titulo = 'Nuevo evento'
     subtitulo = 'Te guiamos paso a paso. Podrás editar todo después.'
     texto_boton = 'Crear evento'
+
+    def get_initial(self):
+        # Los eventos nuevos nacen con la configuración en vivo definida en Ajustes
+        ajustes = Ajustes.cargar()
+        return {
+            **super().get_initial(),
+            'cooldown': ajustes.cooldown,
+            'permitir_saludos': ajustes.permitir_saludos,
+            'permitir_canciones': ajustes.permitir_canciones,
+            'permitir_fotos': ajustes.permitir_fotos,
+            'moderar_pantalla': ajustes.moderar_pantalla,
+            'mensaje_bienvenida': ajustes.mensaje_bienvenida,
+        }
 
     def form_valid(self, form):
         form.instance.creado_por = self.request.user
@@ -269,6 +288,33 @@ class EventoEditar(EventoFormMixin, UpdateView):
 
     def get_subtitulo(self):
         return self.object.nombre_evento
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        if {'pantalla_contenido', 'pantalla_qr', 'moderar_pantalla'} & set(form.changed_data):
+            notificar_proyector(self.object)
+        return respuesta
+
+
+class ProyectorEditar(LoginRequiredMixin, FormularioModalMixin, UpdateView):
+    """Qué se muestra en el proyector y de qué tamaño va el QR; se aplica al instante."""
+    model = Evento
+    form_class = ProyectorForm
+    template_modal = 'eventos/partials/form_proyector.html'
+    titulo = 'Pantalla del proyector'
+    subtitulo = 'Elige qué se proyecta y cómo se ve el código QR.'
+    icono = 'ph ph-projector-screen'
+    tamano = 'lg'
+    texto_boton = 'Aplicar'
+    mensaje_exito = 'Proyector actualizado.'
+
+    def get_queryset(self):
+        return eventos_de(self.request.user)
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        notificar_proyector(self.object)
+        return respuesta
 
 
 @login_required
@@ -338,7 +384,7 @@ class ActividadCrear(HijoEventoMixin, CreateView):
     form_class = ActividadForm
     template_modal = 'eventos/partials/form_actividad.html'
     titulo = 'Agregar al itinerario'
-    icono = 'ri-time-line'
+    icono = 'ph ph-clock'
     texto_boton = 'Agregar'
     mensaje_exito = 'Actividad agregada al itinerario.'
 
@@ -351,7 +397,7 @@ class ActividadEditar(HijoEventoMixin, UpdateView):
     form_class = ActividadForm
     template_modal = 'eventos/partials/form_actividad.html'
     titulo = 'Editar actividad'
-    icono = 'ri-time-line'
+    icono = 'ph ph-clock'
     mensaje_exito = 'Itinerario actualizado.'
 
     def get_queryset(self):
@@ -373,7 +419,7 @@ class PagoCrear(HijoEventoMixin, CreateView):
     form_class = PagoForm
     template_modal = 'eventos/partials/form_pago.html'
     titulo = 'Registrar pago'
-    icono = 'ri-hand-coin-line'
+    icono = 'ph ph-hand-coins'
     tamano = 'sm'
     texto_boton = 'Registrar'
     mensaje_exito = 'Pago registrado.'

@@ -3,14 +3,14 @@
 {% block cuerpo %}
 <div class="mencion-form">
     <div class="mencion-form__campos">
-        {% campo form.titulo icono="ri-price-tag-3-line" %}
+        {% campo form.titulo icono="ph ph-tag" %}
         <div class="sugerencias-chips" aria-label="Títulos sugeridos">
             {% for s in sugerencias %}<button type="button" class="chip chip--outline chip--btn{% if form.titulo.value == s %} is-active{% endif %}" data-rellenar="{{ form.titulo.id_for_label }}" data-luego="{{ form.nombres.id_for_label }}">{{ s }}</button>{% endfor %}
         </div>
         {% campo form.nombres %}
     </div>
     <div class="mencion-previa{% if not form.titulo.value and not form.nombres.value %} is-vacia{% endif %}" data-mencion-previa data-titulo="{{ form.titulo.id_for_label }}" data-nombres="{{ form.nombres.id_for_label }}">
-        <span class="mencion-previa__etiqueta"><i class="ri-eye-line"></i>Así se verá</span>
+        <span class="mencion-previa__etiqueta"><i class="ph ph-eye"></i>Así se verá</span>
         <small data-mp-titulo>{{ form.titulo.value|default:"Padrinos de anillos" }}</small>
         <div class="mencion-previa__nombres" data-mp-nombres>{% if form.nombres.value %}{{ form.nombres.value|linebreaksbr }}{% else %}Nombre y apellido{% endif %}</div>
     </div>

@@ -155,12 +155,13 @@ hr { border: 0; border-top: 1px solid var(--border); }
   padding: 0 22px;
   flex-shrink: 0;
 }
-.sidebar__brand img { height: 30px; width: auto; }
+/* El isotipo conserva su proporción (no se encoge al contraer el menú) */
+.sidebar__brand img { height: 30px; width: auto; flex-shrink: 0; object-fit: contain; }
 .sidebar__brand-text { display: flex; flex-direction: column; line-height: 1.05; white-space: nowrap; }
 .sidebar__brand-text strong { font-size: 15.5px; letter-spacing: -.01em; }
 .sidebar__brand-text small { font-size: 11px; color: var(--text-3); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 
-.sidebar__nav { flex: 1; overflow-y: auto; padding: 8px 14px 18px; }
+.sidebar__nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 14px 18px; }
 .nav-label {
   font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
   color: var(--text-3); padding: 18px 12px 8px; white-space: nowrap;
@@ -187,30 +188,18 @@ hr { border: 0; border-top: 1px solid var(--border); }
 }
 .nav-link.is-active .nav-count { background: var(--brand); color: #fff; }
 
-.sidebar__footer { padding: 14px; border-top: 1px solid var(--border); }
-.sidebar-card {
-  border-radius: var(--r);
-  padding: 14px;
-  background: var(--brand-grad);
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-}
-.sidebar-card::after {
-  content: ""; position: absolute; right: -30px; top: -30px; width: 110px; height: 110px;
-  border-radius: 50%; background: rgba(255, 255, 255, .14);
-}
-.sidebar-card strong { display: block; font-size: 13.5px; }
-.sidebar-card p { font-size: 12px; opacity: .85; margin: 2px 0 10px; }
-.sidebar-card .btn { position: relative; z-index: 1; }
+/* Pie del menú: "Ajustes" alineado hasta abajo, con el mismo estilo que el resto del menú */
+.sidebar__footer { padding: 8px 14px 12px; border-top: 1px solid var(--border); }
+.sidebar__footer .nav-link.is-active::before { left: -14px; }
 
 .app.is-collapsed .sidebar { width: var(--sidebar-w-min); }
-.app.is-collapsed .sidebar__brand { padding: 0 24px; }
+.app.is-collapsed .sidebar__brand { padding: 0; gap: 0; justify-content: center; }
 .app.is-collapsed .sidebar__brand-text,
 .app.is-collapsed .nav-link span,
-.app.is-collapsed .nav-link .nav-count,
-.app.is-collapsed .sidebar-card { display: none; }
-.app.is-collapsed .nav-label { visibility: hidden; height: 14px; padding: 0; }
+.app.is-collapsed .nav-link .nav-count { display: none; }
+/* Contraído: los títulos de sección se vuelven una línea divisoria (no ocupan ancho) */
+.app.is-collapsed .nav-label { height: 1px; padding: 0; margin: 12px 10px; font-size: 0; background: var(--border); overflow: hidden; }
+.app.is-collapsed .nav-label:first-child { margin-top: 4px; background: none; }
 .app.is-collapsed .nav-link { justify-content: center; padding: 0; }
 
 .main {
@@ -221,6 +210,20 @@ hr { border: 0; border-top: 1px solid var(--border); }
   transition: margin .3s var(--ease);
 }
 .app.is-collapsed .main { margin-left: var(--sidebar-w-min); }
+
+/* Etiqueta flotante del menú contraído (la crea em.js) */
+.etiqueta-menu {
+  position: fixed; z-index: 70; transform: translateY(-50%);
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 9px;
+  background: var(--text); color: var(--surface); font-size: 12.5px; font-weight: 650; white-space: nowrap;
+  box-shadow: var(--sh); pointer-events: none; animation: etiqueta-entra .14s var(--ease);
+}
+.etiqueta-menu::before {
+  content: ""; position: absolute; left: -4px; top: 50%; width: 9px; height: 9px; border-radius: 2px;
+  background: inherit; transform: translateY(-50%) rotate(45deg);
+}
+.etiqueta-menu span { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; background: color-mix(in srgb, var(--surface) 22%, transparent); }
+@keyframes etiqueta-entra { from { opacity: 0; transform: translate(-4px, -50%); } }
 
 .topbar {
   position: sticky; top: 0; z-index: 30;
@@ -255,9 +258,12 @@ hr { border: 0; border-top: 1px solid var(--border); }
 
 @media (max-width: 1024px) {
   .sidebar { transform: translateX(-100%); width: var(--sidebar-w) !important; box-shadow: var(--sh-lg); }
-  .app.is-collapsed .sidebar__brand-text, .app.is-collapsed .nav-link span,
-  .app.is-collapsed .sidebar-card { display: revert; }
+  .app.is-collapsed .sidebar__brand-text { display: flex; }
+  .app.is-collapsed .nav-link span { display: revert; }
+  .app.is-collapsed .sidebar__brand { padding: 0 22px; gap: 12px; justify-content: flex-start; }
   .app.is-collapsed .nav-link { justify-content: flex-start; padding: 0 12px; }
+  .app.is-collapsed .nav-label { height: auto; padding: 18px 12px 8px; margin: 0; font-size: 10.5px; background: none; }
+  .app.is-collapsed .nav-link .nav-count { display: revert; }
   .app.sidebar-open .sidebar { transform: none; }
   .app.sidebar-open .sidebar-backdrop {
     display: block; position: fixed; inset: 0; z-index: 35; background: var(--overlay);
@@ -296,8 +302,8 @@ hr { border: 0; border-top: 1px solid var(--border); }
 .grid-sidebar { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
 .span-2 { grid-column: span 2; }
 .span-all { grid-column: 1 / -1; }
-@media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-sidebar { grid-template-columns: 1fr; } }
-@media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr; } .grid-2 { grid-template-columns: 1fr; } .span-2 { grid-column: auto; } }
+@media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-sidebar { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .grid-3 { grid-template-columns: minmax(0, 1fr); } .grid-2 { grid-template-columns: minmax(0, 1fr); } .span-2 { grid-column: auto; } }
 @media (max-width: 560px) { .grid-4 { grid-template-columns: 1fr; } }
 
 .stack { display: flex; flex-direction: column; gap: 20px; }
@@ -320,6 +326,8 @@ hr { border: 0; border-top: 1px solid var(--border); }
   user-select: none;
 }
 .btn i { font-size: 18px; line-height: 1; }
+/* Los puntos de "más acciones" de Phosphor son muy pequeños: se agrandan para que se lean igual que el resto */
+i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
 .btn:hover { border-color: var(--text-3); }
 .btn:active { transform: translateY(1px) scale(.99); }
 .btn:disabled, .btn.is-disabled { opacity: .5; pointer-events: none; }
@@ -404,6 +412,10 @@ hr { border: 0; border-top: 1px solid var(--border); }
 .tone-danger { --tone: var(--danger); --tone-soft: var(--danger-soft); }
 .tone-live { --tone: var(--live); --tone-soft: var(--live-soft); }
 .tone-gold { --tone: var(--gold); --tone-soft: var(--gold-soft); }
+.tone-album { --tone: #0ea5a4; --tone-soft: rgba(14, 165, 164, .13); }
+/* Miniatura de foto en listas (historial de mensajes) */
+.mini-foto { width: 42px; height: 42px; flex-shrink: 0; border-radius: 11px; overflow: hidden; background: var(--surface-3); }
+.mini-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* ----------------------------------------------------------------- Chips & badges */
 .chip {
@@ -596,6 +608,18 @@ hr { border: 0; border-top: 1px solid var(--border); }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--tipo, var(--brand)) 18%, transparent);
 }
 .tile input:focus-visible + .tile__body { box-shadow: 0 0 0 4px var(--brand-ring); }
+/* Miniatura de la distribución del proyector (QR gigante o en una esquina) */
+.proy-mini { position: relative; width: 120px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #2a1b4d, #0b1220); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.proy-mini span { position: absolute; display: block; border-radius: 3px; }
+.proy-mini__qr { background: #fff; aspect-ratio: 1; }
+.proy-mini__titulo { height: 5px; background: rgba(255, 255, 255, .6); }
+.proy-mini__tarjeta { background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .3); }
+.proy-mini--grande .proy-mini__qr { left: 8%; top: 20%; width: 30%; }
+.proy-mini--grande .proy-mini__titulo { left: 47%; top: 20%; width: 34%; }
+.proy-mini--grande .proy-mini__tarjeta { left: 47%; top: 38%; width: 44%; height: 38%; }
+.proy-mini--esquina .proy-mini__qr { right: 5%; bottom: 8%; width: 13%; }
+.proy-mini--esquina .proy-mini__titulo { left: 32%; top: 12%; width: 36%; }
+.proy-mini--esquina .proy-mini__tarjeta { left: 16%; top: 25%; width: 68%; height: 58%; }
 .tiles--compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .tiles--compact .tile__body { flex-direction: row; justify-content: flex-start; padding: 10px 12px; text-align: left; }
 .tiles--compact .tile__body i { width: 32px; height: 32px; font-size: 18px; border-radius: 9px; }
@@ -1038,6 +1062,8 @@ kbd {
 .ev-card__badges .chip i { color: var(--tipo); }
 .ev-card__date { position: absolute; left: 14px; bottom: 12px; z-index: 2; box-shadow: 0 6px 16px rgba(0,0,0,.25); border: 0; }
 .ev-card__menu { position: absolute; top: 8px; right: 8px; z-index: 3; }
+.ev-card__menu .icon-btn { background: rgba(255, 255, 255, .92); color: #0e1726; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); backdrop-filter: blur(6px); }
+.ev-card__menu .icon-btn:hover { background: #fff; color: #0e1726; }
 .ev-card__body { padding: 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .ev-card__title { font-size: 16px; font-weight: 750; line-height: 1.25; }
 .ev-card__meta { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-2); }
@@ -1067,13 +1093,16 @@ kbd {
 .countdown small { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; opacity: .8; font-weight: 700; }
 
 /* Accesos en vivo */
-.live-tile { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--surface); position: relative; overflow: hidden; }
-.live-tile::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--tone, var(--brand)); }
+/* La franja de color va como sombra interior (sigue las esquinas redondeadas sin recortar
+   el contenido), así las etiquetas al pasar el cursor pueden salir de la tarjeta. */
+.live-tile { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--surface); position: relative; box-shadow: inset 0 3px 0 var(--tone, var(--brand)); }
 .live-tile__head { display: flex; align-items: center; gap: 12px; }
 .live-tile__head .stat__icon { width: 42px; height: 42px; }
 .live-tile h3 { font-size: 15px; }
 .live-tile p { font-size: 12.5px; color: var(--text-3); }
 .live-tile__actions { display: flex; gap: 8px; margin-top: auto; }
+/* El último botón de ícono está pegado a la orilla: su etiqueta se alinea a la derecha */
+.live-tile__actions > .icon-btn[data-tip]:last-child:hover::after { left: auto; right: 0; transform: none; }
 
 /* Charts */
 .bars { display: flex; align-items: flex-end; gap: 6px; height: 190px; padding-top: 10px; }
@@ -1172,4 +1201,43 @@ kbd {
   .main { margin: 0 !important; }
   .content { padding: 0; max-width: none; }
   body { background: #fff; }
+}
+
+/* ----------------------------------------------------------------- Ajustes */
+.ajustes { max-width: 980px; }
+.ajuste { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.ajuste:first-child { padding-top: 2px; }
+.ajuste__ico { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px; background: var(--brand-soft); color: var(--brand); font-size: 19px; }
+.ajuste__texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ajuste__texto strong { font-size: 14px; font-weight: 700; }
+.ajuste__texto small { font-size: 12.5px; color: var(--text-3); line-height: 1.4; }
+.ajuste .segmented { flex-shrink: 0; }
+.ajustes__nota { display: flex; gap: 6px; align-items: flex-start; margin-top: 14px; font-size: 12.5px; color: var(--text-3); line-height: 1.45; }
+.ajustes__nota i { font-size: 15px; margin-top: 1px; color: var(--brand); }
+.ajustes__switches { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 16px; }
+.ajustes__pie { position: sticky; bottom: 0; display: flex; justify-content: flex-end; padding: 16px 0; background: linear-gradient(180deg, transparent, var(--bg) 40%); }
+.ajustes__columnas { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+.ajustes__previa { position: sticky; top: calc(var(--topbar-h) + 16px); }
+.ajustes__previa-titulo { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+/* Réplica del pie de la pantalla de invitados */
+.pie-muestra {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 26px 18px 18px;
+  border-radius: var(--r-lg); color: #fff;
+  background: radial-gradient(circle at 20% 0%, rgba(124, 58, 237, .45), transparent 55%), radial-gradient(circle at 90% 100%, rgba(0, 152, 218, .4), transparent 55%), #0b1020;
+}
+.pie-muestra__marca { font-size: 21px; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.pie-muestra__eslogan { font-size: 12.5px; opacity: .75; margin-top: -6px; }
+.pie-muestra__cotizar { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 99px; background: #25d366; color: #06290f; font-size: 13px; font-weight: 750; }
+.pie-muestra__redes { display: flex; gap: 8px; }
+.pie-muestra__redes i { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(255, 255, 255, .1); font-size: 17px; }
+.pie-muestra__creditos { font-size: 11px; opacity: .5; margin-top: 4px; }
+@media (max-width: 900px) {
+  .ajustes__columnas { grid-template-columns: minmax(0, 1fr); }
+  .ajustes__previa { position: static; }
+}
+@media (max-width: 560px) {
+  .ajuste { flex-wrap: wrap; }
+  .ajuste__texto { flex-basis: calc(100% - 54px); }
+  .ajuste .segmented { width: 100%; }
+  .ajuste .segmented button { flex: 1; justify-content: center; }
 }

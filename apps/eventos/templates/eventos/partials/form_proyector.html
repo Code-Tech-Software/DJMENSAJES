@@ -1,0 +1,41 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="field {% if form.pantalla_contenido.errors %}field--error{% endif %}">
+    <span class="field__label">¿Qué se muestra?</span>
+    <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        {% for radio in form.pantalla_contenido %}
+        <label class="tile">{{ radio.tag }}
+            <span class="tile__body">
+                <i class="{% if radio.data.value == 'mensajes' %}ph ph-chat-teardrop-text{% elif radio.data.value == 'fotos' %}ph ph-images{% else %}ph ph-stack{% endif %}"></i>
+                {{ radio.choice_label }}
+            </span>
+        </label>
+        {% endfor %}
+    </div>
+    {% if not object.permitir_fotos %}<small class="field__help"><i class="ph ph-info"></i> Este evento no recibe fotos; actívalo en “Editar evento” para usarlas aquí.</small>{% endif %}
+</div>
+
+<div class="field mt-3 {% if form.pantalla_qr.errors %}field--error{% endif %}">
+    <span class="field__label">Código QR</span>
+    <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        {% for radio in form.pantalla_qr %}
+        <label class="tile">{{ radio.tag }}
+            <span class="tile__body">
+                <span class="proy-mini proy-mini--{{ radio.data.value }}" aria-hidden="true">
+                    <span class="proy-mini__qr"></span><span class="proy-mini__titulo"></span><span class="proy-mini__tarjeta"></span>
+                </span>
+                {{ radio.choice_label }}
+                <small class="muted" style="font-weight:500">{% if radio.data.value == 'grande' %}A un lado, fácil de escanear de lejos{% else %}Pequeño; mensajes y fotos más grandes{% endif %}</small>
+            </span>
+        </label>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mt-3">{% campo form.moderar_pantalla %}</div>
+
+<div class="alert mt-3"><i class="ph ph-lightning"></i>
+    <div>Los cambios se aplican al instante en el proyector abierto. <a href="{{ object.url_pantalla }}" target="_blank" style="font-weight:700">Abrir proyector</a></div>
+</div>
+{% endblock %}

@@ -9,14 +9,15 @@ saludos y le llegan al DJ en tiempo real.
 ```
 DJMENSAJES/          configuración del proyecto (settings, urls, asgi)
 apps/
-  core/              dashboard, búsqueda (Ctrl+K), notificaciones, utilidades, mixins de modales
+  core/              dashboard, ajustes, búsqueda (Ctrl+K), notificaciones, utilidades, mixins de modales
   cuentas/           usuario, login, perfil, equipo y roles
   colaboradores/     sub-agencias (marca, contacto, redes, logos)
   banners/           fondos para pantallas e invitaciones
   eventos/           eventos, calendario, itinerario, pagos, orden de servicio
   invitaciones/      invitación digital con editor en vivo (lugares, personas, galería, música),
                      lista de invitados, RSVP, pases QR y registro de entrada
-  envivo/            pantalla de invitados, panel del DJ, proyector y WebSockets
+  envivo/            pantalla de invitados (canciones, saludos y fotos), panel del DJ, proyector,
+                     carrusel de fotos, álbum digital y WebSockets
 templates/           layouts y componentes compartidos
 static/css, js       sistema de diseño propio (sin Bootstrap)
 ```

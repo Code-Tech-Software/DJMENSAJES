@@ -11,11 +11,14 @@
         try { if (localStorage.getItem('dj-tema') === 'oscuro') document.documentElement.dataset.tema = 'oscuro'; } catch (e) {}
     </script>
     <title>Panel DJ · {{ evento.nombre_evento }}</title>
-    <link rel="icon" type="image/png" href="{% static 'img/isotipo.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/envivo-dj.css' %}">
 </head>
 <body>
@@ -28,22 +31,24 @@
         <div class="reloj" id="reloj">--:--</div>
         <div class="dj-top__acciones">
             <button class="ctrl {% if evento.estado %}on{% else %}pausa{% endif %}" id="btn-recepcion" title="Pausar o reanudar la recepción de mensajes">
-                <i class="{% if evento.estado %}ri-radio-button-line{% else %}ri-pause-circle-fill{% endif %}"></i><span>{% if evento.estado %}Recibiendo{% else %}En pausa{% endif %}</span>
+                <i class="{% if evento.estado %}ph ph-radio-button{% else %}ph-fill ph-pause-circle{% endif %}"></i><span>{% if evento.estado %}Recibiendo{% else %}En pausa{% endif %}</span>
             </button>
-            <button class="ctrl" id="btn-sonido" title="Sonido al recibir mensajes"><i class="ri-notification-off-line"></i><span>Sonido</span></button>
-            <button class="ctrl" id="btn-tema" title="Cambiar a tema oscuro o claro"><i class="ri-moon-clear-line"></i></button>
-            <button class="ctrl" id="btn-qr" title="Mostrar QR para invitados"><i class="ri-qr-code-line"></i></button>
-            <a class="ctrl" href="{{ url_pantalla }}" target="_blank" title="Abrir pantalla del proyector"><i class="ri-tv-2-line"></i></a>
-            <button class="ctrl" id="btn-completa" title="Pantalla completa"><i class="ri-fullscreen-line"></i></button>
+            <button class="ctrl" id="btn-sonido" title="Sonido al recibir mensajes"><i class="ph ph-bell-slash"></i><span>Sonido</span></button>
+            <button class="ctrl" id="btn-tema" title="Cambiar a tema oscuro o claro"><i class="ph ph-moon-stars"></i></button>
+            <button class="ctrl" id="btn-qr" title="Mostrar QR para invitados"><i class="ph ph-qr-code"></i></button>
+            <a class="ctrl" href="{{ url_pantalla }}" target="_blank" title="Abrir pantalla del proyector"><i class="ph ph-television-simple"></i></a>
+            {% if mostrar_fotos %}<a class="ctrl" href="{{ url_fotos }}" target="_blank" title="Abrir carrusel de fotos (segunda pantalla)"><i class="ph ph-images"></i></a>{% endif %}
+            <button class="ctrl" id="btn-completa" title="Pantalla completa"><i class="ph ph-corners-out"></i></button>
         </div>
     </header>
 
     <div class="dj-barra">
         <div class="contadores">
-            <div class="contador" style="--c:var(--cancion)"><i class="ri-music-2-fill"></i><div><strong id="n-cancion">0</strong> <span>canciones</span></div></div>
-            <div class="contador" style="--c:var(--saludo)"><i class="ri-chat-heart-fill"></i><div><strong id="n-saludo">0</strong> <span>saludos</span></div></div>
-            <div class="contador" style="--c:var(--oro)"><i class="ri-vip-crown-2-fill"></i><div><strong id="n-vip">0</strong> <span>VIP</span></div></div>
-            <div class="contador" style="--c:var(--ok)"><i class="ri-check-double-line"></i><div><strong id="n-atendido">0</strong> <span>atendidos</span></div></div>
+            <div class="contador" style="--c:var(--cancion)"><i class="ph-fill ph-music-notes"></i><div><strong id="n-cancion">0</strong> <span>canciones</span></div></div>
+            <div class="contador" style="--c:var(--saludo)"><i class="ph-fill ph-chat-teardrop-text"></i><div><strong id="n-saludo">0</strong> <span>saludos</span></div></div>
+            {% if mostrar_fotos %}<div class="contador" style="--c:var(--foto)"><i class="ph-fill ph-camera"></i><div><strong id="n-foto">0</strong> <span>fotos</span></div></div>{% endif %}
+            <div class="contador" style="--c:var(--oro)"><i class="ph-fill ph-crown-simple"></i><div><strong id="n-vip">0</strong> <span>VIP</span></div></div>
+            <div class="contador" style="--c:var(--ok)"><i class="ph ph-checks"></i><div><strong id="n-atendido">0</strong> <span>atendidos</span></div></div>
         </div>
         <div class="vista-tabs" id="vista">
             <button data-vista="pendientes" class="activo">Pendientes</button>
@@ -52,24 +57,43 @@
         <div class="vista-tabs tabs-movil" id="tabs-movil" style="display:none">
             <button data-col="cancion" class="activo">Canciones</button>
             <button data-col="saludo">Saludos</button>
+            {% if mostrar_fotos %}<button data-col="foto">Fotos</button>{% endif %}
         </div>
-        <label class="buscar"><i class="ri-search-line"></i><input type="search" id="buscar" placeholder="Buscar por canción, artista o nombre"></label>
+        <label class="buscar"><i class="ph ph-magnifying-glass"></i><input type="search" id="buscar" placeholder="Buscar por canción, artista, nombre o texto"></label>
     </div>
 
-    <main class="tablero" id="tablero" data-movil="cancion">
+    <main class="tablero {% if mostrar_fotos %}tablero--fotos{% endif %}" id="tablero" data-movil="cancion">
         <section class="columna columna--cancion" style="--c:var(--cancion)">
-            <div class="columna__cab"><i class="ri-music-2-fill"></i>Canciones <span class="num" id="c-cancion">0</span></div>
+            <div class="columna__cab"><i class="ph-fill ph-music-notes"></i>Canciones <span class="num" id="c-cancion">0</span></div>
             <div class="lista" id="lista-cancion"></div>
         </section>
         <section class="columna columna--saludo" style="--c:var(--saludo)">
-            <div class="columna__cab"><i class="ri-chat-heart-fill"></i>Saludos <span class="num" id="c-saludo">0</span></div>
+            <div class="columna__cab"><i class="ph-fill ph-chat-teardrop-text"></i>Saludos <span class="num" id="c-saludo">0</span></div>
             <div class="lista" id="lista-saludo"></div>
         </section>
+        {% if mostrar_fotos %}
+        <section class="columna columna--foto" style="--c:var(--foto)">
+            <div class="columna__cab"><i class="ph-fill ph-camera"></i>Fotos <span class="num" id="c-foto">0</span>
+                <a class="columna__enlace" href="{{ url_album }}" target="_blank"><i class="ph ph-images"></i>Álbum</a></div>
+            <div class="lista lista--fotos" id="lista-foto"></div>
+        </section>
+        {% endif %}
     </main>
 </div>
 
 <div class="deshacer" id="deshacer"><span id="deshacer-texto">Marcado como atendido</span><button id="deshacer-btn">Deshacer</button></div>
-<div class="aviso-pausa {% if not evento.estado %}visible{% endif %}" id="aviso-pausa"><i class="ri-pause-circle-fill"></i>Recepción en pausa: los invitados no pueden enviar mensajes.</div>
+<div class="aviso-pausa {% if not evento.estado %}visible{% endif %}" id="aviso-pausa"><i class="ph-fill ph-pause-circle"></i>Recepción en pausa: los invitados no pueden enviar mensajes.</div>
+
+<div class="visor" id="visor" hidden>
+    <button class="visor__cerrar" id="visor-cerrar" aria-label="Cerrar"><i class="ph ph-x"></i></button>
+    <button class="visor__nav visor__nav--ant" id="visor-ant" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
+    <img class="visor__img" id="visor-img" alt="">
+    <button class="visor__nav visor__nav--sig" id="visor-sig" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
+    <div class="visor__pie">
+        <div class="visor__texto"><strong id="visor-nombre"></strong><span id="visor-pie"></span></div>
+        <div class="visor__acciones" id="visor-acciones"></div>
+    </div>
+</div>
 
 <div class="modal-qr" id="modal-qr">
     <div class="modal-qr__caja">
@@ -85,6 +109,7 @@
 <script>
     (() => {
         const TOKEN = "{{ evento.token_dj }}";
+        const TIPOS = {% if mostrar_fotos %}['cancion', 'saludo', 'foto']{% else %}['cancion', 'saludo']{% endif %};
         const URLS = {
             accion: (id, accion) => `/envivo/dj/${TOKEN}/mensajes/${id}/${accion}/`,
             mensajes: `/envivo/dj/${TOKEN}/mensajes/`,
@@ -124,36 +149,56 @@
         $('#btn-sonido').addEventListener('click', () => {
             sonido = !sonido;
             $('#btn-sonido').classList.toggle('on', sonido);
-            $('#btn-sonido i').className = sonido ? 'ri-notification-3-fill' : 'ri-notification-off-line';
+            $('#btn-sonido i').className = sonido ? 'ph-fill ph-bell' : 'ph ph-bell-slash';
             if (sonido) campana(false);
             try { localStorage.setItem('dj-sonido', sonido ? '1' : '0'); } catch (e) {}
         });
-        try { if (localStorage.getItem('dj-sonido') === '1') { sonido = true; $('#btn-sonido').classList.add('on'); $('#btn-sonido i').className = 'ri-notification-3-fill'; } } catch (e) {}
+        try { if (localStorage.getItem('dj-sonido') === '1') { sonido = true; $('#btn-sonido').classList.add('on'); $('#btn-sonido i').className = 'ph-fill ph-bell'; } } catch (e) {}
 
         /* ---------- Render ---------- */
         const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         function tarjeta(m) {
             const e = EnVivo.escapar;
             const sub = m.tipo === 'cancion'
-                ? (m.artista ? `<div class="msj__sub"><i class="ri-user-voice-line"></i> ${e(m.artista)}</div>` : '')
+                ? (m.artista ? `<div class="msj__sub"><i class="ph ph-user-sound"></i> ${e(m.artista)}</div>` : '')
                 : (m.destinatario ? `<div class="msj__sub">Para: <strong>${e(m.destinatario)}</strong></div>` : '');
             const acciones = m.estatus === 'pendiente'
-                ? `<button class="btn-msj btn-msj--ok" data-accion="atender" title="Marcar como atendido"><i class="ri-check-line"></i></button>
-                   ${m.tipo === 'saludo' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar del proyector' : 'Mostrar en el proyector'}"><i class="ri-tv-2-line"></i></button>` : ''}
-                   <button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ri-close-line"></i></button>`
-                : `<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ri-arrow-go-back-line"></i></button>
-                   ${m.tipo === 'saludo' && m.estatus === 'atendido' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="Proyector"><i class="ri-tv-2-line"></i></button>` : ''}`;
+                ? `<button class="btn-msj btn-msj--ok" data-accion="atender" title="Marcar como atendido"><i class="ph ph-check"></i></button>
+                   ${m.tipo === 'saludo' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar del proyector' : 'Mostrar en el proyector'}"><i class="ph ph-television-simple"></i></button>` : ''}
+                   <button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ph ph-x"></i></button>`
+                : `<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ph ph-arrow-u-up-left"></i></button>
+                   ${m.tipo === 'saludo' && m.estatus === 'atendido' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="Proyector"><i class="ph ph-television-simple"></i></button>` : ''}`;
             return `<article class="msj msj--${m.tipo} ${m.vip ? 'msj--vip' : ''} ${m.estatus !== 'pendiente' ? 'msj--' + m.estatus : ''} ${nuevos.has(m.id) ? 'msj--nuevo' : ''}" data-id="${m.id}">
                 <div class="msj__cuerpo">
-                    <div class="msj__meta"><strong>${e(m.nombre)}</strong>${m.vip ? '<span class="msj__vip"><i class="ri-vip-crown-2-fill"></i>VIP</span>' : ''}<span>· ${m.hora}</span><span data-hace="${m.fecha}">· ${EnVivo.haceCuanto(m.fecha)}</span>${m.estatus === 'atendido' ? '<span style="color:var(--ok)">· atendido</span>' : ''}${m.estatus === 'descartado' ? '<span>· descartado</span>' : ''}</div>
+                    <div class="msj__meta"><strong>${e(m.nombre)}</strong>${m.vip ? '<span class="msj__vip"><i class="ph-fill ph-crown-simple"></i>VIP</span>' : ''}<span>· ${m.hora}</span><span data-hace="${m.fecha}">· ${EnVivo.haceCuanto(m.fecha)}</span>${m.estatus === 'atendido' ? '<span style="color:var(--ok)">· atendido</span>' : ''}${m.estatus === 'descartado' ? '<span>· descartado</span>' : ''}</div>
                     <div class="msj__texto">${e(m.mensaje)}</div>${sub}
                 </div>
                 <div class="msj__acciones">${acciones}</div></article>`;
         }
+        function accionesFoto(m) {
+            if (m.estatus === 'pendiente') {
+                return `<button class="btn-msj btn-msj--ok" data-accion="aprobar" title="Aprobar: sale en la pantalla y en el álbum"><i class="ph ph-check"></i></button>
+                    <button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ph ph-x"></i></button>`;
+            }
+            if (m.estatus === 'atendido') {
+                return `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar de la pantalla (sigue en el álbum)' : 'Mostrar en la pantalla'}"><i class="ph ph-television-simple"></i></button>
+                    <button class="btn-msj btn-msj--x" data-accion="descartar" title="Quitar de la pantalla y del álbum"><i class="ph ph-trash"></i></button>`;
+            }
+            return `<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ph ph-arrow-u-up-left"></i></button>`;
+        }
+        function tarjetaFoto(m) {
+            const e = EnVivo.escapar;
+            return `<article class="foto-tile ${m.vip ? 'foto-tile--vip' : ''} ${m.estatus !== 'pendiente' ? 'msj--' + m.estatus : ''} ${nuevos.has(m.id) ? 'msj--nuevo' : ''}" data-id="${m.id}">
+                <button class="foto-tile__img" data-ver title="Ver en grande"><img src="${e(m.miniatura)}" alt="" loading="lazy"></button>
+                ${m.en_pantalla ? '<span class="foto-tile__marca"><i class="ph ph-television-simple"></i>En pantalla</span>' : ''}
+                <div class="foto-tile__info"><strong>${e(m.nombre)}</strong>${m.vip ? '<i class="ph-fill ph-crown-simple" style="color:var(--oro)"></i>' : ''}<span>${m.hora}</span></div>
+                ${m.mensaje ? `<p class="foto-tile__pie">${e(m.mensaje)}</p>` : ''}
+                <div class="foto-tile__acciones">${accionesFoto(m)}</div></article>`;
+        }
         function vacio(tipo) {
             const t = vista === 'pendientes'
-                ? (tipo === 'cancion' ? ['ri-music-2-line', 'Sin canciones pendientes'] : ['ri-chat-heart-line', 'Sin saludos pendientes'])
-                : ['ri-history-line', 'Aún no hay historial'];
+                ? ({ cancion: ['ph ph-music-notes', 'Sin canciones pendientes'], saludo: ['ph ph-chat-teardrop-text', 'Sin saludos pendientes'], foto: ['ph ph-camera', 'Sin fotos por revisar'] })[tipo]
+                : ['ph ph-clock-counter-clockwise', 'Aún no hay historial'];
             return `<div class="vacio"><i class="${t[0]}"></i>${t[1]}</div>`;
         }
         function render() {
@@ -162,14 +207,13 @@
                 .filter(m => !filtro || norm(`${m.mensaje} ${m.artista} ${m.nombre} ${m.destinatario}`).includes(filtro));
             // Pendientes: VIP primero y luego en orden de llegada (cola). Historial: lo más reciente primero.
             visibles.sort((a, b) => vista === 'pendientes' ? (b.vip - a.vip) || (new Date(a.fecha) - new Date(b.fecha)) : new Date(b.fecha) - new Date(a.fecha));
-            ['cancion', 'saludo'].forEach(tipo => {
+            TIPOS.forEach(tipo => {
                 const lista = visibles.filter(m => m.tipo === tipo);
-                $(`#lista-${tipo}`).innerHTML = lista.length ? lista.map(tarjeta).join('') : vacio(tipo);
+                $(`#lista-${tipo}`).innerHTML = lista.length ? lista.map(tipo === 'foto' ? tarjetaFoto : tarjeta).join('') : vacio(tipo);
                 $(`#c-${tipo}`).textContent = lista.length;
             });
             const pend = todos.filter(m => m.estatus === 'pendiente');
-            $('#n-cancion').textContent = pend.filter(m => m.tipo === 'cancion').length;
-            $('#n-saludo').textContent = pend.filter(m => m.tipo === 'saludo').length;
+            TIPOS.forEach(tipo => { $(`#n-${tipo}`).textContent = pend.filter(m => m.tipo === tipo).length; });
             $('#n-vip').textContent = pend.filter(m => m.vip).length;
             $('#n-atendido').textContent = todos.filter(m => m.estatus === 'atendido').length;
         }
@@ -183,18 +227,63 @@
             mensajes.set(r.mensaje.id, r.mensaje);
             nuevos.delete(id);
             render();
-            if (nombre === 'atender' || nombre === 'descartar') {
+            if (nombre === 'atender' || nombre === 'descartar' || nombre === 'aprobar') {
                 ultimo = id;
-                $('#deshacer-texto').textContent = nombre === 'atender' ? 'Marcado como atendido' : 'Mensaje descartado';
+                $('#deshacer-texto').textContent = { atender: 'Marcado como atendido', descartar: r.mensaje.tipo === 'foto' ? 'Foto descartada' : 'Mensaje descartado', aprobar: 'Foto aprobada: ya está en la pantalla' }[nombre];
                 $('#deshacer').classList.add('visible');
                 clearTimeout(tDeshacer);
                 tDeshacer = setTimeout(() => $('#deshacer').classList.remove('visible'), 5000);
             }
         }
         $('#tablero').addEventListener('click', e => {
+            const ver = e.target.closest('[data-ver]');
+            if (ver) { abrirVisor(+ver.closest('[data-id]').dataset.id); return; }
             const b = e.target.closest('[data-accion]');
             if (!b) return;
             accion(+b.closest('[data-id]').dataset.id, b.dataset.accion);
+        });
+
+        /* ---------- Visor de fotos: aprobar o descartar pasa a la siguiente ---------- */
+        let enVisor = null;
+        const fotosVisibles = () => [...document.querySelectorAll('#lista-foto [data-id]')].map(el => +el.dataset.id);
+        function abrirVisor(id) {
+            const m = mensajes.get(id);
+            if (!m) { cerrarVisor(); return; }
+            enVisor = id;
+            $('#visor-img').src = m.foto;
+            $('#visor-nombre').textContent = m.nombre + (m.vip ? ' 👑' : '') + ' · ' + m.hora;
+            $('#visor-pie').textContent = m.mensaje || '';
+            $('#visor-acciones').innerHTML = accionesFoto(m);
+            const ids = fotosVisibles();
+            $('#visor-ant').hidden = ids.indexOf(id) <= 0;
+            $('#visor-sig').hidden = ids.indexOf(id) >= ids.length - 1;
+            $('#visor').hidden = false;
+        }
+        function cerrarVisor() { $('#visor').hidden = true; enVisor = null; }
+        function moverVisor(paso) {
+            const ids = fotosVisibles();
+            const i = ids.indexOf(enVisor) + paso;
+            if (i >= 0 && i < ids.length) abrirVisor(ids[i]);
+        }
+        $('#visor-cerrar').addEventListener('click', cerrarVisor);
+        $('#visor-ant').addEventListener('click', () => moverVisor(-1));
+        $('#visor-sig').addEventListener('click', () => moverVisor(1));
+        $('#visor').addEventListener('click', e => { if (e.target.id === 'visor') cerrarVisor(); });
+        $('#visor-acciones').addEventListener('click', async e => {
+            const b = e.target.closest('[data-accion]');
+            if (!b || !enVisor) return;
+            const id = enVisor;
+            const sigue = vista === 'pendientes' && (b.dataset.accion === 'aprobar' || b.dataset.accion === 'descartar');
+            const ids = fotosVisibles();
+            const siguiente = ids[ids.indexOf(id) + 1] || ids[ids.indexOf(id) - 1];
+            await accion(id, b.dataset.accion);
+            if (sigue) { siguiente && siguiente !== id ? abrirVisor(siguiente) : cerrarVisor(); } else abrirVisor(id);
+        });
+        document.addEventListener('keydown', e => {
+            if ($('#visor').hidden) return;
+            if (e.key === 'Escape') cerrarVisor();
+            if (e.key === 'ArrowLeft') moverVisor(-1);
+            if (e.key === 'ArrowRight') moverVisor(1);
         });
         $('#deshacer-btn').addEventListener('click', () => {
             if (ultimo) accion(ultimo, 'restaurar');
@@ -221,7 +310,7 @@
         function pintarRecepcion(activo) {
             const b = $('#btn-recepcion');
             b.classList.toggle('on', activo); b.classList.toggle('pausa', !activo);
-            b.innerHTML = activo ? '<i class="ri-radio-button-line"></i><span>Recibiendo</span>' : '<i class="ri-pause-circle-fill"></i><span>En pausa</span>';
+            b.innerHTML = activo ? '<i class="ph ph-radio-button"></i><span>Recibiendo</span>' : '<i class="ph-fill ph-pause-circle"></i><span>En pausa</span>';
             $('#aviso-pausa').classList.toggle('visible', !activo);
             $('#dj-top').classList.toggle('en-pausa', !activo);
         }
@@ -233,7 +322,7 @@
         /* ---------- Tema claro / oscuro ---------- */
         function pintarTema() {
             const oscuro = document.documentElement.dataset.tema === 'oscuro';
-            $('#btn-tema i').className = oscuro ? 'ri-sun-line' : 'ri-moon-clear-line';
+            $('#btn-tema i').className = oscuro ? 'ph ph-sun' : 'ph ph-moon-stars';
             document.querySelector('meta[name="theme-color"]').content = oscuro ? '#07090f' : '#f3f5f9';
         }
         $('#btn-tema').addEventListener('click', () => {

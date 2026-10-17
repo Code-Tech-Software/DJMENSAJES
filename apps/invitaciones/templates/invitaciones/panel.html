@@ -31,24 +31,24 @@
 {% block content %}
 <div class="page-head">
     <div class="page-head__title">
-        <div class="breadcrumb"><a href="{% url 'invitaciones:indice' %}">Invitaciones</a><i class="ri-arrow-right-s-line"></i><a href="{{ evento.get_absolute_url }}">{{ evento.nombre_evento }}</a></div>
+        <div class="breadcrumb"><a href="{% url 'invitaciones:indice' %}">Invitaciones</a><i class="ph ph-caret-right"></i><a href="{{ evento.get_absolute_url }}">{{ evento.nombre_evento }}</a></div>
         <h1 class="row">Invitación digital
             {% if invitacion.publicada %}<span class="chip chip--success chip--dot chip--lg">Publicada</span>{% else %}<span class="chip chip--warning chip--dot chip--lg">Borrador</span>{% endif %}
         </h1>
         <p>{{ invitacion.titulo_visible }} · {{ invitacion.nombres_visibles }} · {{ evento.fecha_inicio_evento|date:"j \d\e F, H:i" }} h</p>
     </div>
     <div class="page-head__actions">
-        <a class="btn" href="{{ url_publica }}" target="_blank"><i class="ri-external-link-line"></i>Ver invitación</a>
-        <a class="btn btn--primary" href="{% url 'invitaciones:editar' evento.pk %}"><i class="ri-magic-line"></i>Diseñar invitación</a>
+        <a class="btn" href="{{ url_publica }}" target="_blank"><i class="ph ph-arrow-square-out"></i>Ver invitación</a>
+        <a class="btn btn--primary" href="{% url 'invitaciones:editar' evento.pk %}"><i class="ph ph-magic-wand"></i>Diseñar invitación</a>
         <button class="btn {% if invitacion.publicada %}btn--ghost{% else %}btn--success{% endif %}" data-post="{% url 'invitaciones:publicar' evento.pk %}"
                 {% if invitacion.publicada %}data-confirm="¿Regresar a borrador?" data-confirm-text="Los enlaces dejarán de funcionar para tus invitados hasta que la publiques de nuevo."{% endif %}>
-            <i class="{% if invitacion.publicada %}ri-eye-off-line{% else %}ri-send-plane-fill{% endif %}"></i>{% if invitacion.publicada %}Despublicar{% else %}Publicar{% endif %}
+            <i class="{% if invitacion.publicada %}ph ph-eye-slash{% else %}ph-fill ph-paper-plane-tilt{% endif %}"></i>{% if invitacion.publicada %}Despublicar{% else %}Publicar{% endif %}
         </button>
     </div>
 </div>
 
 {% if not invitacion.publicada %}
-<div class="alert alert--warning mb-3"><i class="ri-draft-line"></i>
+<div class="alert alert--warning mb-3"><i class="ph ph-note-pencil"></i>
     <div><strong>Tu invitación está en borrador.</strong> Solo tu equipo puede verla. Personaliza el diseño y publícala para que tus invitados puedan abrir sus enlaces.</div></div>
 {% endif %}
 
@@ -67,9 +67,9 @@
         <div class="card card--pad">
             <h3 style="font-size:15px">Enlace general</h3>
             <p class="muted small mb-2">{% if invitacion.rsvp_abierto %}Cualquiera con el enlace puede confirmar.{% else %}Solo informativo: la confirmación se hace con enlaces personales.{% endif %}</p>
-            <div class="copy-field"><code>{{ url_publica }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ url_publica }}" aria-label="Copiar"><i class="ri-file-copy-line"></i></button></div>
-            <a class="btn btn--whatsapp btn--block mt-2" target="_blank" href="https://wa.me/?text={{ invitacion.titulo_visible|urlencode }}%20%C2%B7%20{{ invitacion.nombres_visibles|urlencode }}%0A{{ url_publica|urlencode }}"><i class="ri-whatsapp-line"></i>Compartir por WhatsApp</a>
-            <div class="row between small mt-2"><span class="muted"><i class="ri-eye-line"></i> {{ invitacion.visitas }} visita{{ invitacion.visitas|pluralize }}</span>
+            <div class="copy-field"><code>{{ url_publica }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ url_publica }}" aria-label="Copiar"><i class="ph ph-copy"></i></button></div>
+            <a class="btn btn--whatsapp btn--block mt-2" target="_blank" href="https://wa.me/?text={{ invitacion.titulo_visible|urlencode }}%20%C2%B7%20{{ invitacion.nombres_visibles|urlencode }}%0A{{ url_publica|urlencode }}"><i class="ph ph-whatsapp-logo"></i>Compartir por WhatsApp</a>
+            <div class="row between small mt-2"><span class="muted"><i class="ph ph-eye"></i> {{ invitacion.visitas }} visita{{ invitacion.visitas|pluralize }}</span>
                 {% if invitacion.fecha_limite_rsvp %}<span class="muted">Confirmar antes del {{ invitacion.fecha_limite_rsvp|date:"j M" }}</span>{% endif %}</div>
         </div>
     </aside>
@@ -88,14 +88,14 @@
             <div class="card__head">
                 <div><h3>Lista de invitados</h3><p>Envía cada invitación por WhatsApp y sigue quién la abrió y confirmó.</p></div>
                 <div class="row row-wrap">
-                    <a class="btn btn--ghost btn--sm" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ri-qr-scan-2-line"></i><span class="hide-mobile">Entrada</span></a>
-                    <a class="btn btn--ghost btn--sm" href="{% url 'invitaciones:exportar' evento.pk %}"><i class="ri-file-excel-2-line"></i><span class="hide-mobile">Exportar</span></a>
-                    <button class="btn btn--sm" data-modal="{% url 'invitaciones:importar' evento.pk %}"><i class="ri-file-list-3-line"></i>Importar</button>
-                    <button class="btn btn--primary btn--sm" data-modal="{% url 'invitaciones:invitado_crear' evento.pk %}"><i class="ri-user-add-line"></i>Agregar</button>
+                    <a class="btn btn--ghost btn--sm" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ph ph-scan"></i><span class="hide-mobile">Entrada</span></a>
+                    <a class="btn btn--ghost btn--sm" href="{% url 'invitaciones:exportar' evento.pk %}"><i class="ph ph-file-xls"></i><span class="hide-mobile">Exportar</span></a>
+                    <button class="btn btn--sm" data-modal="{% url 'invitaciones:importar' evento.pk %}"><i class="ph ph-clipboard-text"></i>Importar</button>
+                    <button class="btn btn--primary btn--sm" data-modal="{% url 'invitaciones:invitado_crear' evento.pk %}"><i class="ph ph-user-plus"></i>Agregar</button>
                 </div>
             </div>
             <form class="toolbar" style="padding:16px 20px 0;margin:0" data-autosubmit data-target="#tabla-invitados">
-                <div class="searchbox"><i class="ri-search-line"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o mesa"></div>
+                <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o mesa"></div>
                 <select class="input" name="estado">
                     <option value="">Todas las respuestas</option>
                     <option value="pendiente" {% if estado == 'pendiente' %}selected{% endif %}>Pendientes</option>
@@ -120,32 +120,32 @@
                                 <div class="t-title">{{ i.nombre }}</div>
                                 <div class="row row-wrap" style="gap:6px;margin-top:3px">
                                     {% if i.grupo %}<span class="chip chip--muted">{{ i.grupo }}</span>{% endif %}
-                                    {% if i.mesa %}<span class="chip chip--info"><i class="ri-restaurant-line"></i>Mesa {{ i.mesa }}</span>{% endif %}
+                                    {% if i.mesa %}<span class="chip chip--info"><i class="ph ph-fork-knife"></i>Mesa {{ i.mesa }}</span>{% endif %}
                                     {% if i.origen == 'publico' %}<span class="chip chip--live">Enlace general</span>{% endif %}
                                 </div>
                             </td>
                             <td class="nowrap">{% if i.estado == 'confirmado' %}<strong class="text-success">{{ i.pases_confirmados }}</strong><span class="t-muted"> / {{ i.pases }}</span>{% else %}<strong>{{ i.pases }}</strong>{% endif %}</td>
                             <td>
                                 <span class="chip rsvp-{{ i.estado }} chip--dot">{{ i.get_estado_display }}</span>
-                                {% if i.mensaje %}<div class="t-sub mt-1" style="max-width:240px" title="{{ i.mensaje }}"><i class="ri-chat-quote-line"></i> {{ i.mensaje|truncatechars:60 }}</div>{% endif %}
+                                {% if i.mensaje %}<div class="t-sub mt-1" style="max-width:240px" title="{{ i.mensaje }}"><i class="ph ph-quotes"></i> {{ i.mensaje|truncatechars:60 }}</div>{% endif %}
                             </td>
                             <td class="hide-mobile">
                                 <div class="seg-icons">
-                                    <i class="ri-send-plane-line {% if i.enviada_en %}on-brand{% endif %}" data-tip="{% if i.enviada_en %}Enviada {{ i.enviada_en|hace }}{% else %}Sin enviar{% endif %}"></i>
-                                    <i class="ri-eye-line {% if i.vista_en %}on-brand{% endif %}" data-tip="{% if i.vista_en %}Vista {{ i.vista_en|hace }}{% else %}No la ha abierto{% endif %}"></i>
-                                    <i class="ri-door-open-line {% if i.check_in_en %}on{% endif %}" data-tip="{% if i.check_in_en %}Llegó {{ i.check_in_en|time:'H:i' }}{% else %}No ha llegado{% endif %}"></i>
+                                    <i class="ph ph-paper-plane-tilt {% if i.enviada_en %}on-brand{% endif %}" data-tip="{% if i.enviada_en %}Enviada {{ i.enviada_en|hace }}{% else %}Sin enviar{% endif %}"></i>
+                                    <i class="ph ph-eye {% if i.vista_en %}on-brand{% endif %}" data-tip="{% if i.vista_en %}Vista {{ i.vista_en|hace }}{% else %}No la ha abierto{% endif %}"></i>
+                                    <i class="ph ph-door-open {% if i.check_in_en %}on{% endif %}" data-tip="{% if i.check_in_en %}Llegó {{ i.check_in_en|time:'H:i' }}{% else %}No ha llegado{% endif %}"></i>
                                 </div>
                             </td>
                             <td class="t-actions">
-                                <a class="btn btn--sm btn--whatsapp" href="{{ i.wa_url }}" target="_blank" data-enviar="{% url 'invitaciones:marcar_enviada' i.pk %}" data-tip="Enviar por WhatsApp"><i class="ri-whatsapp-line"></i></a>
+                                <a class="btn btn--sm btn--whatsapp" href="{{ i.wa_url }}" target="_blank" data-enviar="{% url 'invitaciones:marcar_enviada' i.pk %}" data-tip="Enviar por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
                                 <div class="dropdown" style="display:inline-block">
-                                    <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ri-more-2-fill"></i></button>
+                                    <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ph ph-dots-three-vertical"></i></button>
                                     <div class="dropdown__menu">
-                                        <button class="menu-item" data-copy="{{ i.get_absolute_url }}"><i class="ri-link"></i>Copiar enlace personal</button>
-                                        <a class="menu-item" href="{{ i.get_absolute_url }}" target="_blank"><i class="ri-external-link-line"></i>Abrir su invitación</a>
-                                        <button class="menu-item" data-modal="{% url 'invitaciones:invitado_editar' i.pk %}"><i class="ri-edit-2-line"></i>Editar</button>
+                                        <button class="menu-item" data-copy="{{ i.get_absolute_url }}"><i class="ph ph-link"></i>Copiar enlace personal</button>
+                                        <a class="menu-item" href="{{ i.get_absolute_url }}" target="_blank"><i class="ph ph-arrow-square-out"></i>Abrir su invitación</a>
+                                        <button class="menu-item" data-modal="{% url 'invitaciones:invitado_editar' i.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
                                         <div class="menu-sep"></div>
-                                        <button class="menu-item menu-item--danger" data-post="{% url 'invitaciones:invitado_eliminar' i.pk %}" data-danger data-confirm="¿Quitar a {{ i.nombre }}?" data-confirm-text="Su enlace personal dejará de funcionar." data-confirm-button="Quitar"><i class="ri-delete-bin-6-line"></i>Quitar de la lista</button>
+                                        <button class="menu-item menu-item--danger" data-post="{% url 'invitaciones:invitado_eliminar' i.pk %}" data-danger data-confirm="¿Quitar a {{ i.nombre }}?" data-confirm-text="Su enlace personal dejará de funcionar." data-confirm-button="Quitar"><i class="ph ph-trash"></i>Quitar de la lista</button>
                                     </div>
                                 </div>
                             </td>
@@ -155,15 +155,15 @@
                     </table>
                 </div>
                 {% elif q or estado or grupo %}
-                    {% include 'components/vacio.html' with icono='ri-user-search-line' titulo='Sin coincidencias' texto='Ningún invitado coincide con los filtros.' %}
+                    {% include 'components/vacio.html' with icono='ph ph-user-focus' titulo='Sin coincidencias' texto='Ningún invitado coincide con los filtros.' %}
                 {% else %}
                     <div class="empty">
-                        <div class="empty__art"><i class="ri-user-heart-line"></i></div>
+                        <div class="empty__art"><i class="ph ph-user-list"></i></div>
                         <h3>Arma tu lista de invitados</h3>
                         <p>Cada invitado recibe un enlace personal con sus pases, puede confirmar en un toque y obtiene un pase QR para la entrada.</p>
                         <div class="row" style="justify-content:center">
-                            <button class="btn" data-modal="{% url 'invitaciones:importar' evento.pk %}"><i class="ri-file-list-3-line"></i>Pegar lista</button>
-                            <button class="btn btn--primary" data-modal="{% url 'invitaciones:invitado_crear' evento.pk %}"><i class="ri-user-add-line"></i>Agregar invitado</button>
+                            <button class="btn" data-modal="{% url 'invitaciones:importar' evento.pk %}"><i class="ph ph-clipboard-text"></i>Pegar lista</button>
+                            <button class="btn btn--primary" data-modal="{% url 'invitaciones:invitado_crear' evento.pk %}"><i class="ph ph-user-plus"></i>Agregar invitado</button>
                         </div>
                     </div>
                 {% endif %}
@@ -195,7 +195,7 @@
             const a = e.target.closest('[data-enviar]');
             if (!a) return;
             fetch(a.dataset.enviar, { method: 'POST', keepalive: true, headers: { 'X-CSRFToken': EM.csrf(), 'X-Requested-With': 'XMLHttpRequest' } });
-            const icono = a.closest('tr')?.querySelector('.ri-send-plane-line');
+            const icono = a.closest('tr')?.querySelector('.ph-paper-plane-tilt');
             if (icono) icono.classList.add('on-brand');
         });
         document.addEventListener('em:saved', () => { frame.src = frame.src; });

@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>{{ evento.nombre_evento }} · Pantalla</title>
-    <link rel="icon" type="image/png" href="{% static 'img/isotipo.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <style>
         :root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; }
         * { box-sizing: border-box; margin: 0; }
@@ -57,6 +60,13 @@
         .tarjeta__nuevo { position: absolute; top: -1.6vh; left: 2vw; padding: .5vh 1vw; border-radius: 99px; background: #ff3d5e; font-size: clamp(11px, .9vw, 16px); font-weight: 800; letter-spacing: .1em; display: none; }
         .tarjeta.es-nuevo .tarjeta__nuevo { display: inline-block; animation: latido 1s 3; }
         .tarjeta.vip { border-color: rgba(255, 201, 74, .6); background: linear-gradient(135deg, rgba(255, 201, 74, .2), rgba(255, 255, 255, .08)); }
+        /* Foto aprobada por el DJ: impresión con marco blanco */
+        .foco.con-foto { min-height: 54vh; }
+        .tarjeta--foto { width: auto; max-width: 100%; padding: 1.3vh 1.3vh 2.2vh; border: 0; border-radius: 1vw; background: #fff; color: #0e1726; backdrop-filter: none; rotate: -1.2deg; }
+        .tarjeta--foto img { display: block; max-width: 100%; max-height: 44vh; width: auto; height: auto; border-radius: .5vw; }
+        .tarjeta--foto .tarjeta__pie { margin-top: 1.4vh; padding: 0 .6vw; font-size: clamp(16px, 1.5vw, 28px); font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+        .tarjeta--foto .tarjeta__de { margin-top: .8vh; padding: 0 .6vw; color: #475569; }
+        .tarjeta--foto .tarjeta__nuevo { left: auto; right: 1.4vw; top: -1.8vh; color: #fff; }
 
         .instrucciones { display: flex; gap: 1.4vw; }
         .paso { flex: 1; display: flex; align-items: center; gap: 1vw; padding: 2vh 1.4vw; border-radius: 1.4vw; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); font-size: clamp(13px, 1.15vw, 20px); font-weight: 600; }
@@ -81,6 +91,22 @@
         @keyframes pulso { 70% { box-shadow: 0 0 0 9px rgba(255, 61, 94, 0); } 0% { box-shadow: 0 0 0 0 rgba(255, 61, 94, .7); } }
         @keyframes latido { 50% { transform: scale(1.12); } }
 
+        /* QR en una esquina: mensajes y fotos al centro, más grandes */
+        .qr-esquina .escena { grid-template-columns: 1fr; padding: 6vh 8vw 9vh; }
+        .qr-esquina .qr-panel { display: none; }
+        .qr-esquina .derecha { align-items: center; text-align: center; width: 100%; max-width: 1400px; margin: 0 auto; }
+        .qr-esquina .foco, .qr-esquina .instrucciones { width: min(100%, 72vw); }
+        .qr-esquina .tarjeta { text-align: left; }
+        .qr-esquina .tarjeta--foto { left: 50%; translate: -50% 0; }
+        .qr-esquina .foco.con-foto { min-height: 62vh; }
+        .qr-esquina .tarjeta--foto img { max-height: 52vh; }
+        .qr-esquina .marca { right: auto; left: 3vw; }
+        .qr-rincon { position: fixed; right: 3vw; bottom: 4vh; z-index: 2; display: flex; align-items: center; gap: 1vw; padding: 1vh 1.4vw 1vh 1vh; border-radius: 1.4vw; background: rgba(0, 0, 0, .5); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, .14); text-align: left; }
+        .qr-rincon__caja { width: 15vh; height: 15vh; padding: .9vh; background: #fff; border-radius: 1vw; }
+        .qr-rincon__caja svg { width: 100%; height: 100%; display: block; }
+        .qr-rincon strong { display: block; font-size: clamp(14px, 1.25vw, 24px); }
+        .qr-rincon small { font-size: clamp(11px, .9vw, 16px); opacity: .7; }
+
         @media (max-aspect-ratio: 1/1) {
             html, body { overflow: auto; }
             .escena { grid-template-columns: 1fr; height: auto; min-height: 100vh; padding: 6vh 6vw 14vh; }
@@ -89,19 +115,23 @@
         }
     </style>
 </head>
-<body>
+<body class="qr-{{ evento.pantalla_qr }}">
 {% if banner and banner.imagen_pantalla %}<div class="fondo"><img src="{{ banner.imagen_pantalla.url }}" alt=""></div>{% endif %}
 <div class="aurora"><span></span><span></span></div>
 
 <div class="esquina">
     <span class="vivo" id="vivo">EN VIVO</span>
-    <button class="btn-completa" id="btn-completa" aria-label="Pantalla completa"><i class="ri-fullscreen-line"></i></button>
+    <button class="btn-completa" id="btn-completa" aria-label="Pantalla completa"><i class="ph ph-corners-out"></i></button>
 </div>
 
 <main class="escena">
     <section class="qr-panel">
         <div class="qr-caja">{{ qr|safe }}</div>
-        <h2>Escanea y <span>pide tu canción</span><br>o manda un saludo</h2>
+        {% if evento.pantalla_contenido == 'fotos' %}
+        <h2>Escanea y <span>comparte tus fotos</span><br>o pide tu canción</h2>
+        {% else %}
+        <h2>Escanea y <span>pide tu canción</span>{% if evento.permitir_fotos %},<br>manda saludos y fotos{% else %}<br>o manda un saludo{% endif %}</h2>
+        {% endif %}
         <div class="url">{{ url_corta }}</div>
     </section>
 
@@ -115,12 +145,20 @@
         <div class="puntos" id="puntos"></div>
 
         <div class="instrucciones" id="instrucciones">
-            <div class="paso"><i class="ri-qr-scan-2-line"></i>Escanea el código con tu cámara</div>
-            <div class="paso"><i class="ri-music-2-line"></i>Pide tu canción favorita</div>
-            <div class="paso"><i class="ri-chat-heart-line"></i>Tu saludo puede salir aquí</div>
+            <div class="paso"><i class="ph ph-scan"></i>Escanea el código con tu cámara</div>
+            <div class="paso"><i class="ph ph-music-notes"></i>Pide tu canción favorita</div>
+            {% if evento.pantalla_contenido != 'fotos' %}<div class="paso"><i class="ph ph-chat-teardrop-text"></i>Tu saludo puede salir aquí</div>{% endif %}
+            {% if evento.permitir_fotos %}<div class="paso"><i class="ph ph-camera"></i>{% if evento.pantalla_contenido == 'mensajes' %}Comparte tus fotos del evento{% else %}Tu foto puede salir aquí{% endif %}</div>{% endif %}
         </div>
     </section>
 </main>
+
+{% if evento.pantalla_qr == 'esquina' %}
+<div class="qr-rincon">
+    <div class="qr-rincon__caja">{{ qr|safe }}</div>
+    <div><strong>Escanea y participa</strong><small>{{ url_corta }}</small></div>
+</div>
+{% endif %}
 
 {% if colaborador and colaborador.logo %}
 <div class="marca"><img src="{{ colaborador.logo.url }}" alt="{{ colaborador.nombre }}"></div>
@@ -135,22 +173,33 @@
         let saludos = JSON.parse(document.getElementById('datos-saludos').textContent);
         let indice = saludos.length - 1;
         let rotacion = null;
-        const MAX = 16;
+        const MAX = 30;
+        // Lo que el evento eligió proyectar (los nuevos que no correspondan se ignoran)
+        const CONTENIDO = '{{ evento.pantalla_contenido }}';
+        const corresponde = s => CONTENIDO === 'todo' || (CONTENIDO === 'fotos' ? s.tipo === 'foto' : s.tipo !== 'foto');
 
         function tarjeta(s, esNuevo) {
             const e = EnVivo.escapar;
             const el = document.createElement('article');
+            if (s.tipo === 'foto') {
+                el.className = `tarjeta tarjeta--foto ${esNuevo ? 'es-nuevo' : ''}`;
+                el.innerHTML = `<span class="tarjeta__nuevo">¡NUEVA!</span><img src="${e(s.foto)}" alt="">
+                    ${s.mensaje ? `<div class="tarjeta__pie">${e(s.mensaje)}</div>` : ''}
+                    <div class="tarjeta__de"><i class="ph-fill ph-camera"></i>${e(s.nombre)}</div>`;
+                return el;
+            }
             el.className = `tarjeta ${s.vip ? 'vip' : ''} ${esNuevo ? 'es-nuevo' : ''}`;
             el.innerHTML = `<span class="tarjeta__nuevo">¡NUEVO!</span><span class="comillas">”</span>
                 ${s.destinatario ? `<div class="tarjeta__para">Para ${e(s.destinatario)}</div>` : ''}
                 <div class="tarjeta__texto">${e(s.mensaje)}</div>
-                <div class="tarjeta__de"><span class="av">${e((s.nombre || '?').charAt(0).toUpperCase())}</span>${e(s.nombre)}${s.vip ? ' <i class="ri-vip-crown-2-fill" style="color:#ffc94a"></i>' : ''}</div>`;
+                <div class="tarjeta__de"><span class="av">${e((s.nombre || '?').charAt(0).toUpperCase())}</span>${e(s.nombre)}${s.vip ? ' <i class="ph-fill ph-crown-simple" style="color:#ffc94a"></i>' : ''}</div>`;
             return el;
         }
 
         function mostrar(i, esNuevo = false) {
             if (!saludos.length) {
                 foco.innerHTML = '';
+                foco.classList.remove('con-foto');
                 document.getElementById('instrucciones').style.display = '';
                 puntos.innerHTML = '';
                 return;
@@ -160,6 +209,7 @@
             const anterior = foco.querySelector('.tarjeta.activa');
             if (anterior) { anterior.classList.remove('activa'); anterior.classList.add('saliendo'); setTimeout(() => anterior.remove(), 800); }
             const nueva = tarjeta(saludos[indice], esNuevo);
+            foco.classList.toggle('con-foto', saludos[indice].tipo === 'foto');
             foco.appendChild(nueva);
             requestAnimationFrame(() => requestAnimationFrame(() => nueva.classList.add('activa')));
             puntos.innerHTML = saludos.map((_, j) => `<span class="${j === indice ? 'activo' : ''}"></span>`).join('');
@@ -173,7 +223,9 @@
         EnVivo.conexion('/ws/envivo/{{ evento.codigo }}/pantalla/', {
             alCambiarEstado: ok => document.getElementById('vivo').classList.toggle('off', !ok),
             alMensaje: datos => {
-                if (datos.tipo === 'mostrar') {
+                // Cambió la configuración del proyector en el panel: se aplica recargando
+                if (datos.tipo === 'pantalla') { location.reload(); return; }
+                if (datos.tipo === 'mostrar' && corresponde(datos.mensaje)) {
                     saludos = saludos.filter(s => s.id !== datos.mensaje.id);
                     saludos.push(datos.mensaje);
                     if (saludos.length > MAX) saludos.shift();

@@ -1,13 +1,13 @@
 {% extends 'components/modal_form.html' %}
 {% load ui %}
 {% block cuerpo %}
-<div class="alert mb-3"><i class="ri-lightbulb-flash-line"></i>
+<div class="alert mb-3"><i class="ph ph-lightbulb"></i>
     <div><strong>Formato rápido</strong>Una invitación por línea, separando con comas: <code class="mono">Nombre, pases, WhatsApp, grupo</code>. Puedes copiar columnas directo desde Excel.</div></div>
 <div class="stack" style="gap:16px">
     {% campo form.lista %}
-    {% campo form.grupo icono="ri-group-line" %}
+    {% campo form.grupo icono="ph ph-users" %}
 </div>
-<div class="row small muted mt-2" id="import-preview"><i class="ri-information-line"></i><span>Escribe o pega tu lista…</span></div>
+<div class="row small muted mt-2" id="import-preview"><i class="ph ph-info"></i><span>Escribe o pega tu lista…</span></div>
 <script>
     (() => {
         const area = document.getElementById('{{ form.lista.id_for_label }}');

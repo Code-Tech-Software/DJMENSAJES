@@ -1,0 +1,233 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#faf7f2">
+    <title>Álbum · {{ evento.nombre_evento }}</title>
+    <meta property="og:title" content="Álbum de {{ evento.nombre_evento }}">
+    <meta property="og:description" content="{{ fotos|length }} foto{{ fotos|length|pluralize }} y {{ saludos|length }} mensaje{{ saludos|length|pluralize }} de los invitados.">
+    {% if portada %}<meta property="og:image" content="{{ portada }}">{% endif %}
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
+    <style>
+        :root {
+            --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %};
+            --fondo: #faf7f2; --papel: #ffffff; --tinta: #1d1a16; --suave: #6f675c; --linea: #ebe4d8;
+        }
+        * { box-sizing: border-box; margin: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; background: var(--fondo); color: var(--tinta); -webkit-font-smoothing: antialiased; }
+        button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+        a { color: inherit; }
+        .contenedor { max-width: 1180px; margin: 0 auto; padding: 0 18px; }
+
+        /* Portada */
+        .portada { position: relative; overflow: hidden; text-align: center; padding: 64px 18px 40px; }
+        .portada::before {
+            content: ""; position: absolute; inset: 0; z-index: -1;
+            background: radial-gradient(60% 80% at 50% 0%, color-mix(in srgb, var(--marca) 22%, transparent), transparent 70%);
+        }
+        .portada__fondo { position: absolute; inset: 0; z-index: -2; background: center / cover no-repeat; opacity: .16; filter: blur(30px) saturate(1.2); transform: scale(1.2); }
+        .ceja { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--suave); }
+        .ceja i { color: var(--marca); font-size: 16px; letter-spacing: 0; }
+        .portada h1 { font-family: "Great Vibes", cursive; font-weight: 400; font-size: clamp(56px, 11vw, 112px); line-height: 1.05; margin: 10px 0 8px; overflow-wrap: anywhere; }
+        .portada__fecha { font-size: 15px; color: var(--suave); font-weight: 600; }
+        .cifras { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+        .cifra { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 99px; background: var(--papel); border: 1px solid var(--linea); font-weight: 700; font-size: 14px; box-shadow: 0 6px 20px -12px rgba(60, 40, 10, .25); }
+        .cifra i { font-size: 18px; color: var(--marca); }
+
+        /* Pestañas */
+        .pestanas { position: sticky; top: 0; z-index: 10; display: flex; justify-content: center; padding: 12px 18px; background: color-mix(in srgb, var(--fondo) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--linea); }
+        .pestanas__grupo { display: inline-flex; padding: 4px; gap: 2px; border-radius: 14px; background: #efe8dc; }
+        .pestanas button { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 11px; font-weight: 700; font-size: 14px; color: var(--suave); }
+        .pestanas button.activa { background: var(--papel); color: var(--tinta); box-shadow: 0 2px 8px rgba(60, 40, 10, .12); }
+        .pestanas button span { font-size: 12px; padding: 1px 8px; border-radius: 99px; background: rgba(0, 0, 0, .06); }
+
+        main { padding: 26px 0 40px; }
+        .panel[hidden] { display: none; }
+
+        /* Mosaico de fotos */
+        .mosaico { columns: 2 160px; column-gap: 10px; }
+        .mosaico__foto { position: relative; display: block; width: 100%; margin-bottom: 10px; break-inside: avoid; border-radius: 14px; overflow: hidden; background: #eadfcd; cursor: zoom-in; }
+        .mosaico__foto img { display: block; width: 100%; height: auto; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+        .mosaico__foto:hover img { transform: scale(1.04); }
+        .mosaico__autor { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 10px 8px; text-align: left; font-size: 12px; font-weight: 700; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); opacity: 0; transition: opacity .25s; }
+        .mosaico__foto:hover .mosaico__autor, .mosaico__foto:focus-visible .mosaico__autor { opacity: 1; }
+
+        /* Muro de mensajes */
+        .muro { columns: 1; column-gap: 14px; }
+        .nota { break-inside: avoid; margin-bottom: 14px; padding: 22px 22px 18px; border-radius: 18px; background: var(--papel); border: 1px solid var(--linea); box-shadow: 0 10px 30px -22px rgba(60, 40, 10, .4); position: relative; }
+        .nota::before { content: "\201C"; position: absolute; right: 16px; top: 2px; font-family: Georgia, serif; font-size: 64px; line-height: 1; color: color-mix(in srgb, var(--marca) 35%, transparent); }
+        .nota__para { font-size: 11.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--marca); margin-bottom: 8px; }
+        .nota__texto { font-size: 17px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+        .nota__de { margin-top: 12px; font-size: 13px; color: var(--suave); font-weight: 600; }
+
+        .vacio { text-align: center; padding: 60px 20px; color: var(--suave); }
+        .vacio > i { display: block; font-size: 44px; color: var(--marca); margin-bottom: 10px; }
+        .vacio strong { display: block; font-size: 18px; color: var(--tinta); margin-bottom: 4px; }
+        .boton { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 12px 20px; border-radius: 99px; background: var(--marca); color: #fff; font-weight: 800; text-decoration: none; }
+
+        footer { text-align: center; padding: 30px 18px 46px; color: var(--suave); font-size: 13px; border-top: 1px solid var(--linea); }
+        footer strong { display: block; font-size: 15px; color: var(--tinta); margin-bottom: 4px; }
+
+        /* Visor */
+        .visor { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: rgba(12, 10, 8, .96); color: #fff; }
+        .visor[hidden] { display: none; }
+        .visor__barra { display: flex; align-items: center; gap: 10px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; }
+        .visor__barra span { font-size: 13px; opacity: .7; font-weight: 600; }
+        .visor__boton { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 21px; background: rgba(255, 255, 255, .1); text-decoration: none; }
+        .visor__boton:hover { background: rgba(255, 255, 255, .2); }
+        .visor__boton--cerrar { margin-left: auto; }
+        .visor__escena { flex: 1; min-height: 0; position: relative; display: grid; place-items: center; padding: 0 64px; touch-action: pan-y; }
+        .visor__escena img { max-width: 100%; max-height: 100%; border-radius: 8px; user-select: none; -webkit-user-drag: none; }
+        .visor__nav { position: absolute; top: 50%; transform: translateY(-50%); }
+        .visor__nav--ant { left: 12px; }
+        .visor__nav--sig { right: 12px; }
+        .visor__pie { padding: 12px 18px max(18px, env(safe-area-inset-bottom)); text-align: center; }
+        .visor__pie p { font-size: 16px; font-weight: 700; }
+        .visor__pie small { font-size: 13px; opacity: .7; }
+
+        @media (min-width: 640px) { .mosaico { columns: 3 200px; } .muro { columns: 2; } }
+        @media (min-width: 1000px) { .mosaico { columns: 4 220px; } .muro { columns: 3; } }
+        @media (max-width: 640px) { .visor__escena { padding: 0 8px; } .visor__nav { display: none; } }
+    </style>
+</head>
+<body>
+<header class="portada">
+    {% if portada %}<div class="portada__fondo" style="background-image:url('{{ portada }}')"></div>{% endif %}
+    <span class="ceja"><i class="ph ph-images"></i>Álbum digital</span>
+    <h1>{{ evento.nombre_evento }}</h1>
+    <p class="portada__fecha">{{ evento.tipo_corto }} · {{ evento.fecha_inicio_evento|date:"l j \d\e F \d\e Y"|capfirst }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}</p>
+    <div class="cifras">
+        <span class="cifra"><i class="ph-fill ph-camera"></i>{{ fotos|length }} foto{{ fotos|length|pluralize }}</span>
+        <span class="cifra"><i class="ph-fill ph-chat-teardrop-text"></i>{{ saludos|length }} mensaje{{ saludos|length|pluralize }}</span>
+    </div>
+</header>
+
+<nav class="pestanas" aria-label="Secciones del álbum">
+    <div class="pestanas__grupo">
+        <button type="button" data-panel="fotos" class="{% if fotos or not saludos %}activa{% endif %}"><i class="ph ph-images"></i>Fotos<span>{{ fotos|length }}</span></button>
+        <button type="button" data-panel="mensajes" class="{% if saludos and not fotos %}activa{% endif %}"><i class="ph ph-chat-teardrop-text"></i>Mensajes<span>{{ saludos|length }}</span></button>
+    </div>
+</nav>
+
+<main class="contenedor">
+    <section class="panel" id="panel-fotos" {% if saludos and not fotos %}hidden{% endif %}>
+        {% if fotos %}
+        <div class="mosaico">
+            {% for f in fotos %}
+            <button type="button" class="mosaico__foto" data-indice="{{ forloop.counter0 }}" aria-label="Ver foto de {{ f.nombre }}">
+                <img src="{% if f.miniatura %}{{ f.miniatura.url }}{% else %}{{ f.foto.url }}{% endif %}" width="{{ f.foto_ancho|default:4|stringformat:"d" }}" height="{{ f.foto_alto|default:3|stringformat:"d" }}" alt="{{ f.mensaje|default:'Foto del evento' }}" loading="lazy">
+                <span class="mosaico__autor"><i class="ph-fill ph-camera"></i> {{ f.nombre }}</span>
+            </button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="vacio">
+            <i class="ph ph-camera"></i>
+            <strong>Aún no hay fotos</strong>
+            {% if evento.estado_temporal == 'pasado' %}El álbum de este evento no tiene fotos.{% else %}Las fotos que compartan los invitados aparecerán aquí cuando el DJ las apruebe.{% endif %}
+            {% if evento.permitir_fotos and evento.estado_temporal != 'pasado' %}<div><a class="boton" href="{{ url_invitados }}"><i class="ph-fill ph-camera"></i>Comparte una foto</a></div>{% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="panel" id="panel-mensajes" {% if fotos or not saludos %}hidden{% endif %}>
+        {% if saludos %}
+        <div class="muro">
+            {% for s in saludos %}
+            <article class="nota">
+                {% if s.destinatario %}<div class="nota__para">Para {{ s.destinatario }}</div>{% endif %}
+                <p class="nota__texto">{{ s.mensaje }}</p>
+                <div class="nota__de">— {{ s.nombre }} · {{ s.fecha_creacion|time:"H:i" }}</div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="vacio"><i class="ph ph-chat-teardrop-text"></i><strong>Aún no hay mensajes</strong>Los saludos de los invitados aparecerán aquí.</div>
+        {% endif %}
+    </section>
+</main>
+
+<footer>
+    <strong>{% if colaborador %}{{ colaborador.nombre }}{% else %}{{ ajustes.nombre }}{% endif %}</strong>
+    Álbum digital creado con las fotos y mensajes de los invitados.
+</footer>
+
+<div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-label="Foto">
+    <div class="visor__barra">
+        <span id="visor-cuenta"></span>
+        <a class="visor__boton visor__boton--cerrar" id="visor-descargar" href="#" target="_blank" rel="noopener" download aria-label="Descargar"><i class="ph ph-download-simple"></i></a>
+        <button type="button" class="visor__boton" id="visor-cerrar" aria-label="Cerrar"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="visor__escena" id="visor-escena">
+        <button type="button" class="visor__boton visor__nav visor__nav--ant" id="visor-ant" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
+        <img id="visor-img" alt="">
+        <button type="button" class="visor__boton visor__nav visor__nav--sig" id="visor-sig" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
+    </div>
+    <div class="visor__pie"><p id="visor-texto"></p><small id="visor-de"></small></div>
+</div>
+
+{{ datos_fotos|json_script:"datos-fotos" }}
+<script>
+    (() => {
+        const $ = id => document.getElementById(id);
+        const fotos = JSON.parse($('datos-fotos').textContent);
+
+        // Pestañas
+        document.querySelectorAll('.pestanas button').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('.pestanas button').forEach(x => x.classList.toggle('activa', x === b));
+            $('panel-fotos').hidden = b.dataset.panel !== 'fotos';
+            $('panel-mensajes').hidden = b.dataset.panel !== 'mensajes';
+        }));
+
+        // Visor
+        let actual = 0;
+        function abrir(i) {
+            actual = (i + fotos.length) % fotos.length;
+            const f = fotos[actual];
+            $('visor-img').src = f.foto;
+            $('visor-img').alt = f.mensaje || 'Foto del evento';
+            $('visor-descargar').href = f.foto;
+            $('visor-texto').textContent = f.mensaje || '';
+            $('visor-texto').hidden = !f.mensaje;
+            $('visor-de').textContent = `📸 ${f.nombre} · ${f.hora}`;
+            $('visor-cuenta').textContent = `${actual + 1} de ${fotos.length}`;
+            $('visor').hidden = false;
+            document.body.style.overflow = 'hidden';
+            // Precarga la siguiente
+            if (fotos.length > 1) new Image().src = fotos[(actual + 1) % fotos.length].foto;
+        }
+        function cerrar() { $('visor').hidden = true; document.body.style.overflow = ''; }
+        document.querySelectorAll('[data-indice]').forEach(b => b.addEventListener('click', () => abrir(+b.dataset.indice)));
+        $('visor-cerrar').addEventListener('click', cerrar);
+        $('visor-ant').addEventListener('click', () => abrir(actual - 1));
+        $('visor-sig').addEventListener('click', () => abrir(actual + 1));
+        $('visor-escena').addEventListener('click', e => { if (e.target.id === 'visor-escena') cerrar(); });
+        document.addEventListener('keydown', e => {
+            if ($('visor').hidden) return;
+            if (e.key === 'Escape') cerrar();
+            if (e.key === 'ArrowLeft') abrir(actual - 1);
+            if (e.key === 'ArrowRight') abrir(actual + 1);
+        });
+        // Deslizar en el celular
+        let x0 = null;
+        $('visor-escena').addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+        $('visor-escena').addEventListener('touchend', e => {
+            if (x0 === null) return;
+            const dx = e.changedTouches[0].clientX - x0;
+            if (Math.abs(dx) > 50) abrir(actual + (dx < 0 ? 1 : -1));
+            x0 = null;
+        });
+    })();
+</script>
+</body>
+</html>

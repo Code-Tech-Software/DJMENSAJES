@@ -21,7 +21,7 @@ def actividad_reciente(usuario, limite=10, desde=None):
         confirmo = invitado.estado == Invitado.Estado.CONFIRMADO
         elementos.append({
             'fecha': invitado.respondido_en,
-            'icono': 'ri-user-follow-line' if confirmo else 'ri-user-unfollow-line',
+            'icono': 'ph ph-user-check' if confirmo else 'ph ph-user-minus',
             'tono': 'tone-success' if confirmo else 'tone-danger',
             'texto': (f'<strong>{_e(invitado.nombre)}</strong> '
                       + (f'confirmó {invitado.pases_confirmados} pase(s)' if confirmo else 'no podrá asistir')
@@ -36,7 +36,7 @@ def actividad_reciente(usuario, limite=10, desde=None):
     for mensaje in vip[:limite]:
         elementos.append({
             'fecha': mensaje.fecha_creacion,
-            'icono': 'ri-vip-crown-2-line',
+            'icono': 'ph ph-crown-simple',
             'tono': 'tone-gold',
             'texto': (f'<strong>{_e(mensaje.nombre)}</strong> (VIP) envió '
                       + ('una canción' if mensaje.tipo == 'cancion' else 'un saludo')
@@ -51,7 +51,7 @@ def actividad_reciente(usuario, limite=10, desde=None):
         autor = evento.creado_por.nombre_corto if evento.creado_por else 'Alguien'
         elementos.append({
             'fecha': evento.creado,
-            'icono': 'ri-calendar-check-line',
+            'icono': 'ph ph-calendar-check',
             'tono': '',
             'texto': f'<strong>{_e(autor)}</strong> registró el evento <strong>{_e(evento.nombre_evento)}</strong>',
             'url': evento.get_absolute_url(),

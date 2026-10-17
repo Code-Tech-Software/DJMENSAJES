@@ -51,7 +51,7 @@ class EditarPerfil(LoginRequiredMixin, FormularioModalMixin, UpdateView):
     template_modal = 'cuentas/partials/form_perfil.html'
     titulo = 'Editar perfil'
     subtitulo = 'Actualiza tu información y foto.'
-    icono = 'ri-user-settings-line'
+    icono = 'ph ph-user-gear'
     mensaje_exito = 'Perfil actualizado.'
 
     def get_object(self, queryset=None):
@@ -63,7 +63,7 @@ class CambiarContrasena(LoginRequiredMixin, FormularioModalMixin, FormView):
     template_modal = 'cuentas/partials/form_contrasena.html'
     titulo = 'Cambiar contraseña'
     subtitulo = 'Por seguridad, confirma tu contraseña actual.'
-    icono = 'ri-lock-password-line'
+    icono = 'ph ph-password'
     tamano = 'sm'
     texto_boton = 'Actualizar'
     mensaje_exito = 'Tu contraseña se actualizó.'
@@ -104,7 +104,7 @@ class UsuarioCrear(AdminRequeridoMixin, FormularioModalMixin, CreateView):
     template_modal = 'cuentas/partials/form_usuario.html'
     titulo = 'Nuevo integrante'
     subtitulo = 'Crea el acceso y define qué podrá ver.'
-    icono = 'ri-user-add-line'
+    icono = 'ph ph-user-plus'
     tamano = 'lg'
     texto_boton = 'Crear usuario'
     mensaje_exito = 'Usuario creado. Ya puede iniciar sesión.'
@@ -114,7 +114,7 @@ class UsuarioEditar(AdminRequeridoMixin, FormularioModalMixin, UpdateView):
     model = Usuario
     form_class = UsuarioForm
     template_modal = 'cuentas/partials/form_usuario.html'
-    icono = 'ri-user-settings-line'
+    icono = 'ph ph-user-gear'
     tamano = 'lg'
     mensaje_exito = 'Usuario actualizado.'
 
@@ -128,7 +128,7 @@ class UsuarioEditar(AdminRequeridoMixin, FormularioModalMixin, UpdateView):
 class UsuarioContrasena(AdminRequeridoMixin, FormularioModalMixin, FormView):
     form_class = RestablecerContrasenaForm
     template_modal = 'cuentas/partials/form_contrasena.html'
-    icono = 'ri-key-2-line'
+    icono = 'ph ph-key'
     tamano = 'sm'
     texto_boton = 'Restablecer'
     mensaje_exito = 'Contraseña restablecida.'

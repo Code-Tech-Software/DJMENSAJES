@@ -7,79 +7,75 @@
     <script>try { if (localStorage.getItem('em-sidebar') === 'min' && matchMedia('(min-width: 1025px)').matches) document.currentScript.parentNode.classList.add('is-collapsed'); } catch (e) {}</script>
     <aside class="sidebar" aria-label="Menú principal">
         <a href="{% url 'core:dashboard' %}" class="sidebar__brand">
-            <img src="{% static 'img/isotipo.png' %}" alt="Grupo EM">
-            <span class="sidebar__brand-text"><strong>Grupo EM</strong><small>Eventos</small></span>
+            <img src="{% static 'img/isotipo.png' %}" alt="{{ ajustes.nombre }}">
+            <span class="sidebar__brand-text"><strong>{{ ajustes.nombre }}</strong><small>Eventos</small></span>
         </a>
 
         <nav class="sidebar__nav scroll-thin">
             <div class="nav-label">General</div>
-            <a href="{% url 'core:dashboard' %}" class="nav-link {% activo 'core:dashboard' %}" data-tip-side>
-                <i class="ri-dashboard-3-line"></i><span>Dashboard</span>
+            <a href="{% url 'core:dashboard' %}" class="nav-link {% activo 'core:dashboard' %}">
+                <i class="ph ph-gauge"></i><span>Dashboard</span>
             </a>
             <a href="{% url 'eventos:calendario' %}" class="nav-link {% activo 'eventos:calendario' %}">
-                <i class="ri-calendar-2-line"></i><span>Calendario</span>
+                <i class="ph ph-calendar"></i><span>Calendario</span>
             </a>
 
             <div class="nav-label">Eventos</div>
             <a href="{% url 'eventos:lista' %}" class="nav-link {% activo 'eventos:lista' 'eventos:detalle' 'eventos:orden' %}">
-                <i class="ri-sparkling-2-line"></i><span>Eventos</span>
+                <i class="ph ph-sparkle"></i><span>Eventos</span>
                 {% if total_proximos %}<span class="nav-count">{{ total_proximos }}</span>{% endif %}
             </a>
             <a href="{% url 'invitaciones:indice' %}" class="nav-link {% activo 'invitaciones:*' %}">
-                <i class="ri-mail-open-line"></i><span>Invitaciones</span>
+                <i class="ph ph-envelope-open"></i><span>Invitaciones</span>
             </a>
             <a href="{% url 'eventos:centro_envivo' %}" class="nav-link {% activo 'eventos:centro_envivo' %}">
-                <i class="ri-broadcast-line"></i><span>En vivo</span>
+                <i class="ph ph-broadcast"></i><span>En vivo</span>
             </a>
 
             {% if ve_todo %}
             <div class="nav-label">Administración</div>
             <a href="{% url 'colaboradores:lista' %}" class="nav-link {% activo 'colaboradores:*' %}">
-                <i class="ri-team-line"></i><span>Colaboradores</span>
+                <i class="ph ph-users-three"></i><span>Colaboradores</span>
             </a>
             <a href="{% url 'banners:lista' %}" class="nav-link {% activo 'banners:*' %}">
-                <i class="ri-image-2-line"></i><span>Banners</span>
+                <i class="ph ph-image"></i><span>Banners</span>
             </a>
             {% if es_admin %}
             <a href="{% url 'cuentas:usuarios' %}" class="nav-link {% activo 'cuentas:usuarios' %}">
-                <i class="ri-shield-user-line"></i><span>Equipo</span>
+                <i class="ph ph-shield-check"></i><span>Equipo</span>
             </a>
             {% endif %}
             {% elif user.colaborador_id %}
             <div class="nav-label">Mi agencia</div>
             <a href="{% url 'colaboradores:detalle' user.colaborador_id %}" class="nav-link {% activo 'colaboradores:detalle' %}">
-                <i class="ri-store-2-line"></i><span>{{ user.colaborador.nombre|truncatechars:22 }}</span>
+                <i class="ph ph-storefront"></i><span>{{ user.colaborador.nombre|truncatechars:22 }}</span>
             </a>
             {% endif %}
         </nav>
 
         <div class="sidebar__footer">
-            <div class="sidebar-card">
-                <strong>¿Tienes un evento nuevo?</strong>
-                <p>Regístralo en menos de un minuto.</p>
-                <button class="btn btn--sm" data-modal="{% url 'eventos:crear' %}" style="--btn-bg:#fff;--btn-fg:#0b2540;--btn-bd:transparent">
-                    <i class="ri-add-line"></i>Nuevo evento
-                </button>
-            </div>
+            <a href="{% url 'core:ajustes' %}" class="nav-link {% activo 'core:ajustes' %}">
+                <i class="ph ph-gear-six"></i><span>Ajustes</span>
+            </a>
         </div>
     </aside>
     <div class="sidebar-backdrop"></div>
 
     <div class="main">
         <header class="topbar">
-            <button class="icon-btn" data-sidebar-toggle aria-label="Mostrar u ocultar menú"><i class="ri-menu-2-line"></i></button>
+            <button class="icon-btn" data-sidebar-toggle aria-label="Mostrar u ocultar menú"><i class="ph ph-list"></i></button>
             <button class="topbar__search" data-palette>
-                <i class="ri-search-line"></i><span>Buscar eventos, invitados…</span><kbd>Ctrl K</kbd>
+                <i class="ph ph-magnifying-glass"></i><span>Buscar eventos, invitados…</span><kbd>Ctrl K</kbd>
             </button>
 
             <div class="topbar__actions">
                 <button class="btn btn--primary btn--sm only-desktop" data-modal="{% url 'eventos:crear' %}">
-                    <i class="ri-add-line"></i>Nuevo evento
+                    <i class="ph ph-plus"></i>Nuevo evento
                 </button>
 
                 <div class="dropdown">
                     <button class="icon-btn" data-dropdown aria-label="Notificaciones">
-                        <i class="ri-notification-3-line"></i>
+                        <i class="ph ph-bell"></i>
                         {% if notificaciones_nuevas %}<span class="dot"></span>{% endif %}
                     </button>
                     <div class="dropdown__menu notif-menu">
@@ -93,7 +89,7 @@
                     </div>
                 </div>
 
-                <button class="icon-btn" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ri-moon-clear-line"></i></button>
+                <button class="icon-btn" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
 
                 <div class="dropdown">
                     <button class="user-chip" data-dropdown aria-label="Menú de usuario">
@@ -102,7 +98,7 @@
                             <strong>{{ user.nombre_corto }}</strong>
                             <small>{{ user.rol_visible }}</small>
                         </span>
-                        <i class="ri-arrow-down-s-line muted hide-mobile"></i>
+                        <i class="ph ph-caret-down muted hide-mobile"></i>
                     </button>
                     <div class="dropdown__menu">
                         <div class="menu-head">
@@ -110,14 +106,15 @@
                             <small>@{{ user.username }}{% if user.colaborador %} · {{ user.colaborador }}{% endif %}</small>
                         </div>
                         <div class="menu-sep"></div>
-                        <a href="{% url 'cuentas:perfil' %}" class="menu-item"><i class="ri-user-smile-line"></i>Mi perfil</a>
-                        <button class="menu-item" data-modal="{% url 'cuentas:cambiar_contrasena' %}"><i class="ri-lock-password-line"></i>Cambiar contraseña</button>
-                        <button class="menu-item" data-palette><i class="ri-command-line"></i>Búsqueda rápida <kbd style="margin-left:auto">Ctrl K</kbd></button>
-                        {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="menu-item"><i class="ri-database-2-line"></i>Admin técnico</a>{% endif %}
+                        <a href="{% url 'cuentas:perfil' %}" class="menu-item"><i class="ph ph-user-circle"></i>Mi perfil</a>
+                        <a href="{% url 'core:ajustes' %}" class="menu-item"><i class="ph ph-gear-six"></i>Ajustes</a>
+                        <button class="menu-item" data-modal="{% url 'cuentas:cambiar_contrasena' %}"><i class="ph ph-password"></i>Cambiar contraseña</button>
+                        <button class="menu-item" data-palette><i class="ph ph-command"></i>Búsqueda rápida <kbd style="margin-left:auto">Ctrl K</kbd></button>
+                        {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="menu-item"><i class="ph ph-database"></i>Admin técnico</a>{% endif %}
                         <div class="menu-sep"></div>
                         <form method="post" action="{% url 'cuentas:logout' %}">
                             {% csrf_token %}
-                            <button type="submit" class="menu-item menu-item--danger"><i class="ri-logout-box-r-line"></i>Cerrar sesión</button>
+                            <button type="submit" class="menu-item menu-item--danger"><i class="ph ph-sign-out"></i>Cerrar sesión</button>
                         </form>
                     </div>
                 </div>

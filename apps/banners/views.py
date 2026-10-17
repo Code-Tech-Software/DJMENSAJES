@@ -31,7 +31,7 @@ class BannerCrear(CatalogosRequeridoMixin, FormularioModalMixin, CreateView):
     template_modal = 'banners/partials/form.html'
     titulo = 'Nuevo banner'
     subtitulo = 'Un juego de fondos para pantallas e invitaciones.'
-    icono = 'ri-image-add-line'
+    icono = 'ph ph-image'
     tamano = 'lg'
     texto_boton = 'Guardar banner'
     mensaje_exito = 'Banner creado.'
@@ -42,7 +42,7 @@ class BannerEditar(CatalogosRequeridoMixin, FormularioModalMixin, UpdateView):
     form_class = BannerForm
     template_modal = 'banners/partials/form.html'
     titulo = 'Editar banner'
-    icono = 'ri-image-edit-line'
+    icono = 'ph ph-image'
     tamano = 'lg'
     mensaje_exito = 'Banner actualizado.'
 

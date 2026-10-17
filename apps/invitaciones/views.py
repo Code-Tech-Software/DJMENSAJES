@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, FormView, UpdateView
 
 from apps.core.mixins import FormularioModalMixin, respuesta_ok
+from apps.core.models import Ajustes
 from apps.core.utils import qr_svg, slug_unico
 from apps.eventos.models import Evento
 from apps.eventos.views import eventos_de, obtener_evento
@@ -32,13 +33,14 @@ def obtener_invitacion(evento):
     try:
         return evento.invitacion
     except Invitacion.DoesNotExist:
-        plantilla = PLANTILLA_SUGERIDA.get(evento.tipo_evento, 'moderna')
+        ajustes = Ajustes.cargar()
+        plantilla = ajustes.plantilla or PLANTILLA_SUGERIDA.get(evento.tipo_evento, 'moderna')
         invitacion = Invitacion.objects.create(
             evento=evento,
             slug=slug_unico(evento.nombre_evento, Invitacion),
             plantilla=plantilla,
             color_principal=Invitacion.COLORES_PLANTILLA[plantilla],
-            fecha_limite_rsvp=timezone.localdate(evento.fecha_inicio_evento) - timedelta(days=7),
+            fecha_limite_rsvp=timezone.localdate(evento.fecha_inicio_evento) - timedelta(days=ajustes.dias_limite_rsvp),
         )
         if evento.lugar:
             Ubicacion.objects.create(
@@ -135,7 +137,7 @@ class InvitadoMixin(LoginRequiredMixin, FormularioModalMixin):
     model = Invitado
     form_class = InvitadoForm
     template_modal = 'invitaciones/partials/form_invitado.html'
-    icono = 'ri-user-heart-line'
+    icono = 'ph ph-user-list'
 
     def get_context_data(self, **kwargs):
         contexto = super().get_context_data(**kwargs)
@@ -198,7 +200,7 @@ class ImportarInvitados(LoginRequiredMixin, FormularioModalMixin, FormView):
     template_modal = 'invitaciones/partials/form_importar.html'
     titulo = 'Importar lista de invitados'
     subtitulo = 'Pega tu lista desde Excel, WhatsApp o notas.'
-    icono = 'ri-file-list-3-line'
+    icono = 'ph ph-clipboard-text'
     tamano = 'lg'
     texto_boton = 'Importar'
 

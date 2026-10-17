@@ -1,7 +1,7 @@
 {% if invitado %}
     {% if invitado.estado == 'confirmado' %}
     <div class="rsvp__estado">
-        <span class="icono-grande"><i class="ri-check-line"></i></span>
+        <span class="icono-grande"><i class="ph ph-check"></i></span>
         <p class="rsvp__saludo">{% if respondio == 'si' %}¡Gracias por confirmar!{% else %}¡Asistencia confirmada!{% endif %}</p>
         <p class="rsvp__texto">Te esperamos, {{ invitado.nombre }}. Reservamos <strong>{{ invitado.pases_confirmados }} lugar{{ invitado.pases_confirmados|pluralize:"es" }}</strong>{% if invitado.mesa %} en la mesa {{ invitado.mesa }}{% endif %}.</p>
     </div>
@@ -23,7 +23,7 @@
     {% endif %}
     {% elif invitado.estado == 'rechazado' %}
     <div class="rsvp__estado">
-        <span class="icono-grande no"><i class="ri-heart-line"></i></span>
+        <span class="icono-grande no"><i class="ph ph-heart"></i></span>
         <p class="rsvp__saludo">Gracias por avisarnos</p>
         <p class="rsvp__texto">Lamentamos que no puedas acompañarnos, {{ invitado.nombre }}. ¡Te tendremos presente!</p>
     </div>
@@ -40,8 +40,8 @@
         <form method="post" action="{% url 'invitacion_publica:rsvp' invitacion.slug invitado.token %}" class="form-rsvp">
             {% csrf_token %}
             <div class="opciones">
-                <label><input type="radio" name="asistira" value="si" {% if invitado.estado != 'rechazado' %}checked{% endif %}><span><i class="ri-emotion-happy-line"></i>¡Sí, ahí estaré!</span></label>
-                <label><input type="radio" name="asistira" value="no" {% if invitado.estado == 'rechazado' %}checked{% endif %}><span><i class="ri-emotion-unhappy-line"></i>No podré ir</span></label>
+                <label><input type="radio" name="asistira" value="si" {% if invitado.estado != 'rechazado' %}checked{% endif %}><span><i class="ph ph-smiley"></i>¡Sí, ahí estaré!</span></label>
+                <label><input type="radio" name="asistira" value="no" {% if invitado.estado == 'rechazado' %}checked{% endif %}><span><i class="ph ph-smiley-sad"></i>No podré ir</span></label>
             </div>
             {% if invitado.pases > 1 %}
             <div class="contador-pases" data-pases>
@@ -54,7 +54,7 @@
             </div>
             {% else %}<input type="hidden" name="pases" value="1">{% endif %}
             <div class="campo"><label for="mensaje">Mensaje para los anfitriones (opcional)</label><textarea id="mensaje" name="mensaje" maxlength="500" placeholder="¡Felicidades! Ahí nos vemos…">{{ invitado.mensaje }}</textarea></div>
-            <button type="submit" class="boton boton--lleno boton--bloque"><i class="ri-send-plane-fill"></i>Enviar respuesta</button>
+            <button type="submit" class="boton boton--lleno boton--bloque"><i class="ph-fill ph-paper-plane-tilt"></i>Enviar respuesta</button>
         </form>
         {% if invitado.estado != 'pendiente' %}</details>{% endif %}
     {% endif %}
@@ -67,15 +67,15 @@
         <div class="campo"><label for="nombre">Tu nombre o el de tu familia</label><input id="nombre" name="nombre" required maxlength="150" placeholder="Ej. Familia Pérez"></div>
         <div class="campo"><label for="telefono">WhatsApp (opcional)</label><input id="telefono" name="telefono" inputmode="tel" maxlength="30" placeholder="10 dígitos"></div>
         <div class="opciones">
-            <label><input type="radio" name="asistira" value="si" checked><span><i class="ri-emotion-happy-line"></i>¡Sí, ahí estaré!</span></label>
-            <label><input type="radio" name="asistira" value="no"><span><i class="ri-emotion-unhappy-line"></i>No podré ir</span></label>
+            <label><input type="radio" name="asistira" value="si" checked><span><i class="ph ph-smiley"></i>¡Sí, ahí estaré!</span></label>
+            <label><input type="radio" name="asistira" value="no"><span><i class="ph ph-smiley-sad"></i>No podré ir</span></label>
         </div>
         <div class="contador-pases" data-pases>
             <span>¿Cuántos asistirán?</span>
             <div class="stepper"><button type="button" data-menos aria-label="Menos">−</button><input type="number" name="pases" min="1" max="10" value="1" aria-label="Pases"><button type="button" data-mas aria-label="Más">+</button></div>
         </div>
         <div class="campo"><label for="mensaje">Mensaje (opcional)</label><textarea id="mensaje" name="mensaje" maxlength="500"></textarea></div>
-        <button type="submit" class="boton boton--lleno boton--bloque"><i class="ri-send-plane-fill"></i>Confirmar</button>
+        <button type="submit" class="boton boton--lleno boton--bloque"><i class="ph-fill ph-paper-plane-tilt"></i>Confirmar</button>
     </form>
 {% else %}
     <p class="rsvp__saludo">Confirmación personal</p>

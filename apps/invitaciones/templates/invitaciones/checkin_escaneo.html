@@ -6,10 +6,10 @@
     <div class="card" style="width:100%;max-width:420px;overflow:hidden;text-align:center">
         <div style="padding:32px 24px 8px">
             {% if invitado.check_in_en %}
-            <div class="empty__art" style="margin:0 auto 16px;color:var(--success);background:var(--success-soft);transform:none;{% if recien %}animation:rise .5s{% endif %}"><i class="ri-check-double-line"></i></div>
+            <div class="empty__art" style="margin:0 auto 16px;color:var(--success);background:var(--success-soft);transform:none;{% if recien %}animation:rise .5s{% endif %}"><i class="ph ph-checks"></i></div>
             <span class="eyebrow" style="color:var(--success)">{% if recien %}Entrada registrada{% else %}Ya había ingresado{% endif %}</span>
             {% else %}
-            <div class="empty__art" style="margin:0 auto 16px;transform:none"><i class="ri-ticket-2-line"></i></div>
+            <div class="empty__art" style="margin:0 auto 16px;transform:none"><i class="ph ph-ticket"></i></div>
             <span class="eyebrow">Pase de entrada</span>
             {% endif %}
             <h1 style="font-size:26px;margin-top:8px">{{ invitado.nombre }}</h1>
@@ -19,15 +19,15 @@
             <div class="card stat" style="padding:14px"><div class="stat__label">Pases</div><div class="stat__value" style="font-size:28px">{% if invitado.estado == 'confirmado' %}{{ invitado.pases_confirmados }}{% else %}{{ invitado.pases }}{% endif %}</div></div>
             <div class="card stat" style="padding:14px"><div class="stat__label">Mesa</div><div class="stat__value" style="font-size:28px">{{ invitado.mesa|default:"—" }}</div></div>
         </div>
-        {% if invitado.estado != 'confirmado' and not invitado.check_in_en %}<div class="alert alert--warning" style="margin:0 24px;text-align:left"><i class="ri-error-warning-line"></i><div>Este invitado no había confirmado. Al registrarlo se confirmarán sus {{ invitado.pases }} pases.</div></div>{% endif %}
-        {% if invitado.notas %}<div class="alert" style="margin:12px 24px 0;text-align:left"><i class="ri-sticky-note-line"></i><div>{{ invitado.notas }}</div></div>{% endif %}
+        {% if invitado.estado != 'confirmado' and not invitado.check_in_en %}<div class="alert alert--warning" style="margin:0 24px;text-align:left"><i class="ph ph-warning-circle"></i><div>Este invitado no había confirmado. Al registrarlo se confirmarán sus {{ invitado.pases }} pases.</div></div>{% endif %}
+        {% if invitado.notas %}<div class="alert" style="margin:12px 24px 0;text-align:left"><i class="ph ph-note"></i><div>{{ invitado.notas }}</div></div>{% endif %}
         <div style="padding:20px 24px 26px">
             {% if invitado.check_in_en %}
             <p class="small muted mb-2">Registrado a las {{ invitado.check_in_en|time:"H:i" }} h</p>
-            <a class="btn btn--block btn--lg" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ri-list-check-2"></i>Ver lista de entrada</a>
+            <a class="btn btn--block btn--lg" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ph ph-list-checks"></i>Ver lista de entrada</a>
             {% else %}
             <form method="post">{% csrf_token %}
-                <button class="btn btn--success btn--block btn--lg" type="submit"><i class="ri-login-box-line"></i>Registrar entrada</button>
+                <button class="btn btn--success btn--block btn--lg" type="submit"><i class="ph ph-sign-in"></i>Registrar entrada</button>
             </form>
             {% endif %}
         </div>

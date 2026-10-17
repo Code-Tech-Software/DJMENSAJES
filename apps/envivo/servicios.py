@@ -49,6 +49,11 @@ def notificar_pantalla(mensaje):
         _enviar(grupo_pantalla(mensaje.evento_id), {'tipo': 'quitar', 'id': mensaje.pk})
 
 
+def notificar_proyector(evento):
+    """El proyector y el carrusel se recargan con la nueva configuración (contenido y QR)."""
+    _enviar(grupo_pantalla(evento.pk), {'tipo': 'pantalla'})
+
+
 def notificar_evento(evento):
     """Avisa a todas las pantallas que cambió la configuración (p. ej. se pausó)."""
     datos = {'tipo': 'config', 'activo': evento.estado}

@@ -131,7 +131,7 @@
   function ampliarVista(ampliar) {
     vista.classList.toggle('is-ampliada', ampliar);
     document.body.style.overflow = ampliar ? 'hidden' : '';
-    botonAmpliar.querySelector('i').className = ampliar ? 'ri-fullscreen-exit-line' : 'ri-fullscreen-line';
+    botonAmpliar.querySelector('i').className = ampliar ? 'ph ph-corners-in' : 'ph ph-corners-out';
     botonAmpliar.dataset.tip = ampliar ? 'Reducir' : 'Ver en grande';
     botonAmpliar.setAttribute('aria-label', botonAmpliar.dataset.tip);
     $('#cerrar-vista').dataset.tip = ampliar ? 'Cerrar' : 'Ocultar';
@@ -165,9 +165,12 @@
 
   const nav = $('#editor-nav');
 
-  // Centra el paso activo cuando la barra de pasos no cabe (celulares), sin mover la página
+  // Centra el paso activo cuando los pasos no caben (celulares), sin mover la página
   function centrarBoton(b) {
-    if (nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: b.offsetLeft - (nav.clientWidth - b.offsetWidth) / 2, behavior: 'smooth' });
+    if (nav.scrollWidth <= nav.clientWidth) return;
+    const rb = b.getBoundingClientRect();
+    const rn = nav.getBoundingClientRect();
+    nav.scrollBy({ left: (rb.left + rb.width / 2) - (rn.left + rn.width / 2), behavior: 'smooth' });
   }
 
   function irA(i, inicio = false) {
@@ -175,10 +178,8 @@
     pasos.forEach((p, j) => { p.hidden = j !== actual; });
     botones.forEach((b, j) => {
       b.classList.toggle('is-active', j === actual);
-      b.classList.toggle('is-hecho', j < actual);
       if (j === actual) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
     });
-    nav.style.setProperty('--avance', actual / (pasos.length - 1));
     centrarBoton(botones[actual]);
     form.scrollTop = 0;
     // En celulares se desplaza la página completa: se vuelve al inicio de la sección
@@ -301,8 +302,9 @@
 
   function ponerEstado(tipo, texto) {
     estado.dataset.estado = tipo;
-    estado.querySelector('i').className = { guardando: 'ri-loader-4-line', ok: 'ri-cloud-line', error: 'ri-error-warning-line', pendiente: 'ri-edit-line' }[tipo];
+    estado.querySelector('i').className = { guardando: 'ph ph-spinner-gap', ok: 'ph ph-cloud-check', error: 'ph ph-warning-circle', pendiente: 'ph ph-pencil-simple' }[tipo];
     estado.querySelector('span').textContent = texto;
+    estado.title = texto; // visible al pasar el mouse cuando la barra solo muestra el ícono
   }
 
   function programarGuardado() {
@@ -327,7 +329,7 @@
       const small = document.createElement('small');
       small.className = 'field__error';
       small.dataset.autoguardado = '1';
-      small.innerHTML = `<i class="ri-error-warning-line"></i>${EM.escapeHtml(lista[0])}`;
+      small.innerHTML = `<i class="ph ph-warning-circle"></i>${EM.escapeHtml(lista[0])}`;
       wrap.appendChild(small);
       primero = primero || wrap;
     });
