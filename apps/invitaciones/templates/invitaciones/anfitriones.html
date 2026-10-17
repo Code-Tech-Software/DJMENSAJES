@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mis invitados · {{ invitacion.nombres_visibles }}{% endblock %}
+{% block head %}
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<style>
+    .anf { --acento: {{ invitacion.color_principal }}; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+    .anf-top {
+        position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 12px max(16px, calc((100% - 1180px) / 2)); background: color-mix(in srgb, var(--surface) 88%, transparent);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+    }
+    .anf-top__marca { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 750; font-size: 15px; }
+    .anf-top__marca img { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; flex-shrink: 0; }
+    .anf-top__ico { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: 10px; font-size: 18px; color: #fff; background: var(--brand-grad); }
+    .anf-top__marca span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .anf-top__acciones { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .anf-main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 18px; }
+
+    /* Portada: los nombres del evento con el color de su invitación */
+    .anf-hero {
+        position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center;
+        padding: 28px 30px; border-radius: var(--r-xl); border: 1px solid var(--border);
+        background:
+            radial-gradient(520px 260px at 100% 0%, color-mix(in srgb, var(--acento) 22%, transparent), transparent 70%),
+            radial-gradient(420px 240px at 0% 120%, color-mix(in srgb, var(--acento) 12%, transparent), transparent 70%),
+            var(--surface);
+    }
+    .anf-hero__ceja { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--acento) 75%, var(--text)); }
+    .anf-hero h1 { margin-top: 8px; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.1; letter-spacing: -.03em; }
+    .anf-hero__datos { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 14px; color: var(--text-2); }
+    .anf-hero__datos span { display: inline-flex; align-items: center; gap: 6px; }
+    .anf-hero__datos i { font-size: 17px; color: var(--text-3); }
+    .anf-hero__acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .anf-cuenta {
+        min-width: 140px; padding: 16px 20px; text-align: center; border-radius: var(--r-lg);
+        background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--border); box-shadow: var(--sh-sm);
+    }
+    .anf-cuenta strong { display: block; font-size: 40px; line-height: 1; letter-spacing: -.04em; color: color-mix(in srgb, var(--acento) 80%, var(--text)); }
+    .anf-cuenta small { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 650; color: var(--text-2); }
+    .anf-cuenta i { font-size: 30px; color: color-mix(in srgb, var(--acento) 80%, var(--text)); }
+
+    /* Cómo funciona (solo mientras la lista está vacía) */
+    .anf-pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .anf-paso { display: flex; gap: 12px; align-items: flex-start; padding: 16px; }
+    .anf-paso b { width: 30px; height: 30px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; font-size: 13px; color: #fff; background: var(--brand-grad); }
+    .anf-paso strong { display: block; font-size: 14px; }
+    .anf-paso small { display: block; margin-top: 2px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+
+    .anf-pie { padding: 0 16px 26px; text-align: center; font-size: 12.5px; color: var(--text-3); }
+    .anf-pie a { color: var(--text-2); font-weight: 650; }
+    .anf-pie a:hover { color: var(--brand); }
+
+    @media (max-width: 760px) {
+        .anf-main { padding-top: 16px; gap: 14px; }
+        .anf-hero { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 22px 18px; }
+        .anf-cuenta { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; padding: 10px 14px; order: -1; justify-self: start; }
+        .anf-cuenta strong { font-size: 24px; }
+        .anf-cuenta small { margin: 0; }
+        .anf-cuenta i { font-size: 22px; }
+        .anf-hero__acciones .btn { flex: 1; justify-content: center; }
+        .anf-pasos { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+        .anf-paso { padding: 12px 14px; }
+        .anf-top__privado { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% with colaborador=evento.colaborador %}
+<div class="anf">
+    <header class="anf-top">
+        <div class="anf-top__marca">
+            {% if colaborador %}<b class="anf-top__ico"><i class="{{ colaborador.icono }}"></i></b><span>{{ colaborador.nombre }}</span>
+            {% else %}<img src="{% static 'img/isotipo.png' %}" alt=""><span>{{ ajustes.nombre }}</span>{% endif %}
+        </div>
+        <div class="anf-top__acciones">
+            <span class="chip chip--muted anf-top__privado"><i class="ph ph-lock-simple"></i>Enlace privado</span>
+            <button class="icon-btn" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
+        </div>
+    </header>
+
+    <main class="anf-main">
+        <section class="anf-hero reveal">
+            <div>
+                <span class="anf-hero__ceja"><i class="ph ph-users-three"></i>Tu lista de invitados</span>
+                <h1>{{ invitacion.nombres_visibles }}</h1>
+                <div class="anf-hero__datos">
+                    <span><i class="ph ph-calendar-blank"></i>{{ inicio|date:"l j \d\e F \d\e Y" }} · {{ inicio|time:"H:i" }} h</span>
+                    {% if evento.lugar %}<span><i class="ph ph-map-pin"></i>{{ evento.lugar }}</span>{% endif %}
+                </div>
+                <div class="anf-hero__acciones">
+                    <a class="btn" href="{{ invitacion.get_absolute_url }}" target="_blank"><i class="ph ph-envelope-simple-open"></i>Ver invitación</a>
+                    {% if invitacion.publicada %}
+                    <button class="btn btn--ghost" data-copy="{{ url_publica }}" data-copy-msg="Enlace general copiado"><i class="ph ph-link"></i>Copiar enlace general</button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="anf-cuenta">
+                {% if faltan > 1 %}<strong>{{ faltan|stringformat:"d" }}</strong><small>días para el evento</small>
+                {% elif faltan == 1 %}<i class="ph ph-hourglass-medium"></i><small>¡Es mañana!</small>
+                {% elif faltan == 0 %}<i class="ph ph-confetti"></i><small>¡Es hoy!</small>
+                {% else %}<i class="ph ph-heart"></i><small>Gracias por celebrar</small>{% endif %}
+            </div>
+        </section>
+
+        {% if not invitacion.publicada %}
+        <div class="alert alert--warning"><i class="ph ph-note-pencil"></i>
+            <div><strong>Tu invitación aún no está publicada.</strong> Ya puedes armar tu lista; tus invitados podrán abrir sus enlaces en cuanto tu organizador la publique.</div></div>
+        {% endif %}
+
+        {% if not resumen.total %}
+        <div class="anf-pasos">
+            <div class="card anf-paso"><b>1</b><div><strong>Agrega a tus invitados</strong><small>Uno por uno o pega tu lista completa desde Excel o WhatsApp.</small></div></div>
+            <div class="card anf-paso"><b>2</b><div><strong>Envíales su invitación</strong><small>Con el botón verde se abre WhatsApp con su enlace personal listo.</small></div></div>
+            <div class="card anf-paso"><b>3</b><div><strong>Sigue sus respuestas</strong><small>Aquí verás quién la abrió, quién confirmó y cuántos pases.</small></div></div>
+        </div>
+        {% endif %}
+
+        {% include 'invitaciones/partials/resumen_invitados.html' %}
+        {% include 'invitaciones/partials/lista_invitados.html' %}
+    </main>
+
+    <footer class="anf-pie">
+        {% if colaborador and colaborador.whatsapp_url %}¿Dudas con tu lista? <a href="{{ colaborador.whatsapp_url }}" target="_blank" rel="noopener">Escríbele a {{ colaborador.nombre }}</a> · {% endif %}No compartas este enlace: quien lo tenga puede editar tu lista.
+    </footer>
+</div>
+{% endwith %}
+{% endblock %}

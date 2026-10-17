@@ -4,7 +4,8 @@
 {% block head %}
 <style>
     .inv-layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
-    .inv-side { position: sticky; top: calc(var(--topbar-h) + 12px); display: flex; flex-direction: column; gap: 16px; }
+    /* Sin sticky: la columna es más alta que la pantalla y sus tarjetas de abajo quedaban inalcanzables */
+    .inv-side { display: flex; flex-direction: column; gap: 16px; }
     .phone {
         position: relative; width: 300px; max-width: 100%; margin: 0 auto; aspect-ratio: 9 / 18.5; border-radius: 44px; padding: 10px;
         background: linear-gradient(145deg, #1f2937, #05070d); box-shadow: var(--sh-lg), inset 0 0 0 2px #374151;
@@ -17,16 +18,7 @@
     .plantilla-btn span { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255,255,255,.6); }
     .plantilla-btn:hover { border-color: var(--border-strong); }
     .plantilla-btn.is-active { border-color: var(--brand); color: var(--text); box-shadow: 0 0 0 3px var(--brand-ring); }
-    .mini-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-    .mini-stats .card { padding: 14px; }
-    .mini-stats .stat__value { font-size: 22px; margin-top: 4px; }
-    .seg-icons { display: flex; gap: 6px; }
-    .seg-icons i { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: var(--surface-3); color: var(--text-3); font-size: 15px; }
-    .seg-icons i.on { background: var(--success-soft); color: var(--success); }
-    .seg-icons i.on-brand { background: var(--brand-soft); color: var(--brand); }
-    @media (max-width: 1280px) { .mini-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (max-width: 480px) { .mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mini-stats .stat__label { white-space: normal; } }
-    @media (max-width: 1100px) { .inv-layout { grid-template-columns: minmax(0, 1fr); } .inv-side { position: static; } }
+    @media (max-width: 1100px) { .inv-layout { grid-template-columns: minmax(0, 1fr); } }
 </style>
 {% endblock %}
 {% block content %}
@@ -73,103 +65,35 @@
             <div class="row between small mt-2"><span class="muted"><i class="ph ph-eye"></i> {{ invitacion.visitas }} visita{{ invitacion.visitas|pluralize }}</span>
                 {% if invitacion.fecha_limite_rsvp %}<span class="muted">Confirmar antes del {{ invitacion.fecha_limite_rsvp|date:"j M" }}</span>{% endif %}</div>
         </div>
+        <div class="card card--pad" id="enlace-anfitriones">
+            <div class="row between" style="align-items:flex-start">
+                <h3 style="font-size:15px">Enlace para los anfitriones</h3>
+                {% if url_anfitriones %}
+                <div class="dropdown">
+                    <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Opciones del enlace"><i class="ph ph-dots-three"></i></button>
+                    <div class="dropdown__menu">
+                        <a class="menu-item" href="{{ url_anfitriones }}" target="_blank"><i class="ph ph-arrow-square-out"></i>Abrir su panel</a>
+                        <button class="menu-item" data-post="{% url 'invitaciones:enlace_anfitriones' evento.pk 'regenerar' %}" data-confirm="¿Crear un enlace nuevo?" data-confirm-text="El enlace actual dejará de funcionar y tendrás que compartir el nuevo." data-confirm-button="Crear nuevo"><i class="ph ph-arrows-clockwise"></i>Cambiar enlace</button>
+                        <div class="menu-sep"></div>
+                        <button class="menu-item menu-item--danger" data-post="{% url 'invitaciones:enlace_anfitriones' evento.pk 'desactivar' %}" data-danger data-confirm="¿Desactivar el enlace?" data-confirm-text="Los anfitriones ya no podrán administrar su lista. Puedes crear otro cuando quieras." data-confirm-button="Desactivar"><i class="ph ph-link-break"></i>Desactivar</button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <p class="muted small mb-2">Los festejados agregan y administran a sus invitados desde su celular, sin cuenta. No pueden cambiar el diseño ni publicar.</p>
+            {% if url_anfitriones %}
+            <div class="copy-field"><code>{{ url_anfitriones }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ url_anfitriones }}" aria-label="Copiar"><i class="ph ph-copy"></i></button></div>
+            <a class="btn btn--whatsapp btn--block mt-2" target="_blank" rel="noopener" href="{{ wa_anfitriones }}"><i class="ph ph-whatsapp-logo"></i>Enviar a los anfitriones</a>
+            <p class="small muted mt-2 row" style="gap:6px"><i class="ph ph-lock-simple"></i>Es privado: quien lo tenga puede editar la lista.</p>
+            {% else %}
+            <button class="btn btn--block" data-post="{% url 'invitaciones:enlace_anfitriones' evento.pk 'crear' %}"><i class="ph ph-link-simple"></i>Crear enlace</button>
+            {% endif %}
+        </div>
     </aside>
 
     <section class="stack">
-        <div class="mini-stats reveal">
-            <div class="card"><div class="stat__label">Invitaciones</div><div class="stat__value">{{ resumen.total|default:0 }}</div></div>
-            <div class="card"><div class="stat__label">Pases</div><div class="stat__value">{{ resumen.pases|default:0 }}</div></div>
-            <div class="card tone-success"><div class="stat__label">Confirmados</div><div class="stat__value text-success">{{ resumen.pases_confirmados|default:0 }}</div></div>
-            <div class="card"><div class="stat__label">Pendientes</div><div class="stat__value text-warning">{{ resumen.pendientes|default:0 }}</div></div>
-            <div class="card"><div class="stat__label">No asisten</div><div class="stat__value text-danger">{{ resumen.rechazados|default:0 }}</div></div>
-            <div class="card"><div class="stat__label">La vieron</div><div class="stat__value text-brand">{{ resumen.vistos|default:0 }}</div></div>
-        </div>
-
-        <div class="card">
-            <div class="card__head">
-                <div><h3>Lista de invitados</h3><p>Envía cada invitación por WhatsApp y sigue quién la abrió y confirmó.</p></div>
-                <div class="row row-wrap">
-                    <a class="btn btn--ghost btn--sm" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ph ph-scan"></i><span class="hide-mobile">Entrada</span></a>
-                    <a class="btn btn--ghost btn--sm" href="{% url 'invitaciones:exportar' evento.pk %}"><i class="ph ph-file-xls"></i><span class="hide-mobile">Exportar</span></a>
-                    <button class="btn btn--sm" data-modal="{% url 'invitaciones:importar' evento.pk %}"><i class="ph ph-clipboard-text"></i>Importar</button>
-                    <button class="btn btn--primary btn--sm" data-modal="{% url 'invitaciones:invitado_crear' evento.pk %}"><i class="ph ph-user-plus"></i>Agregar</button>
-                </div>
-            </div>
-            <form class="toolbar" style="padding:16px 20px 0;margin:0" data-autosubmit data-target="#tabla-invitados">
-                <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o mesa"></div>
-                <select class="input" name="estado">
-                    <option value="">Todas las respuestas</option>
-                    <option value="pendiente" {% if estado == 'pendiente' %}selected{% endif %}>Pendientes</option>
-                    <option value="confirmado" {% if estado == 'confirmado' %}selected{% endif %}>Confirmados</option>
-                    <option value="rechazado" {% if estado == 'rechazado' %}selected{% endif %}>No asistirán</option>
-                    <option value="sin_enviar" {% if estado == 'sin_enviar' %}selected{% endif %}>Sin enviar</option>
-                    <option value="vista" {% if estado == 'vista' %}selected{% endif %}>La vieron sin responder</option>
-                </select>
-                {% if grupos %}
-                <select class="input" name="grupo"><option value="">Todos los grupos</option>{% for g in grupos %}<option value="{{ g }}" {% if grupo == g %}selected{% endif %}>{{ g }}</option>{% endfor %}</select>
-                {% endif %}
-            </form>
-            <div id="tabla-invitados" class="mt-2">
-                {% if invitados %}
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead><tr><th>Invitado</th><th>Pases</th><th>Respuesta</th><th class="hide-mobile">Seguimiento</th><th></th></tr></thead>
-                        <tbody>
-                        {% for i in invitados %}
-                        <tr>
-                            <td>
-                                <div class="t-title">{{ i.nombre }}</div>
-                                <div class="row row-wrap" style="gap:6px;margin-top:3px">
-                                    {% if i.grupo %}<span class="chip chip--muted">{{ i.grupo }}</span>{% endif %}
-                                    {% if i.mesa %}<span class="chip chip--info"><i class="ph ph-fork-knife"></i>Mesa {{ i.mesa }}</span>{% endif %}
-                                    {% if i.origen == 'publico' %}<span class="chip chip--live">Enlace general</span>{% endif %}
-                                </div>
-                            </td>
-                            <td class="nowrap">{% if i.estado == 'confirmado' %}<strong class="text-success">{{ i.pases_confirmados }}</strong><span class="t-muted"> / {{ i.pases }}</span>{% else %}<strong>{{ i.pases }}</strong>{% endif %}</td>
-                            <td>
-                                <span class="chip rsvp-{{ i.estado }} chip--dot">{{ i.get_estado_display }}</span>
-                                {% if i.mensaje %}<div class="t-sub mt-1" style="max-width:240px" title="{{ i.mensaje }}"><i class="ph ph-quotes"></i> {{ i.mensaje|truncatechars:60 }}</div>{% endif %}
-                            </td>
-                            <td class="hide-mobile">
-                                <div class="seg-icons">
-                                    <i class="ph ph-paper-plane-tilt {% if i.enviada_en %}on-brand{% endif %}" data-tip="{% if i.enviada_en %}Enviada {{ i.enviada_en|hace }}{% else %}Sin enviar{% endif %}"></i>
-                                    <i class="ph ph-eye {% if i.vista_en %}on-brand{% endif %}" data-tip="{% if i.vista_en %}Vista {{ i.vista_en|hace }}{% else %}No la ha abierto{% endif %}"></i>
-                                    <i class="ph ph-door-open {% if i.check_in_en %}on{% endif %}" data-tip="{% if i.check_in_en %}Llegó {{ i.check_in_en|time:'H:i' }}{% else %}No ha llegado{% endif %}"></i>
-                                </div>
-                            </td>
-                            <td class="t-actions">
-                                <a class="btn btn--sm btn--whatsapp" href="{{ i.wa_url }}" target="_blank" data-enviar="{% url 'invitaciones:marcar_enviada' i.pk %}" data-tip="Enviar por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
-                                <div class="dropdown" style="display:inline-block">
-                                    <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ph ph-dots-three-vertical"></i></button>
-                                    <div class="dropdown__menu">
-                                        <button class="menu-item" data-copy="{{ i.get_absolute_url }}"><i class="ph ph-link"></i>Copiar enlace personal</button>
-                                        <a class="menu-item" href="{{ i.get_absolute_url }}" target="_blank"><i class="ph ph-arrow-square-out"></i>Abrir su invitación</a>
-                                        <button class="menu-item" data-modal="{% url 'invitaciones:invitado_editar' i.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
-                                        <div class="menu-sep"></div>
-                                        <button class="menu-item menu-item--danger" data-post="{% url 'invitaciones:invitado_eliminar' i.pk %}" data-danger data-confirm="¿Quitar a {{ i.nombre }}?" data-confirm-text="Su enlace personal dejará de funcionar." data-confirm-button="Quitar"><i class="ph ph-trash"></i>Quitar de la lista</button>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% elif q or estado or grupo %}
-                    {% include 'components/vacio.html' with icono='ph ph-user-focus' titulo='Sin coincidencias' texto='Ningún invitado coincide con los filtros.' %}
-                {% else %}
-                    <div class="empty">
-                        <div class="empty__art"><i class="ph ph-user-list"></i></div>
-                        <h3>Arma tu lista de invitados</h3>
-                        <p>Cada invitado recibe un enlace personal con sus pases, puede confirmar en un toque y obtiene un pase QR para la entrada.</p>
-                        <div class="row" style="justify-content:center">
-                            <button class="btn" data-modal="{% url 'invitaciones:importar' evento.pk %}"><i class="ph ph-clipboard-text"></i>Pegar lista</button>
-                            <button class="btn btn--primary" data-modal="{% url 'invitaciones:invitado_crear' evento.pk %}"><i class="ph ph-user-plus"></i>Agregar invitado</button>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+        {% include 'invitaciones/partials/resumen_invitados.html' %}
+        {% include 'invitaciones/partials/lista_invitados.html' %}
     </section>
 </div>
 {% endblock %}
@@ -190,14 +114,6 @@
             await EM.post("{% url 'invitaciones:cambiar_plantilla' evento.pk %}", datos);
             frame.src = frame.src.split('&t=')[0] + '&t=' + Date.now();
             EM.toast(`Plantilla “${b.textContent.trim()}” aplicada`);
-        });
-        // Marca la invitación como enviada al abrir WhatsApp
-        document.addEventListener('click', e => {
-            const a = e.target.closest('[data-enviar]');
-            if (!a) return;
-            fetch(a.dataset.enviar, { method: 'POST', keepalive: true, headers: { 'X-CSRFToken': EM.csrf(), 'X-Requested-With': 'XMLHttpRequest' } });
-            const icono = a.closest('tr')?.querySelector('.ph-paper-plane-tilt');
-            if (icono) icono.classList.add('on-brand');
         });
         document.addEventListener('em:saved', () => { frame.src = frame.src; });
     })();

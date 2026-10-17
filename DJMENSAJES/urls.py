@@ -23,6 +23,7 @@ urlpatterns = [
 
     # Páginas públicas
     path('i/', include('apps.invitaciones.urls_publicas')),
+    path('anfitriones/', include('apps.invitaciones.urls_anfitriones')),
     path('', include('apps.envivo.urls')),
 ]
 

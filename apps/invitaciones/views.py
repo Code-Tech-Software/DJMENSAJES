@@ -15,7 +15,7 @@ from django.views.generic import CreateView, FormView, UpdateView
 
 from apps.core.mixins import FormularioModalMixin, respuesta_ok
 from apps.core.models import Ajustes
-from apps.core.utils import qr_svg, slug_unico
+from apps.core.utils import generar_token, qr_svg, slug_unico
 from apps.eventos.models import Evento
 from apps.eventos.views import eventos_de, obtener_evento
 
@@ -77,10 +77,11 @@ def indice(request):
     return render(request, 'invitaciones/indice.html', {'eventos': eventos, 'ver_pasados': ver_pasados})
 
 
-@login_required
-def panel(request, pk):
-    evento = obtener_evento(request, pk)
-    invitacion = obtener_invitacion(evento)
+def lista_invitados(request, evento, invitacion, *, token=None):
+    """
+    Lista filtrada de invitados con las rutas de cada acción. La comparten el panel del equipo y el de
+    los anfitriones (token = su enlace privado), que usan la misma tabla con rutas distintas.
+    """
     q = request.GET.get('q', '').strip()
     estado = request.GET.get('estado', '')
     grupo = request.GET.get('grupo', '')
@@ -96,20 +97,46 @@ def panel(request, pk):
         invitados = invitados.filter(estado=estado)
     if grupo:
         invitados = invitados.filter(grupo=grupo)
+
+    espacio, base = ('anfitriones', [token]) if token else ('invitaciones', [])
     invitados = list(invitados)
     for invitado in invitados:
         invitado.wa_url = mensaje_whatsapp(request, invitado, invitacion)
+        args = base + [invitado.pk]
+        invitado.url_editar = reverse(f'{espacio}:invitado_editar', args=args)
+        invitado.url_eliminar = reverse(f'{espacio}:invitado_eliminar', args=args)
+        invitado.url_enviada = reverse(f'{espacio}:marcar_enviada', args=args)
 
-    return render(request, 'invitaciones/panel.html', {
-        'evento': evento,
-        'invitacion': invitacion,
+    args = [token] if token else [evento.pk]
+    return {
         'invitados': invitados,
         'resumen': evento.invitados.resumen(),
         'grupos': evento.invitados.exclude(grupo='').values_list('grupo', flat=True).distinct().order_by('grupo'),
         'q': q, 'estado': estado, 'grupo': grupo,
+        'url_crear': reverse(f'{espacio}:invitado_crear', args=args),
+        'url_importar': reverse(f'{espacio}:importar', args=args),
+        'url_exportar': reverse(f'{espacio}:exportar', args=args),
+        'url_entrada': '' if token else reverse('invitaciones:checkin', args=args),
+    }
+
+
+@login_required
+def panel(request, pk):
+    evento = obtener_evento(request, pk)
+    invitacion = obtener_invitacion(evento)
+    contexto = lista_invitados(request, evento, invitacion)
+    contexto.update({
+        'evento': evento,
+        'invitacion': invitacion,
         'url_publica': request.build_absolute_uri(invitacion.get_absolute_url()),
         'plantillas': Invitacion.Plantilla.choices,
     })
+    if invitacion.token_anfitriones:
+        url = request.build_absolute_uri(invitacion.url_anfitriones())
+        texto = (f'¡Hola! Este es el enlace para administrar la lista de invitados de {invitacion.nombres_visibles}:\n{url}\n'
+                 'Desde ahí pueden agregar a sus invitados, enviarles su invitación por WhatsApp y ver quién confirmó.')
+        contexto.update({'url_anfitriones': url, 'wa_anfitriones': f'https://wa.me/?text={quote(texto)}'})
+    return render(request, 'invitaciones/panel.html', contexto)
 
 
 @login_required
@@ -134,7 +161,28 @@ def publicar(request, pk):
                         else 'La invitación volvió a borrador.')
 
 
-class InvitadoMixin(LoginRequiredMixin, FormularioModalMixin):
+@login_required
+@require_POST
+def enlace_anfitriones(request, pk, accion):
+    """Crea, cambia o desactiva el enlace privado con el que los anfitriones administran su lista."""
+    invitacion = obtener_invitacion(obtener_evento(request, pk))
+    if accion == 'desactivar':
+        invitacion.token_anfitriones = None
+        mensaje = 'Enlace desactivado: los anfitriones ya no pueden entrar.'
+    elif accion == 'regenerar' or not invitacion.token_anfitriones:
+        mensaje = ('Se creó un enlace nuevo; el anterior dejó de funcionar.' if invitacion.token_anfitriones
+                   else 'Enlace creado. Compártelo con los anfitriones.')
+        invitacion.token_anfitriones = generar_token(18)
+    else:
+        return respuesta_ok(request)
+    invitacion.save(update_fields=['token_anfitriones', 'actualizado'])
+    return respuesta_ok(request, mensaje)
+
+
+# Formularios de invitados: los usan el equipo (abajo) y los anfitriones (anfitriones.py); cada uno
+# define get_evento() y desde dónde se puede editar.
+
+class InvitadoFormMixin(FormularioModalMixin):
     model = Invitado
     form_class = InvitadoForm
     template_modal = 'invitaciones/partials/form_invitado.html'
@@ -146,15 +194,10 @@ class InvitadoMixin(LoginRequiredMixin, FormularioModalMixin):
         return contexto
 
 
-class InvitadoCrear(InvitadoMixin, CreateView):
+class InvitadoCrearBase(InvitadoFormMixin, CreateView):
     titulo = 'Agregar invitado'
     texto_boton = 'Agregar'
     mensaje_exito = 'Invitado agregado.'
-
-    def get_evento(self):
-        if not hasattr(self, '_evento'):
-            self._evento = obtener_evento(self.request, self.kwargs['pk'])
-        return self._evento
 
     def get_subtitulo(self):
         return self.get_evento().nombre_evento
@@ -164,17 +207,13 @@ class InvitadoCrear(InvitadoMixin, CreateView):
         obtener_invitacion(form.instance.evento)
         if 'otro' in self.request.POST:
             form.save()
-            return respuesta_ok(self.request, f'{form.instance.nombre} agregado.', recargar=False,
-                                abrir=reverse('invitaciones:invitado_crear', args=[form.instance.evento_id]))
+            return respuesta_ok(self.request, f'{form.instance.nombre} agregado.', recargar=False, abrir=self.request.path)
         return super().form_valid(form)
 
 
-class InvitadoEditar(InvitadoMixin, UpdateView):
+class InvitadoEditarBase(InvitadoFormMixin, UpdateView):
     titulo = 'Editar invitado'
     mensaje_exito = 'Invitado actualizado.'
-
-    def get_queryset(self):
-        return Invitado.objects.filter(evento__in=eventos_de(self.request.user))
 
     def get_evento(self):
         return self.object.evento
@@ -188,15 +227,7 @@ class InvitadoEditar(InvitadoMixin, UpdateView):
         return super().form_valid(form)
 
 
-@login_required
-@require_POST
-def invitado_eliminar(request, pk):
-    invitado = get_object_or_404(Invitado, pk=pk, evento__in=eventos_de(request.user))
-    invitado.delete()
-    return respuesta_ok(request, f'Se quitó a {invitado.nombre} de la lista.')
-
-
-class ImportarInvitados(LoginRequiredMixin, FormularioModalMixin, FormView):
+class ImportarInvitadosBase(FormularioModalMixin, FormView):
     form_class = ImportarInvitadosForm
     template_modal = 'invitaciones/partials/form_importar.html'
     titulo = 'Importar lista de invitados'
@@ -206,7 +237,7 @@ class ImportarInvitados(LoginRequiredMixin, FormularioModalMixin, FormView):
     texto_boton = 'Importar'
 
     def form_valid(self, form):
-        evento = obtener_evento(self.request, self.kwargs['pk'])
+        evento = self.get_evento()
         obtener_invitacion(evento)
         grupo_general = form.cleaned_data.get('grupo', '')
         nuevos = [Invitado(evento=evento, nombre=f['nombre'], pases=f['pases'], telefono=f['telefono'],
@@ -216,10 +247,38 @@ class ImportarInvitados(LoginRequiredMixin, FormularioModalMixin, FormView):
         return self.respuesta_exito()
 
 
+class InvitadoCrear(LoginRequiredMixin, InvitadoCrearBase):
+    def get_evento(self):
+        if not hasattr(self, '_evento'):
+            self._evento = obtener_evento(self.request, self.kwargs['pk'])
+        return self._evento
+
+
+class InvitadoEditar(LoginRequiredMixin, InvitadoEditarBase):
+    def get_queryset(self):
+        return Invitado.objects.filter(evento__in=eventos_de(self.request.user))
+
+
+class ImportarInvitados(LoginRequiredMixin, ImportarInvitadosBase):
+    def get_evento(self):
+        return obtener_evento(self.request, self.kwargs['pk'])
+
+
+@login_required
+@require_POST
+def invitado_eliminar(request, pk):
+    invitado = get_object_or_404(Invitado, pk=pk, evento__in=eventos_de(request.user))
+    invitado.delete()
+    return respuesta_ok(request, f'Se quitó a {invitado.nombre} de la lista.')
+
+
 @login_required
 def exportar(request, pk):
     evento = obtener_evento(request, pk)
-    invitacion = obtener_invitacion(evento)
+    return csv_invitados(request, evento, obtener_invitacion(evento))
+
+
+def csv_invitados(request, evento, invitacion):
     respuesta = HttpResponse(content_type='text/csv; charset=utf-8')
     respuesta['Content-Disposition'] = f'attachment; filename="invitados-{invitacion.slug}.csv"'
     respuesta.write('\ufeff')  # BOM para que Excel respete los acentos
@@ -239,7 +298,10 @@ def exportar(request, pk):
 @login_required
 @require_POST
 def marcar_enviada(request, pk):
-    invitado = get_object_or_404(Invitado, pk=pk, evento__in=eventos_de(request.user))
+    return registrar_envio(get_object_or_404(Invitado, pk=pk, evento__in=eventos_de(request.user)))
+
+
+def registrar_envio(invitado):
     if not invitado.enviada_en:
         invitado.enviada_en = timezone.now()
         invitado.save(update_fields=['enviada_en'])
@@ -328,6 +390,7 @@ def _contexto_publico(request, invitacion, invitado=None):
         'google_calendar': google,
         'rsvp_cerrado': cerrado,
         'es_equipo': request.user.is_authenticated and eventos_de(request.user).filter(pk=evento.pk).exists(),
+        'es_anfitrion': es_anfitrion(request, invitacion),
     }
     imagen = invitacion.imagen_portada
     if imagen:
@@ -342,8 +405,18 @@ def _contexto_publico(request, invitacion, invitado=None):
     return contexto
 
 
+def clave_anfitrion(invitacion):
+    return f'anfitrion_{invitacion.pk}'
+
+
+def es_anfitrion(request, invitacion):
+    """Quien abrió el panel de los anfitriones en este navegador (con el enlace vigente)."""
+    token = invitacion.token_anfitriones
+    return bool(token) and request.session.get(clave_anfitrion(invitacion)) == token
+
+
 def _verificar_publicada(request, invitacion):
-    if invitacion.publicada:
+    if invitacion.publicada or es_anfitrion(request, invitacion):
         return True
     return request.user.is_authenticated and eventos_de(request.user).filter(pk=invitacion.evento_id).exists()
 
@@ -353,7 +426,7 @@ def invitacion_general(request, slug):
     if not _verificar_publicada(request, invitacion):
         return render(request, 'invitaciones/publica/no_disponible.html', {'invitacion': invitacion}, status=404)
     clave = f'inv_vista_{invitacion.pk}'
-    if not request.session.get(clave) and not request.user.is_authenticated:
+    if not request.session.get(clave) and not request.user.is_authenticated and not es_anfitrion(request, invitacion):
         request.session[clave] = True
         Invitacion.objects.filter(pk=invitacion.pk).update(visitas=F('visitas') + 1)
     contexto = _contexto_publico(request, invitacion)
@@ -367,7 +440,8 @@ def invitacion_personal(request, slug, token):
     if not _verificar_publicada(request, invitacion):
         return render(request, 'invitaciones/publica/no_disponible.html', {'invitacion': invitacion}, status=404)
     contexto = _contexto_publico(request, invitacion, invitado)
-    if not contexto['es_equipo'] and not invitado.vista_en:
+    # Ni el equipo ni los anfitriones cuentan como "la vio" al revisar el enlace de alguien
+    if not contexto['es_equipo'] and not contexto['es_anfitrion'] and not invitado.vista_en:
         invitado.vista_en = timezone.now()
         invitado.save(update_fields=['vista_en'])
         Invitacion.objects.filter(pk=invitacion.pk).update(visitas=F('visitas') + 1)

@@ -1013,6 +1013,40 @@ kbd {
 .divider-text { display: flex; align-items: center; gap: 12px; color: var(--text-3); font-size: 12px; font-weight: 650; }
 .divider-text::before, .divider-text::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
+/* Resumen y seguimiento de invitados (panel del equipo y de los anfitriones) */
+.mini-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.mini-stats .card { padding: 14px; }
+.mini-stats .stat__value { font-size: 22px; margin-top: 4px; }
+.seg-icons { display: flex; gap: 6px; }
+.seg-icons i { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: var(--surface-3); color: var(--text-3); font-size: 15px; }
+.seg-icons i.on { background: var(--success-soft); color: var(--success); }
+.seg-icons i.on-brand { background: var(--brand-soft); color: var(--brand); }
+@media (max-width: 1280px) { .mini-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mini-stats .stat__label { white-space: normal; } }
+.tabla-invitados .t-pases > i { display: none; }
+/* En celular cada invitado es una tarjeta: nombre arriba, pases y respuesta abajo, acciones a la derecha */
+@media (max-width: 640px) {
+  .lista-head { flex-direction: column; align-items: stretch; }
+  .lista-head > .row { flex-wrap: nowrap; }
+  .lista-head > .row > .btn:not(.btn--ghost) { flex: 1; justify-content: center; }
+  .lista-filtros .searchbox { flex-basis: 100%; max-width: none; min-width: 0; }
+  .lista-filtros select.input { flex: 1; min-width: 0; }
+  .tabla-invitados, .tabla-invitados tbody { display: block; }
+  .tabla-invitados thead { display: none; }
+  .tabla-invitados tr {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "nombre nombre acciones" "pases resp acciones";
+    gap: 8px 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border);
+  }
+  .tabla-invitados tr:last-child { border-bottom: 0; }
+  .tabla-invitados td { display: block; padding: 0; border: 0; }
+  .tabla-invitados .t-nombre { grid-area: nombre; }
+  .tabla-invitados .t-pases { grid-area: pases; display: inline-flex; align-items: center; gap: 4px; }
+  .tabla-invitados .t-pases > i { display: inline; font-size: 16px; color: var(--text-3); }
+  .tabla-invitados .t-resp { grid-area: resp; min-width: 0; }
+  .tabla-invitados .t-resp .t-sub { max-width: none !important; }
+  .tabla-invitados .t-actions { grid-area: acciones; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+}
+
 .copy-field { display: flex; align-items: center; gap: 6px; padding: 5px 5px 5px 12px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--border); }
 .copy-field code { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 

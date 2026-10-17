@@ -19,6 +19,8 @@ urlpatterns = [
             editor.mover, name='elemento_mover'),
     path('evento/<int:pk>/plantilla/', views.cambiar_plantilla, name='cambiar_plantilla'),
     path('evento/<int:pk>/publicar/', views.publicar, name='publicar'),
+    re_path(r'^evento/(?P<pk>\d+)/anfitriones/(?P<accion>crear|regenerar|desactivar)/$',
+            views.enlace_anfitriones, name='enlace_anfitriones'),
     path('evento/<int:pk>/invitados/nuevo/', views.InvitadoCrear.as_view(), name='invitado_crear'),
     path('evento/<int:pk>/invitados/importar/', views.ImportarInvitados.as_view(), name='importar'),
     path('evento/<int:pk>/invitados/exportar/', views.exportar, name='exportar'),

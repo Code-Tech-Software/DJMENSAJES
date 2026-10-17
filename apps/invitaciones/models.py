@@ -97,6 +97,10 @@ class Invitacion(models.Model):
     mostrar_mapa = models.BooleanField('mostrar lugares y mapas', default=True)
     publicada = models.BooleanField(default=False)
     visitas = models.PositiveIntegerField(default=0, editable=False)
+    # Enlace privado para que los anfitriones administren su lista de invitados (vacío = desactivado)
+    token_anfitriones = models.CharField(
+        'enlace de los anfitriones', max_length=40, unique=True, null=True, blank=True, editable=False,
+    )
 
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
@@ -110,6 +114,9 @@ class Invitacion(models.Model):
 
     def get_absolute_url(self):
         return reverse('invitacion_publica:general', args=[self.slug])
+
+    def url_anfitriones(self):
+        return reverse('anfitriones:panel', args=[self.token_anfitriones]) if self.token_anfitriones else ''
 
     @property
     def nombres_visibles(self):

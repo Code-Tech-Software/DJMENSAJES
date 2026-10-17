@@ -1,0 +1,97 @@
+{% load ui %}
+{# Lista de invitados: la comparten el panel del equipo y el de los anfitriones (cada uno pasa sus rutas) #}
+<div class="card">
+    <div class="card__head lista-head">
+        <div><h3>Lista de invitados</h3><p>Envía cada invitación por WhatsApp y sigue quién la abrió y confirmó.</p></div>
+        <div class="row row-wrap">
+            {% if url_entrada %}<a class="btn btn--ghost btn--sm" href="{{ url_entrada }}"><i class="ph ph-scan"></i><span class="hide-mobile">Entrada</span></a>{% endif %}
+            <a class="btn btn--ghost btn--sm" href="{{ url_exportar }}" data-tip="Descargar en Excel (CSV)"><i class="ph ph-file-xls"></i><span class="hide-mobile">Exportar</span></a>
+            <button class="btn btn--sm" data-modal="{{ url_importar }}"><i class="ph ph-clipboard-text"></i>Importar</button>
+            <button class="btn btn--primary btn--sm" data-modal="{{ url_crear }}"><i class="ph ph-user-plus"></i>Agregar</button>
+        </div>
+    </div>
+    <form class="toolbar lista-filtros" style="padding:16px 20px 0;margin:0" data-autosubmit data-target="#tabla-invitados">
+        <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o mesa"></div>
+        <select class="input" name="estado">
+            <option value="">Todas las respuestas</option>
+            <option value="pendiente" {% if estado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+            <option value="confirmado" {% if estado == 'confirmado' %}selected{% endif %}>Confirmados</option>
+            <option value="rechazado" {% if estado == 'rechazado' %}selected{% endif %}>No asistirán</option>
+            <option value="sin_enviar" {% if estado == 'sin_enviar' %}selected{% endif %}>Sin enviar</option>
+            <option value="vista" {% if estado == 'vista' %}selected{% endif %}>La vieron sin responder</option>
+        </select>
+        {% if grupos %}
+        <select class="input" name="grupo"><option value="">Todos los grupos</option>{% for g in grupos %}<option value="{{ g }}" {% if grupo == g %}selected{% endif %}>{{ g }}</option>{% endfor %}</select>
+        {% endif %}
+    </form>
+    <div id="tabla-invitados" class="mt-2">
+        {% if invitados %}
+        <div class="table-wrap">
+            <table class="table tabla-invitados">
+                <thead><tr><th>Invitado</th><th>Pases</th><th>Respuesta</th><th class="hide-mobile">Seguimiento</th><th></th></tr></thead>
+                <tbody>
+                {% for i in invitados %}
+                <tr>
+                    <td class="t-nombre">
+                        <div class="t-title">{{ i.nombre }}</div>
+                        <div class="row row-wrap" style="gap:6px;margin-top:3px">
+                            {% if i.grupo %}<span class="chip chip--muted">{{ i.grupo }}</span>{% endif %}
+                            {% if i.mesa %}<span class="chip chip--info"><i class="ph ph-fork-knife"></i>Mesa {{ i.mesa }}</span>{% endif %}
+                            {% if i.origen == 'publico' %}<span class="chip chip--live">Enlace general</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="nowrap t-pases"><i class="ph ph-ticket" aria-hidden="true"></i>{% if i.estado == 'confirmado' %}<strong class="text-success">{{ i.pases_confirmados }}</strong><span class="t-muted"> / {{ i.pases }}</span>{% else %}<strong>{{ i.pases }}</strong>{% endif %}</td>
+                    <td class="t-resp">
+                        <span class="chip rsvp-{{ i.estado }} chip--dot">{{ i.get_estado_display }}</span>
+                        {% if i.mensaje %}<div class="t-sub mt-1" style="max-width:240px" title="{{ i.mensaje }}"><i class="ph ph-quotes"></i> {{ i.mensaje|truncatechars:60 }}</div>{% endif %}
+                    </td>
+                    <td class="hide-mobile">
+                        <div class="seg-icons">
+                            <i class="ph ph-paper-plane-tilt {% if i.enviada_en %}on-brand{% endif %}" data-tip="{% if i.enviada_en %}Enviada {{ i.enviada_en|hace }}{% else %}Sin enviar{% endif %}"></i>
+                            <i class="ph ph-eye {% if i.vista_en %}on-brand{% endif %}" data-tip="{% if i.vista_en %}Vista {{ i.vista_en|hace }}{% else %}No la ha abierto{% endif %}"></i>
+                            <i class="ph ph-door-open {% if i.check_in_en %}on{% endif %}" data-tip="{% if i.check_in_en %}Llegó {{ i.check_in_en|time:'H:i' }}{% else %}No ha llegado{% endif %}"></i>
+                        </div>
+                    </td>
+                    <td class="t-actions">
+                        <a class="btn btn--sm btn--whatsapp" href="{{ i.wa_url }}" target="_blank" rel="noopener" data-enviar="{{ i.url_enviada }}" data-tip="Enviar por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
+                        <div class="dropdown" style="display:inline-block">
+                            <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ph ph-dots-three-vertical"></i></button>
+                            <div class="dropdown__menu">
+                                <button class="menu-item" data-copy="{{ i.get_absolute_url }}"><i class="ph ph-link"></i>Copiar enlace personal</button>
+                                <a class="menu-item" href="{{ i.get_absolute_url }}" target="_blank"><i class="ph ph-arrow-square-out"></i>Abrir su invitación</a>
+                                <button class="menu-item" data-modal="{{ i.url_editar }}"><i class="ph ph-pencil-simple"></i>Editar</button>
+                                <div class="menu-sep"></div>
+                                <button class="menu-item menu-item--danger" data-post="{{ i.url_eliminar }}" data-danger data-confirm="¿Quitar a {{ i.nombre }}?" data-confirm-text="Su enlace personal dejará de funcionar." data-confirm-button="Quitar"><i class="ph ph-trash"></i>Quitar de la lista</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif q or estado or grupo %}
+            {% include 'components/vacio.html' with icono='ph ph-user-focus' titulo='Sin coincidencias' texto='Ningún invitado coincide con los filtros.' %}
+        {% else %}
+            <div class="empty">
+                <div class="empty__art"><i class="ph ph-user-list"></i></div>
+                <h3>Arma tu lista de invitados</h3>
+                <p>Cada invitado recibe un enlace personal con sus pases, puede confirmar en un toque y obtiene un pase QR para la entrada.</p>
+                <div class="row" style="justify-content:center">
+                    <button class="btn" data-modal="{{ url_importar }}"><i class="ph ph-clipboard-text"></i>Pegar lista</button>
+                    <button class="btn btn--primary" data-modal="{{ url_crear }}"><i class="ph ph-user-plus"></i>Agregar invitado</button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<script>
+    // Marca la invitación como enviada al abrir WhatsApp
+    document.addEventListener('click', e => {
+        const a = e.target.closest('[data-enviar]');
+        if (!a) return;
+        fetch(a.dataset.enviar, { method: 'POST', keepalive: true, headers: { 'X-CSRFToken': EM.csrf(), 'X-Requested-With': 'XMLHttpRequest' } });
+        const icono = a.closest('tr')?.querySelector('.ph-paper-plane-tilt');
+        if (icono) icono.classList.add('on-brand');
+    });
+</script>

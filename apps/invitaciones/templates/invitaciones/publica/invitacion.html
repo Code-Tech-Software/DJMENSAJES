@@ -26,6 +26,8 @@
 
 {% if es_equipo and not invitacion.publicada and not preview %}
 <div class="preview-banda">Vista previa · borrador visible solo para tu equipo</div>
+{% elif es_anfitrion and not invitacion.publicada and not preview %}
+<div class="preview-banda">Vista previa · tus invitados podrán verla cuando se publique</div>
 {% endif %}
 
 {# ------------------------------------------------------------ Sobre #}

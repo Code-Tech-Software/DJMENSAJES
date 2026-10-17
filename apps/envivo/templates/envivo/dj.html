@@ -109,6 +109,8 @@
 <script>
     (() => {
         const TOKEN = "{{ evento.token_dj }}";
+        // Con el proyector moderado, aprobar un saludo (✓) también lo manda a la pantalla
+        const MODERADO = {{ evento.moderar_pantalla|yesno:"true,false" }};
         const TIPOS = {% if mostrar_fotos %}['cancion', 'saludo', 'foto']{% else %}['cancion', 'saludo']{% endif %};
         const URLS = {
             accion: (id, accion) => `/envivo/dj/${TOKEN}/mensajes/${id}/${accion}/`,
@@ -163,7 +165,7 @@
                 ? (m.artista ? `<div class="msj__sub"><i class="ph ph-user-sound"></i> ${e(m.artista)}</div>` : '')
                 : (m.destinatario ? `<div class="msj__sub">Para: <strong>${e(m.destinatario)}</strong></div>` : '');
             const acciones = m.estatus === 'pendiente'
-                ? `<button class="btn-msj btn-msj--ok" data-accion="atender" title="Marcar como atendido"><i class="ph ph-check"></i></button>
+                ? `<button class="btn-msj btn-msj--ok" data-accion="atender" title="${m.tipo === 'saludo' && MODERADO ? 'Aprobar: sale en la pantalla' : 'Marcar como atendido'}"><i class="ph ph-check"></i></button>
                    ${m.tipo === 'saludo' ? `<button class="btn-msj btn-msj--pantalla ${m.en_pantalla ? 'activo' : ''}" data-accion="${m.en_pantalla ? 'ocultar' : 'mostrar'}" title="${m.en_pantalla ? 'Quitar del proyector' : 'Mostrar en el proyector'}"><i class="ph ph-television-simple"></i></button>` : ''}
                    <button class="btn-msj btn-msj--x" data-accion="descartar" title="Descartar"><i class="ph ph-x"></i></button>`
                 : `<button class="btn-msj" data-accion="restaurar" title="Regresar a pendientes"><i class="ph ph-arrow-u-up-left"></i></button>
@@ -229,7 +231,7 @@
             render();
             if (nombre === 'atender' || nombre === 'descartar' || nombre === 'aprobar') {
                 ultimo = id;
-                $('#deshacer-texto').textContent = { atender: 'Marcado como atendido', descartar: r.mensaje.tipo === 'foto' ? 'Foto descartada' : 'Mensaje descartado', aprobar: 'Foto aprobada: ya está en la pantalla' }[nombre];
+                $('#deshacer-texto').textContent = { atender: r.mensaje.tipo === 'saludo' && MODERADO ? 'Saludo aprobado: ya está en la pantalla' : 'Marcado como atendido', descartar: r.mensaje.tipo === 'foto' ? 'Foto descartada' : 'Mensaje descartado', aprobar: 'Foto aprobada: ya está en la pantalla' }[nombre];
                 $('#deshacer').classList.add('visible');
                 clearTimeout(tDeshacer);
                 tDeshacer = setTimeout(() => $('#deshacer').classList.remove('visible'), 5000);

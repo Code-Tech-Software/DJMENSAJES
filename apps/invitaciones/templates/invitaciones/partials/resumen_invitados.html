@@ -1,0 +1,8 @@
+<div class="mini-stats reveal">
+    <div class="card"><div class="stat__label">Invitaciones</div><div class="stat__value">{{ resumen.total|default:0 }}</div></div>
+    <div class="card"><div class="stat__label">Pases</div><div class="stat__value">{{ resumen.pases|default:0 }}</div></div>
+    <div class="card tone-success"><div class="stat__label">Confirmados</div><div class="stat__value text-success">{{ resumen.pases_confirmados|default:0 }}</div></div>
+    <div class="card"><div class="stat__label">Pendientes</div><div class="stat__value text-warning">{{ resumen.pendientes|default:0 }}</div></div>
+    <div class="card"><div class="stat__label">No asisten</div><div class="stat__value text-danger">{{ resumen.rechazados|default:0 }}</div></div>
+    <div class="card"><div class="stat__label">La vieron</div><div class="stat__value text-brand">{{ resumen.vistos|default:0 }}</div></div>
+</div>

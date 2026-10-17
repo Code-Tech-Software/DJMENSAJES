@@ -328,8 +328,14 @@ def dj_accion(request, token, pk, accion):
         mensaje.marcar(cambios['estatus'])
     if 'en_pantalla' in cambios:
         mensaje.en_pantalla = cambios['en_pantalla']
-    if mensaje.es_foto and mensaje.estatus == Mensaje.Estatus.PENDIENTE:
-        mensaje.en_pantalla = False  # una foto sin aprobar nunca sale en la pantalla
+    # Con el proyector moderado, aprobar un saludo (✓) también lo manda a la pantalla, igual que
+    # una foto; el botón de pantalla sigue sirviendo para quitarlo o volver a mostrarlo.
+    moderado = mensaje.tipo == Mensaje.Tipo.SALUDO and evento.moderar_pantalla
+    if moderado and accion == 'atender':
+        mensaje.en_pantalla = True
+    regresa = accion in ('restaurar', 'pendiente')
+    if mensaje.estatus == Mensaje.Estatus.PENDIENTE and (mensaje.es_foto or (moderado and regresa)):
+        mensaje.en_pantalla = False  # sin aprobar no sale en la pantalla
     mensaje.save(update_fields=['estatus', 'atendido_en', 'en_pantalla'])
     notificar_cambio(mensaje, pantalla_cambio=pantalla_antes != mensaje.en_pantalla)
     return JsonResponse({'ok': True, 'mensaje': mensaje.a_dict()})
