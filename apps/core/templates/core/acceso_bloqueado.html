@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Acceso suspendido{% endblock %}
+{% block head %}
+<style>
+    .bloqueo { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); }
+    .bloqueo__caja { width: 100%; max-width: 480px; padding: 34px 30px 28px; border-radius: var(--r-xl); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--sh); text-align: center; }
+    .bloqueo__logo { display: block; height: 28px; width: auto; aspect-ratio: 16379 / 3248.8; margin: 0 auto 26px; }
+    .bloqueo__icono { width: 60px; height: 60px; margin: 0 auto 16px; display: grid; place-items: center; border-radius: 18px; font-size: 30px; background: var(--warning-soft); color: var(--warning); }
+    .bloqueo h1 { font-size: 22px; letter-spacing: -.02em; }
+    .bloqueo p { margin-top: 10px; font-size: 14.5px; line-height: 1.55; color: var(--text-2); }
+    .bloqueo__nota { margin-top: 18px; padding: 12px 14px; border-radius: var(--r); background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text-2); text-align: left; display: flex; gap: 10px; }
+    .bloqueo__nota i { font-size: 18px; color: var(--success); flex-shrink: 0; }
+    .bloqueo__acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+    .bloqueo__acciones form, .bloqueo__acciones .btn { width: 100%; }
+    .bloqueo__acciones .btn { justify-content: center; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="bloqueo">
+    <div class="bloqueo__caja">
+        {% include 'components/logo.html' with clase='bloqueo__logo' %}
+        <div class="bloqueo__icono"><i class="ph ph-lock-key"></i></div>
+        {% if not agencia %}
+        <h1>Tu cuenta no tiene agencia</h1>
+        <p>Tu usuario no pertenece a ninguna agencia de EventPro. Pide a EventPro que te asigne a la tuya.</p>
+        {% elif not agencia.activa %}
+        <h1>El acceso de {{ agencia.nombre }} está suspendido</h1>
+        <p>Para volver a administrar tus eventos, comunícate con EventPro.</p>
+        {% else %}
+        <h1>El plan de {{ agencia.nombre }} venció</h1>
+        <p>Venció el <strong>{{ agencia.vence_el|date:"j \d\e F \d\e Y" }}</strong>. Renueva con EventPro para volver a administrar tus eventos.</p>
+        {% endif %}
+        {% if agencia %}
+        <div class="bloqueo__nota"><i class="ph ph-check-circle"></i><span>Tus invitaciones, pantallas en vivo y álbumes siguen funcionando para tus invitados.</span></div>
+        {% endif %}
+        <div class="bloqueo__acciones">
+            {% if contacto.whatsapp_url %}
+            <a class="btn btn--whatsapp" href="{{ contacto.whatsapp_url }}?text={% if agencia %}{{ 'Hola, quiero renovar el acceso de '|urlencode }}{{ agencia.nombre|urlencode }}{% else %}{{ 'Hola, necesito acceso a EventPro'|urlencode }}{% endif %}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Escribir a EventPro</a>
+            {% elif contacto.email %}
+            <a class="btn btn--primary" href="mailto:{{ contacto.email }}"><i class="ph ph-envelope-simple"></i>Escribir a EventPro</a>
+            {% endif %}
+            <form method="post" action="{% url 'cuentas:logout' %}">{% csrf_token %}<button class="btn btn--ghost" type="submit"><i class="ph ph-sign-out"></i>Cerrar sesión</button></form>
+        </div>
+    </div>
+</div>
+{% endblock %}

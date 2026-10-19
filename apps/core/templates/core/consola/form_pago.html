@@ -1,0 +1,14 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% if form.agencia.is_hidden %}{{ form.agencia }}{% else %}{% campo form.agencia icono="ph ph-buildings" clase="span-2" %}{% endif %}
+    {% campo form.monto icono="ph ph-currency-dollar" %}
+    {% campo form.meses icono="ph ph-calendar-plus" %}
+    {% campo form.fecha icono="ph ph-calendar-blank" %}
+    {% campo form.metodo icono="ph ph-credit-card" %}
+    {% campo form.referencia icono="ph ph-receipt" clase="span-2" %}
+</div>
+<div class="mt-3">{% campo form.reactivar %}</div>
+<div class="alert mt-3"><i class="ph ph-info"></i><div>La vigencia se suma desde su vencimiento actual; si ya venció, desde hoy.</div></div>
+{% endblock %}

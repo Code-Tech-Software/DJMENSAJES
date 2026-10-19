@@ -1,0 +1,10 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.admin_nombre icono="ph ph-user" %}
+    {% campo form.admin_usuario icono="ph ph-at" %}
+    {% campo form.admin_correo icono="ph ph-envelope-simple" %}
+    {% campo form.admin_clave icono="ph ph-key" %}
+</div>
+{% endblock %}

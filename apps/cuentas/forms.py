@@ -87,10 +87,12 @@ class UsuarioForm(forms.ModelForm):
             'rol': forms.RadioSelect,
         }
 
-    def __init__(self, *args, **kwargs):
+    usa_agencia = True
+
+    def __init__(self, *args, agencia_id=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['first_name'].required = True
-        self.fields['colaborador'].queryset = Colaborador.objects.filter(estado=True)
+        self.fields['colaborador'].queryset = Colaborador.objects.filter(estado=True, agencia_id=agencia_id)
         self.fields['colaborador'].empty_label = 'Sin sub-agencia (equipo central)'
         self.es_nuevo = not self.instance.pk
         if self.es_nuevo:

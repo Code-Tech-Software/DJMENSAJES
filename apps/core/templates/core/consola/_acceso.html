@@ -1,0 +1,13 @@
+{# Acceso recién creado o restablecido: se muestra una sola vez para compartirlo #}
+<div class="card card--pad acceso-nuevo mb-3">
+    <div class="row between row-wrap">
+        <div><h3 style="font-size:16px"><i class="ph ph-key text-success"></i> Acceso de {{ acceso.nombre }}{% if acceso.agencia %} · {{ acceso.agencia }}{% endif %}</h3>
+            <p class="small muted">Compártelo ahora: por seguridad la contraseña <strong>no se vuelve a mostrar</strong>. Al entrar, que la cambie en su perfil.</p></div>
+        <a class="btn btn--whatsapp btn--sm" href="{{ acceso.whatsapp }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Enviar por WhatsApp</a>
+    </div>
+    <div class="acceso-nuevo__datos">
+        <div class="acceso-nuevo__dato"><small>Entrar en</small><div><code>{{ acceso.url }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ acceso.url }}" aria-label="Copiar"><i class="ph ph-copy"></i></button></div></div>
+        <div class="acceso-nuevo__dato"><small>Usuario</small><div><code>{{ acceso.usuario }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ acceso.usuario }}" data-copy-msg="Usuario copiado" aria-label="Copiar"><i class="ph ph-copy"></i></button></div></div>
+        <div class="acceso-nuevo__dato"><small>Contraseña temporal</small><div><code>{{ acceso.clave }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ acceso.clave }}" data-copy-msg="Contraseña copiada" aria-label="Copiar"><i class="ph ph-copy"></i></button></div></div>
+    </div>
+</div>

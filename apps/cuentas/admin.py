@@ -6,11 +6,11 @@ from .models import Usuario
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    list_display = ('username', 'first_name', 'last_name', 'rol', 'colaborador', 'is_active', 'last_login')
-    list_filter = ('rol', 'colaborador', 'is_active', 'is_superuser')
+    list_display = ('username', 'first_name', 'last_name', 'agencia', 'rol', 'colaborador', 'is_active', 'last_login')
+    list_filter = ('agencia', 'rol', 'colaborador', 'is_active', 'is_superuser')
     fieldsets = UserAdmin.fieldsets + (
-        ('Grupo EM', {'fields': ('rol', 'colaborador', 'cargo', 'telefono', 'direccion', 'foto')}),
+        ('EventPro', {'fields': ('agencia', 'rol', 'colaborador', 'cargo', 'telefono', 'direccion', 'foto')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Grupo EM', {'fields': ('first_name', 'last_name', 'rol', 'colaborador')}),
+        ('EventPro', {'fields': ('first_name', 'last_name', 'agencia', 'rol', 'colaborador')}),
     )

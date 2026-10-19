@@ -8,7 +8,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, FormView, UpdateView
 
-from apps.core.mixins import FormularioModalMixin, respuesta_error, respuesta_ok
+from apps.core.bitacora import Accion, registrar
+from apps.core.limites import LimitePlanMixin, bloquear_si_lleno
+from apps.core.mixins import AsignarAgenciaMixin, DeLaAgenciaMixin, FormularioModalMixin, respuesta_error, respuesta_ok
 from apps.eventos.models import Evento
 
 from .forms import CambiarContrasenaForm, LoginForm, PerfilForm, RestablecerContrasenaForm, UsuarioForm
@@ -86,19 +88,21 @@ class CambiarContrasena(LoginRequiredMixin, FormularioModalMixin, FormView):
 def usuarios(request):
     q = request.GET.get('q', '').strip()
     rol = request.GET.get('rol', '')
-    lista = Usuario.objects.select_related('colaborador').annotate(n_eventos=Count('eventos')).order_by('-is_active', 'first_name', 'username')
+    del_equipo = Usuario.objects.filter(agencia_id=request.user.agencia_id)
+    lista = del_equipo.select_related('colaborador').annotate(n_eventos=Count('eventos')).order_by('-is_active', 'first_name', 'username')
     if q:
         lista = lista.filter(Q(username__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(email__icontains=q))
     if rol:
         lista = lista.filter(rol=rol)
-    conteo = dict(Usuario.objects.values_list('rol').annotate(n=Count('id')))
+    conteo = dict(del_equipo.values_list('rol').annotate(n=Count('id')))
     return render(request, 'cuentas/usuarios.html', {
         'usuarios': lista, 'q': q, 'rol': rol, 'roles': Usuario.Rol.choices,
         'conteo': conteo, 'total': sum(conteo.values()),
     })
 
 
-class UsuarioCrear(AdminRequeridoMixin, FormularioModalMixin, CreateView):
+class UsuarioCrear(LimitePlanMixin, AsignarAgenciaMixin, AdminRequeridoMixin, FormularioModalMixin, CreateView):
+    recurso_limitado = 'usuarios'
     model = Usuario
     form_class = UsuarioForm
     template_modal = 'cuentas/partials/form_usuario.html'
@@ -109,8 +113,13 @@ class UsuarioCrear(AdminRequeridoMixin, FormularioModalMixin, CreateView):
     texto_boton = 'Crear usuario'
     mensaje_exito = 'Usuario creado. Ya puede iniciar sesión.'
 
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        registrar(Accion.USUARIO_CREADO, usuario=self.object, detalle=f'@{self.object.username} · {self.object.get_rol_display()}', request=self.request)
+        return respuesta
 
-class UsuarioEditar(AdminRequeridoMixin, FormularioModalMixin, UpdateView):
+
+class UsuarioEditar(DeLaAgenciaMixin, AdminRequeridoMixin, FormularioModalMixin, UpdateView):
     model = Usuario
     form_class = UsuarioForm
     template_modal = 'cuentas/partials/form_usuario.html'
@@ -135,7 +144,7 @@ class UsuarioContrasena(AdminRequeridoMixin, FormularioModalMixin, FormView):
     recargar = False
 
     def dispatch(self, request, *args, **kwargs):
-        self.usuario = get_object_or_404(Usuario, pk=kwargs['pk'])
+        self.usuario = get_object_or_404(Usuario, pk=kwargs['pk'], agencia_id=request.user.agencia_id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_titulo(self):
@@ -157,9 +166,14 @@ class UsuarioContrasena(AdminRequeridoMixin, FormularioModalMixin, FormView):
 @admin_requerido
 @require_POST
 def usuario_activar(request, pk):
-    usuario = get_object_or_404(Usuario, pk=pk)
+    usuario = get_object_or_404(Usuario, pk=pk, agencia_id=request.user.agencia_id)
     if usuario == request.user:
         return respuesta_error(request, 'No puedes desactivar tu propia cuenta.')
+    if not usuario.is_active:  # reactivarlo cuenta para el límite de usuarios del plan
+        bloqueo = bloquear_si_lleno(request, 'usuarios')
+        if bloqueo is not None:
+            return bloqueo
     usuario.is_active = not usuario.is_active
     usuario.save(update_fields=['is_active'])
+    registrar(Accion.USUARIO_ACTIVADO if usuario.is_active else Accion.USUARIO_DESACTIVADO, usuario=usuario, request=request)
     return respuesta_ok(request, f'{usuario} ahora está {"activo" if usuario.is_active else "inactivo"}.')

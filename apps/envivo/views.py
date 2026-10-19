@@ -10,6 +10,8 @@ from django.utils.text import slugify
 from django.utils.crypto import constant_time_compare
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.marca import Marca
+from apps.core.models import Ajustes
 from apps.core.utils import ip_cliente, qr_svg
 from apps.eventos.models import Evento
 
@@ -81,6 +83,8 @@ def invitado(request, codigo):
         'espera_total': int(evento.cooldown * 60),
         'mis_mensajes': [m.a_dict() for m in mios],
         'invitacion': getattr(evento, 'invitacion', None),
+        'ajustes': Ajustes.de(evento.agencia_id),
+        'marca': Marca(evento),
     })
 
 
@@ -239,6 +243,7 @@ def pantalla(request, codigo):
         'url_corta': url_invitados.split('://', 1)[-1],
         'qr': qr_svg(url_invitados, color='#0b1220'),
         'saludos': [m.a_dict_pantalla() for m in reversed(list(elementos.order_by('-fecha_creacion')[:30]))],
+        'marca': Marca(evento),
     })
 
 
@@ -253,6 +258,7 @@ def pantalla_fotos(request, codigo):
         'url_corta': url_invitados.split('://', 1)[-1],
         'qr': qr_svg(url_invitados, color='#0b1220'),
         'fotos': [m.a_dict_pantalla() for m in reversed(list(fotos))],
+        'marca': Marca(evento),
     })
 
 
@@ -269,6 +275,8 @@ def album(request, codigo):
         'datos_fotos': [m.a_dict() for m in fotos],
         'url_invitados': evento.url_invitados(),
         'portada': fotos[0].foto.url if fotos else '',
+        'ajustes': Ajustes.de(evento.agencia_id),
+        'marca': Marca(evento),
     })
 
 

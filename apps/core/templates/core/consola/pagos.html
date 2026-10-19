@@ -1,0 +1,37 @@
+{% extends 'layouts/consola.html' %}
+{% load ui %}
+{% block title %}Pagos · Consola EventPro{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'plataforma:dashboard' %}">Consola</a><i class="ph ph-caret-right"></i>Ingresos</div>
+        <h1>Pagos</h1>
+        <p>Lo que te han pagado las agencias. Registrar un pago extiende su vencimiento solo.</p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn btn--primary" data-modal="{% url 'plataforma:pago_crear' %}"><i class="ph ph-hand-coins"></i>Registrar pago</button>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-3 reveal">
+    <div class="card stat tone-success"><div class="stat__top"><span class="stat__label">Este mes</span><span class="stat__icon"><i class="ph ph-currency-dollar"></i></span></div><div class="stat__value">{{ totales.mes|moneda }}</div><div class="stat__meta">Mes anterior: {{ totales.mes_anterior|moneda }}</div></div>
+    <div class="card stat"><div class="stat__top"><span class="stat__label">Este año</span><span class="stat__icon"><i class="ph ph-calendar-blank"></i></span></div><div class="stat__value">{{ totales.anio|moneda }}</div></div>
+    <div class="card stat"><div class="stat__top"><span class="stat__label">Histórico</span><span class="stat__icon"><i class="ph ph-chart-line-up"></i></span></div><div class="stat__value">{{ totales.total|moneda }}</div></div>
+    <div class="card stat tone-live"><div class="stat__top"><span class="stat__label">En esta vista</span><span class="stat__icon"><i class="ph ph-funnel"></i></span></div><div class="stat__value">{{ suma_filtro|moneda }}</div><div class="stat__meta">{{ n_filtro }} pago{{ n_filtro|pluralize }}</div></div>
+</div>
+
+<form class="toolbar" data-autosubmit data-target="#resultados">
+    <select class="input" name="agencia">
+        <option value="">Todas las agencias</option>
+        {% for a in agencias %}<option value="{{ a.pk }}" {% if agencia == a.pk|stringformat:"d" %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+    <select class="input" name="anio">
+        <option value="">Todos los años</option>
+        {% for a in anios %}<option value="{{ a|stringformat:'d' }}" {% if anio == a|stringformat:"d" %}selected{% endif %}>{{ a|stringformat:"d" }}</option>{% endfor %}
+    </select>
+</form>
+
+<div id="resultados">
+    <div class="card">{% include 'core/consola/_tabla_pagos.html' with con_agencia=True %}</div>
+</div>
+{% endblock %}

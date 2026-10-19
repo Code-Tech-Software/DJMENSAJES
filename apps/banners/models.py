@@ -1,5 +1,12 @@
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
+
+
+class BannerQuerySet(models.QuerySet):
+    def disponibles_para(self, agencia_id):
+        """Los de la agencia y los de la biblioteca de EventPro (sin agencia)."""
+        return self.filter(Q(agencia_id=agencia_id) | Q(agencia__isnull=True))
 
 
 class Banner(models.Model):
@@ -28,12 +35,18 @@ class Banner(models.Model):
         upload_to='banners/', blank=True, null=True,
         help_text='Portada sugerida para la invitación digital.',
     )
+    # Sin agencia = biblioteca de EventPro, disponible para todas las agencias
+    agencia = models.ForeignKey(
+        'core.Agencia', on_delete=models.PROTECT, null=True, blank=True, related_name='banners', editable=False,
+    )
     colaborador = models.ForeignKey(
         'colaboradores.Colaborador', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='banners', help_text='Déjalo vacío para que todos puedan usarlo.',
     )
     estado = models.BooleanField('activo', default=True)
     creado = models.DateTimeField(default=timezone.now, editable=False)
+
+    objects = BannerQuerySet.as_manager()
 
     class Meta:
         db_table = 'eventos_banner'  # tabla heredada

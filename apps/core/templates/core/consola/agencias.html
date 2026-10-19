@@ -1,0 +1,85 @@
+{% extends 'layouts/consola.html' %}
+{% load ui %}
+{% block title %}Agencias · Consola EventPro{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'plataforma:dashboard' %}">Consola</a><i class="ph ph-caret-right"></i>Clientes</div>
+        <h1>Agencias</h1>
+        <p>Las agencias que rentan EventPro: su plan, hasta cuándo pagaron y su actividad.</p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn btn--primary" data-modal="{% url 'plataforma:agencia_crear' %}"><i class="ph ph-plus"></i>Nueva agencia</button>
+    </div>
+</div>
+
+<div class="grid grid-4 mb-3 reveal">
+    <a class="card stat tone-success" href="?estado=activa">
+        <div class="stat__top"><span class="stat__label">Activas</span><span class="stat__icon"><i class="ph ph-check-circle"></i></span></div>
+        <div class="stat__value">{{ conteo|get:'activa'|default:0 }}</div><div class="stat__meta">de {{ total }} agencia{{ total|pluralize }}</div></a>
+    <a class="card stat tone-warning" href="?estado=por_vencer">
+        <div class="stat__top"><span class="stat__label">Vencen pronto</span><span class="stat__icon"><i class="ph ph-hourglass-medium"></i></span></div>
+        <div class="stat__value">{{ conteo|get:'por_vencer'|default:0 }}</div><div class="stat__meta">en 7 días o menos</div></a>
+    <a class="card stat tone-danger" href="?estado=vencida">
+        <div class="stat__top"><span class="stat__label">Vencidas</span><span class="stat__icon"><i class="ph ph-calendar-x"></i></span></div>
+        <div class="stat__value">{{ conteo|get:'vencida'|default:0 }}</div><div class="stat__meta">sin acceso al panel</div></a>
+    <a class="card stat" href="?estado=suspendida">
+        <div class="stat__top"><span class="stat__label">Suspendidas</span><span class="stat__icon"><i class="ph ph-prohibit"></i></span></div>
+        <div class="stat__value">{{ conteo|get:'suspendida'|default:0 }}</div><div class="stat__meta">por ti</div></a>
+</div>
+
+<form class="toolbar" data-autosubmit data-target="#resultados">
+    <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar agencia, notas o usuario"></div>
+    <select class="input" name="estado">
+        <option value="">Todos los estados</option>
+        {% for valor, datos in estados.items %}<option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ datos.0 }}</option>{% endfor %}
+    </select>
+    <select class="input" name="plan">
+        <option value="">Todos los planes</option>
+        {% for p in planes %}<option value="{{ p.pk }}" {% if plan == p.pk|stringformat:"d" %}selected{% endif %}>{{ p }}</option>{% endfor %}
+        <option value="sin" {% if plan == 'sin' %}selected{% endif %}>Sin plan</option>
+    </select>
+</form>
+
+<div id="resultados">
+    <div class="card">
+        {% if agencias %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Agencia</th><th>Estado</th><th>Vence</th><th class="hide-mobile">Eventos</th><th class="hide-mobile">Equipo</th><th class="hide-mobile">Último acceso</th><th></th></tr></thead>
+                <tbody>
+                {% for a in agencias %}
+                <tr>
+                    <td><a class="t-title" href="{% url 'plataforma:agencia' a.pk %}">{{ a.nombre }}</a>
+                        <div class="t-sub">{% if a.plan %}{{ a.plan }} · {{ a.plan.precio_mensual|moneda }}/mes{% else %}Sin plan{% endif %}</div></td>
+                    <td><span class="chip chip--{{ a.estado_tono }} chip--dot">{{ a.estado_visible }}</span></td>
+                    <td class="nowrap">
+                        {% if a.vence_el %}{{ a.vence_el|date:"j M Y" }}
+                        <div class="t-sub">{% with d=a.dias_restantes %}{% if d > 1 %}en {{ d }} días{% elif d == 1 %}mañana{% elif d == 0 %}hoy{% else %}hace {{ d|cut:"-" }} día{{ d|cut:"-"|pluralize }}{% endif %}{% endwith %}</div>
+                        {% else %}<span class="t-muted">Sin vencimiento</span>{% endif %}
+                    </td>
+                    <td class="hide-mobile"><strong>{{ a.n_eventos }}</strong><span class="t-muted"> · {{ a.n_proximos }} próximo{{ a.n_proximos|pluralize }}</span></td>
+                    <td class="hide-mobile">{{ a.n_usuarios }}</td>
+                    <td class="hide-mobile t-muted">{{ a.ultimo_acceso|hace|default:"Nunca" }}</td>
+                    <td class="t-actions">
+                        <button class="btn btn--sm btn--ghost" data-modal="{% url 'plataforma:agencia_pago' a.pk %}" data-tip="Registrar pago"><i class="ph ph-hand-coins"></i></button>
+                        <a class="btn btn--sm" href="{% url 'plataforma:agencia' a.pk %}">Ver<i class="ph ph-caret-right"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif q or estado or plan %}
+            {% include 'components/vacio.html' with icono='ph ph-buildings' titulo='Sin resultados' texto='Ninguna agencia coincide con los filtros.' %}
+        {% else %}
+        <div class="empty">
+            <div class="empty__art"><i class="ph ph-buildings"></i></div>
+            <h3>Tu primera agencia</h3>
+            <p>Crea la agencia, su plan, su fecha de vencimiento y el acceso de su administrador. Todo lo demás lo configura ella.</p>
+            <button class="btn btn--primary" data-modal="{% url 'plataforma:agencia_crear' %}"><i class="ph ph-plus"></i>Nueva agencia</button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

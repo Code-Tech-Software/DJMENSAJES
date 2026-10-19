@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from apps.colaboradores.models import Colaborador
 from apps.core.actividad import actividad_reciente, recordatorios
 from apps.core.forms import AjustesForm
+from apps.core.limites import uso
 from apps.core.models import Ajustes
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
@@ -24,6 +25,8 @@ MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', '
 
 @login_required
 def dashboard(request):
+    if request.user.is_superuser and not request.user.agencia_id:
+        return redirect('plataforma:dashboard')  # cuenta de EventPro sin agencia propia: su consola
     ahora = timezone.now()
     hoy = timezone.localdate()
     eventos = Evento.objects.visibles_para(request.user)
@@ -135,12 +138,13 @@ def buscar(request):
         } for i in invitados]})
 
         if request.user.ve_todo:
-            colaboradores = Colaborador.objects.filter(Q(nombre__icontains=q) | Q(ciudad__icontains=q))[:4]
+            colaboradores = (Colaborador.objects.filter(agencia_id=request.user.agencia_id)
+                             .filter(Q(nombre__icontains=q) | Q(ciudad__icontains=q))[:4])
             grupos.append({'grupo': 'Colaboradores', 'items': [{
                 'titulo': c.nombre, 'sub': c.get_tipo_display(), 'url': c.get_absolute_url(), 'icono': 'ph ph-users-three',
             } for c in colaboradores]})
         if request.user.es_admin:
-            usuarios = Usuario.objects.filter(
+            usuarios = Usuario.objects.filter(agencia_id=request.user.agencia_id).filter(
                 Q(username__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q))[:4]
             grupos.append({'grupo': 'Equipo', 'items': [{
                 'titulo': str(u), 'sub': f'@{u.username} · {u.rol_visible}', 'url': reverse('cuentas:usuarios'), 'icono': 'ph ph-shield-check',
@@ -198,8 +202,8 @@ def ajustes(request):
     """
     form = None
     seccion = 'apariencia'
-    if request.user.es_admin:
-        form = AjustesForm(request.POST or None, instance=Ajustes.cargar())
+    if request.user.es_admin and request.user.agencia_id:
+        form = AjustesForm(request.POST or None, request.FILES or None, instance=Ajustes.de(request.user.agencia_id))
         if request.method == 'POST':
             if form.is_valid():
                 form.save()
@@ -211,7 +215,11 @@ def ajustes(request):
     elif request.method == 'POST':
         messages.error(request, 'Solo un administrador puede cambiar los ajustes del negocio.')
         return redirect('core:ajustes')
-    return render(request, 'core/ajustes.html', {'form': form, 'seccion_activa': seccion})
+    mi_plan = None
+    if request.user.es_admin and request.user.agencia_id:
+        agencia = request.user.agencia
+        mi_plan = {'agencia': agencia, 'uso': uso(agencia), 'contacto': Ajustes.plataforma()}
+    return render(request, 'core/ajustes.html', {'form': form, 'seccion_activa': seccion, 'mi_plan': mi_plan})
 
 
 SECCION_EVENTOS = ('cooldown', 'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla',

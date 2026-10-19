@@ -19,6 +19,10 @@ class Usuario(AbstractUser):
         max_length=20, choices=Rol.choices, default=Rol.COORDINADOR,
         help_text='Define qué secciones y eventos puede ver.',
     )
+    agencia = models.ForeignKey(
+        'core.Agencia', on_delete=models.PROTECT, null=True, blank=True, related_name='usuarios',
+        help_text='Agencia cliente de EventPro. Vacío = cuenta de EventPro (sin agencia).',
+    )
     colaborador = models.ForeignKey(
         'colaboradores.Colaborador', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='usuarios', help_text='Sub-agencia a la que pertenece.',

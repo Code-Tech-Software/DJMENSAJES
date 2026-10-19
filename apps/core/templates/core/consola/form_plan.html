@@ -1,0 +1,21 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.nombre icono="ph ph-stack" %}
+    {% campo form.precio_mensual icono="ph ph-currency-dollar" %}
+    {% campo form.descripcion icono="ph ph-text-align-left" clase="span-2" %}
+</div>
+<div class="form-section mt-3">
+    <div class="form-section__title"><i class="ph ph-gauge"></i>Límites <small>· vacío = sin límite</small></div>
+    <div class="form-grid form-grid--3">
+        {% campo form.max_eventos_mes icono="ph ph-sparkle" %}
+        {% campo form.max_usuarios icono="ph ph-users" %}
+        {% campo form.max_colaboradores icono="ph ph-users-three" %}
+    </div>
+</div>
+<div class="form-grid mt-3">
+    {% campo form.orden icono="ph ph-sort-ascending" %}
+    <div>{% campo form.activo %}</div>
+</div>
+{% endblock %}

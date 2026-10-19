@@ -1,0 +1,10 @@
+{# Barras de uso del plan (filas = limites.uso(agencia)) #}
+<div class="uso">
+    {% for f in filas %}
+    <div class="uso__fila {% if f.lleno %}is-lleno{% elif f.cerca %}is-cerca{% endif %}">
+        <span><i class="{{ f.icono }} muted"></i> {{ f.etiqueta }}</span>
+        <strong>{{ f.usado }}{% if f.limite is not None %} / {{ f.limite }}{% else %} <small class="muted">· sin límite</small>{% endif %}</strong>
+        {% if f.limite is not None %}<div class="uso__barra"><span style="width:{{ f.porcentaje }}%"></span></div>{% endif %}
+    </div>
+    {% endfor %}
+</div>

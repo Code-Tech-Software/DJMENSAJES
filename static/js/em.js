@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GRUPO EM · Interfaz
+   EventPro · Interfaz
    Modales con formularios AJAX, asistente por pasos, toasts, confirmaciones,
    menús, pestañas, paleta de comandos y filtros en vivo. Sin dependencias.
    ========================================================================== */

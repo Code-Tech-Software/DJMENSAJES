@@ -1,0 +1,41 @@
+{% extends 'layouts/consola.html' %}
+{% load ui %}
+{% block title %}Bitácora · Consola EventPro{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'plataforma:dashboard' %}">Consola</a><i class="ph ph-caret-right"></i>Sistema</div>
+        <h1>Bitácora</h1>
+        <p>Lo que pasa en la plataforma: altas, pagos, suspensiones, accesos y quién entró como quién.</p>
+    </div>
+</div>
+
+<form class="toolbar" data-autosubmit data-target="#resultados">
+    <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar en el detalle o por usuario"></div>
+    <select class="input" name="agencia">
+        <option value="">Todas las agencias</option>
+        <option value="eventpro" {% if agencia == 'eventpro' %}selected{% endif %}>Solo EventPro</option>
+        {% for a in agencias %}<option value="{{ a.pk }}" {% if agencia == a.pk|stringformat:"d" %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+    <select class="input" name="accion">
+        <option value="">Todas las acciones</option>
+        <option value="sin_accesos" {% if accion == 'sin_accesos' %}selected{% endif %}>Todo menos inicios de sesión</option>
+        {% for valor, nombre in acciones %}<option value="{{ valor }}" {% if accion == valor %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+</form>
+
+<div id="resultados">
+    <div class="card">
+        <div class="card__body" style="padding-top:6px">{% include 'core/consola/_actividad.html' with registros=pagina.object_list con_agencia=True %}</div>
+        {% if pagina.paginator.num_pages > 1 %}
+        <div class="card__foot row between">
+            <span class="small muted">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }} · {{ pagina.paginator.count }} registros</span>
+            <div class="row">
+                {% if pagina.has_previous %}<a class="btn btn--sm" href="?pagina={{ pagina.previous_page_number }}{% if filtros %}&{{ filtros }}{% endif %}"><i class="ph ph-caret-left"></i>Anterior</a>{% endif %}
+                {% if pagina.has_next %}<a class="btn btn--sm" href="?pagina={{ pagina.next_page_number }}{% if filtros %}&{{ filtros }}{% endif %}">Siguiente<i class="ph ph-caret-right"></i></a>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

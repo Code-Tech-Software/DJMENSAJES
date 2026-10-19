@@ -1,4 +1,4 @@
-# Grupo EM · Plataforma de eventos
+# EventPro · Plataforma de eventos
 
 Panel para administrar eventos y sub-agencias, invitaciones digitales con confirmación
 (RSVP) y la experiencia en vivo: los invitados escanean un QR, piden canciones o mandan

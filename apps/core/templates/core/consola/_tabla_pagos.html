@@ -1,0 +1,24 @@
+{% load ui %}
+{# Tabla de pagos (pagos, con_agencia) #}
+{% if pagos %}
+<div class="table-wrap mt-2">
+    <table class="table">
+        <thead><tr><th>Fecha</th>{% if con_agencia %}<th>Agencia</th>{% endif %}<th>Monto</th><th class="hide-mobile">Cubre</th><th class="hide-mobile">Método</th><th class="hide-mobile">Registró</th><th></th></tr></thead>
+        <tbody>
+        {% for p in pagos %}
+        <tr>
+            <td class="nowrap">{{ p.fecha|date:"j M Y" }}</td>
+            {% if con_agencia %}<td><a class="t-title" href="{% url 'plataforma:agencia' p.agencia_id %}#pagos">{{ p.agencia }}</a></td>{% endif %}
+            <td><strong class="text-success">{{ p.monto|moneda }}</strong>{% if p.referencia %}<div class="t-sub">{{ p.referencia }}</div>{% endif %}</td>
+            <td class="hide-mobile nowrap">{{ p.meses }} mes{{ p.meses|pluralize:"es" }}{% if p.cubre_hasta %}<div class="t-sub">hasta {{ p.cubre_hasta|date:"j M Y" }}</div>{% endif %}</td>
+            <td class="hide-mobile">{{ p.get_metodo_display }}</td>
+            <td class="hide-mobile t-muted">{{ p.registrado_por|default:"—" }}</td>
+            <td class="t-actions"><button class="icon-btn icon-btn--sm" data-post="{% url 'plataforma:pago_eliminar' p.pk %}" data-danger data-confirm="¿Eliminar este pago de {{ p.monto|moneda }}?" data-confirm-text="Solo si se registró por error. El vencimiento de la agencia no cambia." data-confirm-button="Eliminar" aria-label="Eliminar pago" data-tip="Eliminar"><i class="ph ph-trash"></i></button></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    {% include 'components/vacio.html' with icono='ph ph-receipt' titulo='Sin pagos registrados' texto='Cuando una agencia te pague, regístralo aquí: su vencimiento se extiende solo.' %}
+{% endif %}

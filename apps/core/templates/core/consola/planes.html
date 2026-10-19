@@ -1,0 +1,62 @@
+{% extends 'layouts/consola.html' %}
+{% load ui %}
+{% block title %}Planes · Consola EventPro{% endblock %}
+{% block head %}
+<style>
+    .planes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .plan-card { display: flex; flex-direction: column; gap: 14px; }
+    .plan-card.is-inactivo { opacity: .65; }
+    .plan-card__precio { font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
+    .plan-card__precio small { font-size: 14px; font-weight: 600; color: var(--text-3); }
+    .plan-card__limites { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+    .plan-card__limites div { display: flex; align-items: center; gap: 8px; }
+    .plan-card__limites i { font-size: 17px; color: var(--brand); }
+    .plan-card__pie { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'plataforma:dashboard' %}">Consola</a><i class="ph ph-caret-right"></i>Ingresos</div>
+        <h1>Planes</h1>
+        <p>Lo que ofreces a las agencias: precio de referencia y límites. Deja un límite vacío para que no tenga tope.</p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn btn--primary" data-modal="{% url 'plataforma:plan_crear' %}"><i class="ph ph-plus"></i>Nuevo plan</button>
+    </div>
+</div>
+
+{% if planes %}
+<div class="planes reveal">
+    {% for p in planes %}
+    <div class="card card--pad plan-card {% if not p.activo %}is-inactivo{% endif %}">
+        <div class="row between"><h3 style="font-size:17px">{{ p.nombre }}</h3>{% if not p.activo %}<span class="chip chip--muted">Retirado</span>{% endif %}</div>
+        {% if p.descripcion %}<p class="small muted" style="margin-top:-8px">{{ p.descripcion }}</p>{% endif %}
+        <div class="plan-card__precio">{{ p.precio_mensual|moneda }}<small> /mes</small></div>
+        <div class="plan-card__limites">
+            <div><i class="ph ph-sparkle"></i>{% if p.max_eventos_mes %}{{ p.max_eventos_mes }} evento{{ p.max_eventos_mes|pluralize }} al mes{% else %}Eventos ilimitados{% endif %}</div>
+            <div><i class="ph ph-users"></i>{% if p.max_usuarios %}{{ p.max_usuarios }} usuario{{ p.max_usuarios|pluralize }}{% else %}Usuarios ilimitados{% endif %}</div>
+            <div><i class="ph ph-users-three"></i>{% if p.max_colaboradores is not None %}{{ p.max_colaboradores }} sub-agencia{{ p.max_colaboradores|pluralize }}{% else %}Sub-agencias ilimitadas{% endif %}</div>
+        </div>
+        <div class="plan-card__pie">
+            <a class="small strong text-brand" href="{% url 'plataforma:agencias' %}?plan={{ p.pk|stringformat:'d' }}">{{ p.n_agencias }} agencia{{ p.n_agencias|pluralize }}</a>
+            <div class="row">
+                <button class="btn btn--sm" data-modal="{% url 'plataforma:plan_editar' p.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
+                {% if not p.n_agencias %}<button class="icon-btn icon-btn--sm" data-post="{% url 'plataforma:plan_eliminar' p.pk %}" data-danger data-confirm="¿Eliminar el plan {{ p.nombre }}?" data-confirm-button="Eliminar" aria-label="Eliminar"><i class="ph ph-trash"></i></button>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% if sin_plan %}<p class="small muted mt-3"><i class="ph ph-info"></i> {{ sin_plan }} agencia{{ sin_plan|pluralize }} sin plan: no tienen límites. <a class="text-brand" href="{% url 'plataforma:agencias' %}?plan=sin">Verlas</a></p>{% endif %}
+{% else %}
+<div class="card">
+    <div class="empty">
+        <div class="empty__art"><i class="ph ph-stack"></i></div>
+        <h3>Arma tus planes</h3>
+        <p>Por ejemplo: Básico (4 eventos al mes, 2 usuarios), Pro (15 eventos, 5 usuarios) y Agencia (sin límites). Asígnalos al crear o editar una agencia.</p>
+        <button class="btn btn--primary" data-modal="{% url 'plataforma:plan_crear' %}"><i class="ph ph-plus"></i>Nuevo plan</button>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

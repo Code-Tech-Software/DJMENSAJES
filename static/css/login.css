@@ -18,7 +18,9 @@
 
 /* --- Barra superior -------------------------------------------------------------- */
 .ingreso__barra { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 48px 0; }
-.ingreso__logo { height: 34px; width: auto; }
+/* Logo en negativo sobre el escenario oscuro */
+.ingreso__barra { --logo-texto: #ffffff; --logo-azul: #ffffff; --logo-celeste: #22adec; }
+.ingreso__logo { display: block; height: 34px; width: auto; aspect-ratio: 16379 / 3248.8; }
 .ingreso__tema {
   width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 18px; color: rgba(255, 255, 255, .8);
   background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); transition: background .15s;

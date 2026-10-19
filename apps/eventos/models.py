@@ -44,15 +44,16 @@ def _token_dj():
 
 class EventoQuerySet(models.QuerySet):
     def visibles_para(self, usuario):
-        """Eventos que el usuario puede consultar según su rol."""
-        if not usuario.is_authenticated:
+        """Eventos que el usuario puede consultar: solo de su agencia y, dentro de ella, según su rol."""
+        if not usuario.is_authenticated or not usuario.agencia_id:
             return self.none()
+        de_su_agencia = self.filter(agencia_id=usuario.agencia_id)
         if usuario.ve_todo:
-            return self
+            return de_su_agencia
         filtro = Q(creado_por=usuario)
         if usuario.colaborador_id:
             filtro |= Q(colaborador_id=usuario.colaborador_id)
-        return self.filter(filtro)
+        return de_su_agencia.filter(filtro)
 
     def proximos(self):
         return self.filter(fecha_inicio_evento__gt=timezone.now())
@@ -90,6 +91,7 @@ class Evento(models.Model):
     )
     tipo_evento = models.CharField('tipo de evento', max_length=50, choices=TipoEvento.choices)
     etapa = models.CharField(max_length=20, choices=Etapa.choices, default=Etapa.CONFIRMADO)
+    agencia = models.ForeignKey('core.Agencia', on_delete=models.PROTECT, related_name='eventos', editable=False)
     colaborador = models.ForeignKey(
         'colaboradores.Colaborador', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='eventos', help_text='Sub-agencia que opera el evento.',

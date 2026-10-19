@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <style>
-        :root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; --duracion: 8s; }
+        :root { --marca: {{ marca.color }}; --duracion: 8s; }
         * { box-sizing: border-box; margin: 0; }
         html, body { height: 100%; overflow: hidden; }
         body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: #fff; background: #000; -webkit-font-smoothing: antialiased; cursor: none; }

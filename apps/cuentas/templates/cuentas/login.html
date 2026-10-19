@@ -8,7 +8,7 @@
     <div class="ingreso__fondo" aria-hidden="true"></div>
 
     <header class="ingreso__barra">
-        <img class="ingreso__logo" src="{% static 'img/logo-gupoem.png' %}" alt="{{ ajustes.nombre }}">
+        {% include 'components/logo.html' with clase='ingreso__logo' %}
         <button class="ingreso__tema" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
     </header>
 

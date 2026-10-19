@@ -281,13 +281,11 @@
     <footer class="pie">
         <div class="pie__nombres" data-bind="nombres" data-fallback="{{ evento.nombre_evento }}">{{ invitacion.nombres_visibles }}</div>
         <p class="pie__fecha">{{ inicio|date:"d · m · Y" }}</p>
-        {% if colaborador %}
-        <a class="pie__marca" {% if colaborador.whatsapp_url %}href="{{ colaborador.whatsapp_url }}" target="_blank" rel="noopener"{% endif %}>
+        <a class="pie__marca" {% if marca.whatsapp_url %}href="{{ marca.whatsapp_url }}" target="_blank" rel="noopener"{% endif %}>
             <span>Evento organizado por</span>
-            {% if colaborador.logo %}<span class="pie__logo-fondo"><img src="{{ colaborador.logo.url }}" alt="{{ colaborador.nombre }}"></span>{% else %}<strong>{{ colaborador.nombre }}</strong>{% endif %}
+            {% if marca.logo %}<span class="pie__logo-fondo"><img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}"></span>{% else %}<strong>{{ marca.nombre }}</strong>{% endif %}
         </a>
-        {% endif %}
-        <p class="pie__creditos">Invitación digital · {{ ajustes.nombre }}</p>
+        <p class="pie__creditos">Invitación digital · {% include 'components/credito_eventpro.html' %}</p>
     </footer>
 </main>
 

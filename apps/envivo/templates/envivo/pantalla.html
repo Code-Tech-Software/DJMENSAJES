@@ -14,7 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <style>
-        :root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; }
+        :root { --marca: {{ marca.color }}; }
         * { box-sizing: border-box; margin: 0; }
         html, body { height: 100%; overflow: hidden; }
         body { font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: #fff; background: #05070d; -webkit-font-smoothing: antialiased; cursor: none; }
@@ -78,6 +78,9 @@
 
         .marca { position: fixed; right: 3vw; bottom: 3.4vh; display: flex; align-items: center; gap: 1vw; opacity: .9; }
         .marca img { max-height: 7vh; max-width: 14vw; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .5)); }
+        /* Crédito de la plataforma: discreto, centrado abajo */
+        .credito { position: fixed; left: 50%; bottom: 1.4vh; transform: translateX(-50%); z-index: 2; font-size: clamp(10px, .75vw, 15px); letter-spacing: .04em; color: rgba(255, 255, 255, .38); white-space: nowrap; pointer-events: none; }
+        .credito strong { font-weight: 700; color: rgba(255, 255, 255, .55); }
         .esquina { position: fixed; top: 3vh; right: 3vw; display: flex; gap: 10px; align-items: center; }
         .vivo { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .15); font-size: clamp(11px, .95vw, 16px); font-weight: 800; letter-spacing: .12em; }
         .vivo::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #ff3d5e; animation: pulso 1.6s infinite; }
@@ -160,9 +163,10 @@
 </div>
 {% endif %}
 
-{% if colaborador and colaborador.logo %}
-<div class="marca"><img src="{{ colaborador.logo.url }}" alt="{{ colaborador.nombre }}"></div>
+{% if marca.logo %}
+<div class="marca"><img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}"></div>
 {% endif %}
+<div class="credito">{% include 'components/credito_eventpro.html' %}</div>
 
 {{ saludos|json_script:"datos-saludos" }}
 <script src="{% static 'js/envivo.js' %}"></script>

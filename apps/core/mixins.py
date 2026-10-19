@@ -1,5 +1,6 @@
 """Piezas reutilizables para vistas con formularios en modal (AJAX) y respuestas JSON."""
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, JsonResponse
 
 
@@ -103,3 +104,36 @@ class FormularioModalMixin:
             self.request, self.get_mensaje_exito(),
             redirect=self.get_url_exito(), recargar=self.recargar, respaldo=respaldo,
         )
+
+
+class FormularioConAgenciaMixin:
+    """Los formularios con listas de sub-agencias o banners (usa_agencia = True) reciben la agencia."""
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if getattr(self.get_form_class(), 'usa_agencia', False):
+            kwargs['agencia_id'] = self.request.user.agencia_id
+        return kwargs
+
+
+class AsignarAgenciaMixin(FormularioConAgenciaMixin):
+    """
+    Para las vistas que crean algo de una agencia (evento, sub-agencia, banner, integrante):
+    queda en la agencia de quien lo crea. Una cuenta sin agencia (de EventPro) no puede crear.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not request.user.agencia_id:
+            raise PermissionDenied('Tu cuenta no pertenece a ninguna agencia.')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.agencia_id = self.request.user.agencia_id
+        return super().form_valid(form)
+
+
+class DeLaAgenciaMixin(FormularioConAgenciaMixin):
+    """Para editar o ver registros de una agencia: los de otra agencia dan 404 aunque se cambie el número."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(agencia_id=self.request.user.agencia_id)

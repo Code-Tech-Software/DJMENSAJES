@@ -19,7 +19,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <style>
         :root {
-            --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %};
+            --marca: {{ marca.color }};
             --fondo: #faf7f2; --papel: #ffffff; --tinta: #1d1a16; --suave: #6f675c; --linea: #ebe4d8;
         }
         * { box-sizing: border-box; margin: 0; }
@@ -77,6 +77,10 @@
 
         footer { text-align: center; padding: 30px 18px 46px; color: var(--suave); font-size: 13px; border-top: 1px solid var(--linea); }
         footer strong { display: block; font-size: 15px; color: var(--tinta); margin-bottom: 4px; }
+        footer .pie-logo { display: inline-grid; place-items: center; margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; background: #0f172a; }
+        footer .pie-logo img { max-height: 40px; max-width: 180px; object-fit: contain; }
+        footer .credito { display: block; margin-top: 12px; font-size: 11.5px; opacity: .8; }
+        footer .credito strong { display: inline; font-size: inherit; color: inherit; margin: 0; }
 
         /* Visor */
         .visor { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: rgba(12, 10, 8, .96); color: #fff; }
@@ -158,8 +162,9 @@
 </main>
 
 <footer>
-    <strong>{% if colaborador %}{{ colaborador.nombre }}{% else %}{{ ajustes.nombre }}{% endif %}</strong>
+    {% if marca.logo %}<span class="pie-logo"><img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}"></span>{% else %}<strong>{{ marca.nombre }}</strong>{% endif %}
     Álbum digital creado con las fotos y mensajes de los invitados.
+    <small class="credito">{% include 'components/credito_eventpro.html' %}</small>
 </footer>
 
 <div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-label="Foto">

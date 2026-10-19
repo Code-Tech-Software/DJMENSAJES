@@ -1,0 +1,24 @@
+{# Menú de acciones de un usuario (u) en la consola #}
+<div class="dropdown" style="display:inline-block">
+    <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ph ph-dots-three-vertical"></i></button>
+    <div class="dropdown__menu">
+        <button class="menu-item" data-modal="{% url 'plataforma:usuario_editar' u.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
+        {% if not u.is_superuser %}
+        <button class="menu-item" data-post="{% url 'plataforma:nueva_clave' u.pk %}" data-confirm="¿Nueva contraseña para {{ u }}?"
+                data-confirm-text="Su contraseña actual dejará de funcionar. Verás la nueva una sola vez para compartírsela." data-confirm-button="Generar"><i class="ph ph-key"></i>Nueva contraseña</button>
+        {% if u.is_active and u.agencia_id %}
+        <button class="menu-item" data-post="{% url 'plataforma:entrar_como' u.pk %}" data-confirm="¿Entrar como {{ u }}?"
+                data-confirm-text="Verás el panel de {{ u.agencia }} tal como lo ve. Quedará registrado en la bitácora y podrás volver con la barra de arriba." data-confirm-button="Entrar"><i class="ph ph-user-switch"></i>Entrar como {{ u.first_name|default:u.username }}</button>
+        {% endif %}
+        {% endif %}
+        {% if u != user %}
+        <div class="menu-sep"></div>
+        <button class="menu-item {% if u.is_active %}menu-item--danger{% endif %}" data-post="{% url 'plataforma:usuario_activar' u.pk %}"
+                data-confirm="{% if u.is_active %}¿Desactivar a {{ u }}?{% else %}¿Reactivar a {{ u }}?{% endif %}"
+                data-confirm-text="{% if u.is_active %}No podrá iniciar sesión hasta que lo reactives.{% else %}Podrá volver a iniciar sesión.{% endif %}"
+                {% if u.is_active %}data-danger data-confirm-button="Desactivar"{% endif %}>
+            <i class="{% if u.is_active %}ph ph-prohibit{% else %}ph ph-user-check{% endif %}"></i>{% if u.is_active %}Desactivar{% else %}Reactivar{% endif %}
+        </button>
+        {% endif %}
+    </div>
+</div>

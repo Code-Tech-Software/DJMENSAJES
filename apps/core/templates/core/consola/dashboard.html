@@ -1,0 +1,162 @@
+{% extends 'layouts/consola.html' %}
+{% load ui humanize %}
+{% block title %}Consola EventPro{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="eyebrow">{{ hoy|date:"l j \d\e F" }}</div>
+        <h1>Así va EventPro</h1>
+        <p>{{ kpi.agencias_vigentes }} agencia{{ kpi.agencias_vigentes|pluralize }} con acceso{% if kpi.por_vencer or kpi.vencidas %} · {% if kpi.por_vencer %}{{ kpi.por_vencer }} por vencer{% endif %}{% if kpi.por_vencer and kpi.vencidas %} y {% endif %}{% if kpi.vencidas %}{{ kpi.vencidas }} vencida{{ kpi.vencidas|pluralize }}{% endif %}{% endif %}.</p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn" data-modal="{% url 'plataforma:pago_crear' %}"><i class="ph ph-hand-coins"></i>Registrar pago</button>
+        <button class="btn btn--primary" data-modal="{% url 'plataforma:agencia_crear' %}"><i class="ph ph-plus"></i>Nueva agencia</button>
+    </div>
+</div>
+
+{% if en_vivo %}
+<div class="alert alert--live mb-3"><i class="ph-fill ph-broadcast"></i>
+    <div class="grow"><strong>{{ en_vivo|length }} evento{{ en_vivo|pluralize }} en vivo ahora</strong>
+        {% for e in en_vivo %}{{ e.nombre_evento }} <span class="muted">({{ e.agencia }})</span>{% if not forloop.last %}, {% endif %}{% endfor %}</div></div>
+{% endif %}
+
+<div class="grid grid-4 reveal">
+    <div class="card stat tone-success">
+        <div class="stat__top"><span class="stat__label">Ingresos del mes</span><span class="stat__icon"><i class="ph ph-currency-dollar"></i></span></div>
+        <div class="stat__value">{{ kpi.ingresos_mes|moneda }}</div>
+        <div class="stat__meta">{% if kpi.variacion is not None %}<span class="variacion {% if kpi.variacion >= 0 %}variacion--sube{% else %}variacion--baja{% endif %}"><i class="ph {% if kpi.variacion >= 0 %}ph-trend-up{% else %}ph-trend-down{% endif %}"></i>{{ kpi.variacion }}%</span> vs. mes anterior{% else %}Mes anterior: {{ kpi.ingresos_anterior|moneda }}{% endif %}</div>
+    </div>
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Ingreso mensual esperado</span><span class="stat__icon"><i class="ph ph-chart-line-up"></i></span></div>
+        <div class="stat__value">{{ kpi.mensual|moneda }}</div>
+        <div class="stat__meta">Suma de los planes de las agencias con acceso</div>
+    </div>
+    <a class="card stat tone-warning" href="{% url 'plataforma:agencias' %}?estado=vencida">
+        <div class="stat__top"><span class="stat__label">Por cobrar</span><span class="stat__icon"><i class="ph ph-wallet"></i></span></div>
+        <div class="stat__value">{{ kpi.monto_por_cobrar|moneda }}</div>
+        <div class="stat__meta">{{ kpi.vencidas }} vencida{{ kpi.vencidas|pluralize }} · {{ kpi.por_vencer }} por vencer</div>
+    </a>
+    <a class="card stat tone-live" href="{% url 'plataforma:agencias' %}">
+        <div class="stat__top"><span class="stat__label">Agencias</span><span class="stat__icon"><i class="ph ph-buildings"></i></span></div>
+        <div class="stat__value">{{ kpi.agencias_vigentes }}<small> / {{ kpi.agencias_total }}</small></div>
+        <div class="stat__meta">con acceso{% if kpi.suspendidas %} · {{ kpi.suspendidas }} suspendida{{ kpi.suspendidas|pluralize }}{% endif %}</div>
+    </a>
+</div>
+
+<div class="grid grid-4 mt-3 reveal">
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Eventos este mes</span><span class="stat__icon"><i class="ph ph-sparkle"></i></span></div>
+        <div class="stat__value">{{ kpi.eventos_mes|intcomma }}</div>
+        <div class="stat__meta">{{ kpi.en_vivo }} en vivo ahora</div>
+    </div>
+    <a class="card stat" href="{% url 'plataforma:usuarios' %}">
+        <div class="stat__top"><span class="stat__label">Usuarios de agencias</span><span class="stat__icon"><i class="ph ph-users"></i></span></div>
+        <div class="stat__value">{{ kpi.usuarios|intcomma }}</div>
+        <div class="stat__meta">{{ kpi.conectados }} entraron en los últimos 30 días</div>
+    </a>
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Invitados</span><span class="stat__icon"><i class="ph ph-user-list"></i></span></div>
+        <div class="stat__value">{{ kpi.invitados|intcomma }}</div>
+        <div class="stat__meta">En todas las listas de invitados</div>
+    </div>
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Interacción en vivo</span><span class="stat__icon"><i class="ph ph-chats"></i></span></div>
+        <div class="stat__value">{{ kpi.mensajes|intcomma }}</div>
+        <div class="stat__meta"><i class="ph ph-camera"></i>{{ kpi.fotos|intcomma }} fotos · canciones y saludos</div>
+    </div>
+</div>
+
+<div class="grid grid-sidebar mt-3">
+    <div class="stack">
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card__head"><div><h3>Ingresos por mes</h3><p>Pagos registrados · últimos 12 meses</p></div><a class="btn btn--ghost btn--sm" href="{% url 'plataforma:pagos' %}">Pagos <i class="ph ph-arrow-right"></i></a></div>
+                <div class="card__body">
+                    <div class="bars">
+                        {% for b in barras_ingresos %}
+                        {# Los montos no caben sobre cada barra: el del mes actual se ve, los demás al pasar el cursor #}
+                        <div class="bars__col" {% if b.n %}data-tip="{{ b.mes|capfirst }}: {{ b.n|moneda }}"{% endif %}>
+                            <div class="bars__track"><div class="bars__bar {% if b.actual %}is-current{% elif not b.n %}is-muted{% endif %}" data-height="{{ b.alto|default:3 }}" style="height:0">{% if b.n and b.actual %}<span>{{ b.n|moneda_corta }}</span>{% endif %}</div></div>
+                            <span class="bars__label">{{ b.mes }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card__head"><div><h3>Eventos por mes</h3><p>De todas las agencias · últimos 12 meses</p></div></div>
+                <div class="card__body">
+                    <div class="bars">
+                        {% for b in barras_eventos %}
+                        <div class="bars__col">
+                            <div class="bars__track"><div class="bars__bar {% if b.actual %}is-current{% elif not b.n %}is-muted{% endif %}" data-height="{{ b.alto|default:3 }}" style="height:0">{% if b.n %}<span>{{ b.n }}</span>{% endif %}</div></div>
+                            <span class="bars__label">{{ b.mes }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__head">
+                <div class="card-title"><span class="ico"><i class="ph ph-warning-diamond"></i></span><div><h3>Requieren atención</h3><p>Vencidas o por vencer: cobra y registra el pago</p></div></div>
+                <a class="btn btn--ghost btn--sm" href="{% url 'plataforma:agencias' %}">Agencias <i class="ph ph-arrow-right"></i></a>
+            </div>
+            {% if por_cobrar %}
+            <div class="table-wrap mt-2">
+                <table class="table">
+                    <thead><tr><th>Agencia</th><th>Estado</th><th>Vence</th><th class="hide-mobile">Plan</th><th></th></tr></thead>
+                    <tbody>
+                    {% for a in por_cobrar %}
+                    <tr>
+                        <td><a class="t-title" href="{% url 'plataforma:agencia' a.pk %}">{{ a.nombre }}</a></td>
+                        <td><span class="chip chip--{{ a.estado_tono }} chip--dot">{{ a.estado_visible }}</span></td>
+                        <td class="nowrap">{{ a.vence_el|date:"j M" }} <span class="t-muted">· {% with d=a.dias_restantes %}{% if d > 1 %}en {{ d }} días{% elif d == 1 %}mañana{% elif d == 0 %}hoy{% else %}hace {{ d|cut:"-" }} d{% endif %}{% endwith %}</span></td>
+                        <td class="hide-mobile">{% if a.plan %}{{ a.plan }} · {{ a.plan.precio_mensual|moneda }}{% else %}<span class="t-muted">Sin plan</span>{% endif %}</td>
+                        <td class="t-actions"><button class="btn btn--sm btn--success" data-modal="{% url 'plataforma:agencia_pago' a.pk %}"><i class="ph ph-hand-coins"></i><span class="hide-mobile">Registrar pago</span></button></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            {% include 'components/vacio.html' with icono='ph ph-check-circle' titulo='Todo al corriente' texto='Ninguna agencia está vencida ni por vencer.' %}
+            {% endif %}
+        </div>
+
+        {% if cerca_del_limite %}
+        <div class="card">
+            <div class="card__head"><div class="card-title"><span class="ico"><i class="ph ph-gauge"></i></span><div><h3>Cerca del límite de su plan</h3><p>Buena oportunidad para ofrecerles un plan mayor</p></div></div></div>
+            <div class="card__body grid grid-2">
+                {% for c in cerca_del_limite %}
+                <div><a class="strong" href="{% url 'plataforma:agencia' c.agencia.pk %}">{{ c.agencia }}</a> <span class="t-muted small">· {{ c.agencia.plan }}</span>
+                    <div class="mt-2">{% include 'core/consola/_uso.html' with filas=c.filas %}</div></div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="stack">
+        <div class="card">
+            <div class="card__head"><div class="card-title"><span class="ico"><i class="ph ph-crown-simple"></i></span><div><h3>Más activas este mes</h3><p>Por eventos del mes</p></div></div></div>
+            <div class="list mt-2">
+                {% for a in top %}
+                <a href="{% url 'plataforma:agencia' a.pk %}" class="list-item">
+                    <div class="list-item__body"><div class="t-title">{{ a.nombre }}</div><div class="t-sub">{{ a.plan|default:"Sin plan" }}</div></div>
+                    <span class="chip chip--info">{{ a.n_mes }} evento{{ a.n_mes|pluralize }}</span>
+                </a>
+                {% empty %}<p class="muted small" style="padding:6px 20px 16px">Sin eventos este mes todavía.</p>{% endfor %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card__head">
+                <div class="card-title"><span class="ico"><i class="ph ph-list-magnifying-glass"></i></span><div><h3>Actividad reciente</h3><p>En toda la plataforma</p></div></div>
+                <a class="btn btn--ghost btn--sm" href="{% url 'plataforma:bitacora' %}">Todo <i class="ph ph-arrow-right"></i></a>
+            </div>
+            <div class="card__body" style="padding-top:4px">{% include 'core/consola/_actividad.html' with registros=actividad con_agencia=True %}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

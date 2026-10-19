@@ -6,7 +6,9 @@
     body { background: var(--surface-3); }
     .doc { max-width: 860px; margin: 28px auto; background: #fff; color: #0e1726; border-radius: 18px; box-shadow: var(--sh); overflow: hidden; }
     .doc__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 34px 40px 26px; border-bottom: 4px solid #0098da; }
-    .doc__head img { height: 44px; }
+    .doc__logo-fondo { display: inline-grid; place-items: center; padding: 10px 14px; border-radius: 12px; background: #0f172a; }
+    .doc__logo-fondo img { max-height: 40px; max-width: 200px; object-fit: contain; }
+    .doc__agencia { font-size: 24px; letter-spacing: -.02em; }
     .doc__folio { text-align: right; }
     .doc__folio strong { display: block; font-size: 22px; letter-spacing: -.02em; }
     .doc__folio span { color: #64748b; font-size: 13px; }
@@ -37,7 +39,8 @@
 <article class="doc">
     <header class="doc__head">
         <div>
-            <img src="{% static 'img/grupo-em-neg.png' %}" alt="Grupo EM">
+            {% if agencia.logo %}<span class="doc__logo-fondo"><img src="{{ agencia.logo.url }}" alt="{{ agencia.nombre }}"></span>
+            {% else %}<strong class="doc__agencia">{{ agencia.nombre }}</strong>{% endif %}
             {% if evento.colaborador %}<p class="small" style="color:#64748b;margin-top:10px">Operado por <strong style="color:#0e1726">{{ evento.colaborador }}</strong>{% if evento.colaborador.telefono %} · {{ evento.colaborador.telefono }}{% endif %}</p>{% endif %}
         </div>
         <div class="doc__folio">

@@ -21,6 +21,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from apps.banners.models import Banner
 from apps.colaboradores.models import Colaborador
+from apps.core.models import Agencia, Plan
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
 from apps.eventos.models import ActividadItinerario, Evento, Pago
@@ -72,9 +73,18 @@ class Command(BaseCommand):
         hoy = timezone.localdate()
         aleatorio = random.Random(7)
 
+        # --- Planes de EventPro y la agencia (cliente) a la que pertenece todo lo demás
+        for orden, (nombre, precio, eventos, usuarios, subagencias) in enumerate([
+                ('Básico', 499, 4, 2, 1), ('Pro', 999, 15, 6, 5), ('Agencia', 1999, None, None, None)]):
+            Plan.objects.get_or_create(nombre=nombre, defaults={
+                'precio_mensual': precio, 'max_eventos_mes': eventos, 'max_usuarios': usuarios,
+                'max_colaboradores': subagencias, 'orden': orden})
+        agencia, _ = Agencia.objects.get_or_create(slug='grupo-em', defaults={'nombre': 'Grupo EM'})
+
         # --- Equipo
         admin, creado = Usuario.objects.get_or_create(username=USUARIO_DEMO, defaults={
-            'first_name': 'Luis', 'last_name': 'Ramírez', 'email': 'demo@grupoem.local',
+            'agencia': agencia,
+            'first_name': 'Luis', 'last_name': 'Ramírez', 'email': 'demo@eventpro.local',
             'rol': Usuario.Rol.ADMIN, 'is_staff': True, 'is_superuser': True, 'cargo': 'Director general',
         })
         if creado:
@@ -82,24 +92,26 @@ class Command(BaseCommand):
             admin.save()
 
         # --- Colaboradores
-        logo = settings.BASE_DIR / 'static' / 'img' / 'logo-gupoem.png'
-        espectaculares = Colaborador.objects.create(
+        logo = settings.BASE_DIR / 'static' / 'img' / 'logo-eventpro.png'
+        espectaculares = Colaborador.objects.create(agencia=agencia, 
             nombre='Eventos Espectaculares', tipo='sonido', ciudad='Puebla, Pue.', responsable='Marco Ruiz',
             telefono='2221234567', whatsapp='2221234567', email='hola@espectaculares.mx', color_marca='#0098DA',
-            eslogan='Hacemos vibrar tu fiesta', instagram='https://instagram.com/grupoem',
-            facebook='https://facebook.com/grupoem', descripcion='Audio, iluminación y DJ para bodas, XV años y eventos sociales.',
+            eslogan='Hacemos vibrar tu fiesta', instagram='https://instagram.com/eventpro',
+            facebook='https://facebook.com/eventpro', descripcion='Audio, iluminación y DJ para bodas, XV años y eventos sociales.',
         )
         with open(logo, 'rb') as f:
             espectaculares.logo_principal.save('espectaculares.png', File(f), save=True)
-        palmas = Colaborador.objects.create(
+        palmas = Colaborador.objects.create(agencia=agencia, 
             nombre='Jardín Las Palmas', tipo='salon', ciudad='Cholula, Pue.', responsable='Andrea Torres',
             telefono='2229876543', whatsapp='2229876543', color_marca='#10A37F', eslogan='El jardín de tus sueños',
         )
-        Colaborador.objects.create(nombre='Luz Studio', tipo='foto', ciudad='CDMX', responsable='Diego Paz', color_marca='#D43FE6')
+        Colaborador.objects.create(agencia=agencia, nombre='Luz Studio', tipo='foto', ciudad='CDMX', responsable='Diego Paz', color_marca='#D43FE6')
 
         Usuario.objects.get_or_create(username='sofia', defaults={
+            'agencia': agencia,
             'first_name': 'Sofía', 'last_name': 'Méndez', 'rol': Usuario.Rol.COORDINADOR, 'cargo': 'Coordinadora de eventos'})
         Usuario.objects.get_or_create(username='dj.marco', defaults={
+            'agencia': agencia,
             'first_name': 'Marco', 'last_name': 'Ruiz', 'rol': Usuario.Rol.COLABORADOR, 'colaborador': espectaculares, 'cargo': 'DJ residente'})
 
         # --- Banners con fondos generados
@@ -111,7 +123,7 @@ class Command(BaseCommand):
         ]
         banners = []
         for i, (nombre, categoria, colores) in enumerate(paletas):
-            banner = Banner(nombre=nombre, categoria=categoria, descripcion=f'Fondo {nombre.lower()} generado para la demostración.')
+            banner = Banner(agencia=agencia, nombre=nombre, categoria=categoria, descripcion=f'Fondo {nombre.lower()} generado para la demostración.')
             banner.fondo_movil.save(f'demo-{i}-movil.jpg', _fondo(720, 1280, colores, i), save=False)
             banner.fondo_pantalla.save(f'demo-{i}-pantalla.jpg', _fondo(1600, 900, colores, i + 10), save=False)
             banner.portada.save(f'demo-{i}-portada.jpg', _fondo(1200, 800, colores, i + 20), save=False)
@@ -122,7 +134,7 @@ class Command(BaseCommand):
             return timezone.make_aware(datetime.combine(hoy + timedelta(days=dias), time(hora, 0)))
 
         # --- Eventos
-        boda = Evento.objects.create(
+        boda = Evento.objects.create(agencia=agencia, 
             nombre_evento='Ana & Luis', tipo_evento='boda', colaborador=espectaculares, banner=banners[0], creado_por=admin,
             fecha_inicio_evento=fecha(12, 17), fecha_fin_evento=fecha(13, 2), lugar='Jardín Las Palmas',
             direccion='Av. Las Palmas 120, Cholula, Puebla', cliente_nombre='Ana García', cliente_telefono='2225550101',
@@ -130,7 +142,7 @@ class Command(BaseCommand):
             servicios='Audio profesional\nDJ 7 horas\nPista iluminada 6x6\nPantalla y proyector\nInvitación digital con RSVP',
             mensaje_bienvenida='¡Gracias por acompañarnos! Pide tu canción y déjanos un saludo 💛',
         )
-        en_curso = Evento.objects.create(
+        en_curso = Evento.objects.create(agencia=agencia, 
             nombre_evento='Sofía', tipo_evento='quinse', colaborador=espectaculares, banner=banners[3], creado_por=admin,
             fecha_inicio_evento=ahora - timedelta(hours=2), fecha_fin_evento=ahora + timedelta(hours=4),
             lugar='Salón Cristal', direccion='Blvd. 5 de Mayo 300, Puebla', cliente_nombre='Familia Hernández',
@@ -147,7 +159,7 @@ class Command(BaseCommand):
             ('Neón Party', 'fiesta', -70, 22, banners[1], 'confirmado', Decimal('15000')),
         ]
         for nombre, tipo, dias, hora, banner, etapa, precio in otros:
-            Evento.objects.create(
+            Evento.objects.create(agencia=agencia, 
                 nombre_evento=nombre, tipo_evento=tipo, colaborador=aleatorio.choice([espectaculares, palmas, None]),
                 banner=banner, creado_por=admin, etapa=etapa, fecha_inicio_evento=fecha(dias, hora),
                 fecha_fin_evento=fecha(dias, hora) + timedelta(hours=6), lugar=aleatorio.choice(['Salón Cristal', 'Hacienda San Juan', 'Terraza Sky']),

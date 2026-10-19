@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.core.mixins import es_ajax, respuesta_ok
+from apps.core.marca import Marca
+from apps.core.models import Ajustes
 from apps.eventos.models import Evento
 
 from .models import Invitacion, Invitado
@@ -39,6 +41,8 @@ def panel(request, token):
         'inicio': inicio,
         'faltan': (inicio.date() - timezone.localdate()).days,
         'url_publica': request.build_absolute_uri(invitacion.get_absolute_url()),
+        'ajustes': Ajustes.de(evento.agencia_id),
+        'marca': Marca(evento),
     })
     return render(request, 'invitaciones/anfitriones.html', contexto)
 

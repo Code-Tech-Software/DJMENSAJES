@@ -6,8 +6,8 @@ from .models import Banner
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'categoria', 'colaborador', 'estado', 'vista_previa')
-    list_filter = ('categoria', 'estado', 'colaborador')
+    list_display = ('nombre', 'agencia', 'categoria', 'colaborador', 'estado', 'vista_previa')
+    list_filter = ('agencia', 'categoria', 'estado', 'colaborador')
     search_fields = ('nombre', 'descripcion')
 
     @admin.display(description='Vista previa')

@@ -14,9 +14,11 @@ class BannerForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Para qué tipo de eventos funciona mejor'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    usa_agencia = True
+
+    def __init__(self, *args, agencia_id=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['colaborador'].queryset = Colaborador.objects.filter(estado=True)
+        self.fields['colaborador'].queryset = Colaborador.objects.filter(estado=True, agencia_id=agencia_id)
         self.fields['colaborador'].empty_label = 'Disponible para todos'
         self.fields['colaborador'].label = 'Exclusivo de'
 

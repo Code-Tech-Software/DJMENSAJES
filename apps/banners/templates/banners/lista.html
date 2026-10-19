@@ -41,7 +41,8 @@
             <div class="card__body" style="padding:14px 16px">
                 <div class="row between">
                     <div style="min-width:0"><div class="strong truncate">{{ b.nombre }}</div>
-                        <div class="row mt-1" style="gap:6px"><span class="chip chip--info">{{ b.get_categoria_display }}</span>{% if b.colaborador %}<span class="chip chip--live truncate" style="max-width:150px">{{ b.colaborador }}</span>{% endif %}{% if not b.estado %}<span class="chip chip--muted">Inactivo</span>{% endif %}</div></div>
+                        <div class="row mt-1" style="gap:6px"><span class="chip chip--info">{{ b.get_categoria_display }}</span>{% if b.colaborador %}<span class="chip chip--live truncate" style="max-width:150px">{{ b.colaborador }}</span>{% endif %}{% if not b.estado %}<span class="chip chip--muted">Inactivo</span>{% endif %}{% if not b.agencia_id %}<span class="chip chip--muted" data-tip="Banner de la biblioteca de EventPro: puedes usarlo, no editarlo"><i class="ph ph-books"></i>EventPro</span>{% endif %}</div></div>
+                    {% if b.agencia_id %}
                     <div class="dropdown">
                         <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Acciones"><i class="ph ph-dots-three-vertical"></i></button>
                         <div class="dropdown__menu">
@@ -49,6 +50,7 @@
                             <button class="menu-item menu-item--danger" data-post="{% url 'banners:eliminar' b.pk %}" data-danger data-confirm="¿Eliminar el banner “{{ b.nombre }}”?" data-confirm-text="{% if b.n_eventos %}{{ b.n_eventos }} evento(s) lo usan y quedarán sin fondo.{% else %}Ningún evento lo usa.{% endif %}"><i class="ph ph-trash"></i>Eliminar</button>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
                 <p class="xsmall muted mt-1">Usado en {{ b.n_eventos }} evento{{ b.n_eventos|pluralize }}</p>
             </div>

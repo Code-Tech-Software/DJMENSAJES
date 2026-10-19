@@ -17,7 +17,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, UpdateView
 
 from apps.colaboradores.models import Colaborador
-from apps.core.mixins import FormularioModalMixin, es_ajax, respuesta_ok
+from apps.core.limites import LimitePlanMixin, bloquear_si_lleno
+from apps.core.mixins import AsignarAgenciaMixin, FormularioModalMixin, es_ajax, respuesta_ok
 from apps.core.models import Ajustes
 from apps.core.utils import generar_codigo, generar_token, qr_svg
 from apps.envivo.models import Mensaje
@@ -103,7 +104,7 @@ def lista(request):
         'q': q, 'tipo': tipo, 'etapa': etapa, 'colaborador': colaborador, 'cuando': cuando,
         'tipos': TipoEvento.choices,
         'etapas': Evento.Etapa.choices,
-        'colaboradores': Colaborador.objects.filter(estado=True) if request.user.ve_todo else [],
+        'colaboradores': Colaborador.objects.filter(estado=True, agencia_id=request.user.agencia_id) if request.user.ve_todo else [],
         'opciones_cuando': [(k, v[0], v[1], conteos[k]) for k, v in CUANDO.items()],
         'query': query.urlencode(),
         'hay_filtros': any([q, tipo, etapa, colaborador]),
@@ -200,8 +201,9 @@ def orden(request, pk):
         'evento': evento,
         'pagos': evento.pagos.all(),
         'itinerario': evento.itinerario.all(),
-        'folio': f'EM-{evento.pk:05d}',
+        'folio': f'EP-{evento.pk:05d}',  # EP = EventPro
         'hoy': timezone.localdate(),
+        'agencia': Ajustes.de(evento.agencia_id),
     })
 
 
@@ -249,14 +251,15 @@ class EventoFormMixin(LoginRequiredMixin, FormularioModalMixin):
         return kwargs
 
 
-class EventoCrear(EventoFormMixin, CreateView):
+class EventoCrear(LimitePlanMixin, AsignarAgenciaMixin, EventoFormMixin, CreateView):
+    recurso_limitado = 'eventos'
     titulo = 'Nuevo evento'
     subtitulo = 'Te guiamos paso a paso. Podrás editar todo después.'
     texto_boton = 'Crear evento'
 
     def get_initial(self):
-        # Los eventos nuevos nacen con la configuración en vivo definida en Ajustes
-        ajustes = Ajustes.cargar()
+        # Los eventos nuevos nacen con la configuración en vivo definida en los Ajustes de la agencia
+        ajustes = Ajustes.de(self.request.user.agencia_id)
         return {
             **super().get_initial(),
             'cooldown': ajustes.cooldown,
@@ -268,6 +271,7 @@ class EventoCrear(EventoFormMixin, CreateView):
         }
 
     def form_valid(self, form):
+        form.instance.agencia_id = self.request.user.agencia_id
         form.instance.creado_por = self.request.user
         if not self.request.user.ve_todo and self.request.user.colaborador_id:
             form.instance.colaborador_id = self.request.user.colaborador_id
@@ -332,6 +336,9 @@ def eliminar(request, pk):
 @require_POST
 def duplicar(request, pk):
     original = obtener_evento(request, pk)
+    bloqueo = bloquear_si_lleno(request, 'eventos')  # la copia cuenta como evento nuevo del mes
+    if bloqueo is not None:
+        return bloqueo
     actividades = list(original.itinerario.all())
     copia = original
     copia.pk = None

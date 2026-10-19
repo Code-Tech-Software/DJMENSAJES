@@ -53,8 +53,10 @@ class EventoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.usuario = usuario
 
-        colaboradores = Colaborador.objects.filter(estado=True)
-        banners = Banner.objects.filter(estado=True)
+        # Solo sub-agencias de su agencia; banners de su agencia y de la biblioteca de EventPro
+        agencia_id = usuario.agencia_id if usuario else None
+        colaboradores = Colaborador.objects.filter(estado=True, agencia_id=agencia_id)
+        banners = Banner.objects.disponibles_para(agencia_id).filter(estado=True)
         if usuario and not usuario.ve_todo:
             colaboradores = colaboradores.filter(pk=usuario.colaborador_id)
             banners = banners.filter(Q(colaborador__isnull=True) | Q(colaborador_id=usuario.colaborador_id))
@@ -62,7 +64,7 @@ class EventoForm(forms.ModelForm):
                 self.fields['colaborador'].initial = usuario.colaborador_id
                 self.fields['colaborador'].disabled = True
         if self.instance.pk and self.instance.banner_id:
-            banners = banners | Banner.objects.filter(pk=self.instance.banner_id)
+            banners = banners | Banner.objects.disponibles_para(agencia_id).filter(pk=self.instance.banner_id)
         self.fields['colaborador'].queryset = colaboradores
         self.fields['colaborador'].empty_label = 'Sin asignar'
         self.fields['banner'].queryset = banners.distinct()

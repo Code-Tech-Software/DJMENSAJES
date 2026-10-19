@@ -1,0 +1,177 @@
+{% extends 'layouts/consola.html' %}
+{% load ui humanize %}
+{% block title %}{{ agencia.nombre }} · Consola EventPro{% endblock %}
+{% block head %}
+<style>
+    .vigencia { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .vigencia__fecha strong { display: block; font-size: 22px; letter-spacing: -.02em; }
+    .vigencia__fecha small { color: var(--text-3); font-size: 13px; }
+    .vigencia__botones { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    @media (max-width: 760px) { .vigencia__botones { margin-left: 0; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'plataforma:agencias' %}">Agencias</a><i class="ph ph-caret-right"></i>{{ agencia.nombre }}</div>
+        <h1 class="row">{{ agencia.nombre }} <span class="chip chip--{{ agencia.estado_tono }} chip--dot chip--lg">{{ agencia.estado_visible }}</span></h1>
+        <p>{% if agencia.plan %}Plan {{ agencia.plan }} · {{ agencia.plan.precio_mensual|moneda }}/mes{% else %}Sin plan (sin límites){% endif %} · Cliente desde {{ agencia.creada|date:"F Y" }}</p>
+    </div>
+    <div class="page-head__actions">
+        <button class="btn" data-modal="{% url 'plataforma:agencia_editar' agencia.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
+        {% if agencia.activa %}
+        <button class="btn btn--ghost" data-post="{% url 'plataforma:suspender' agencia.pk %}" data-danger data-confirm="¿Suspender a {{ agencia.nombre }}?"
+                data-confirm-text="Su equipo no podrá entrar al panel. Sus invitaciones y pantallas en vivo siguen funcionando para los invitados." data-confirm-button="Suspender"><i class="ph ph-prohibit"></i>Suspender</button>
+        {% else %}
+        <button class="btn btn--success" data-post="{% url 'plataforma:suspender' agencia.pk %}"><i class="ph ph-check-circle"></i>Reactivar</button>
+        {% endif %}
+    </div>
+</div>
+
+{% if acceso %}{% include 'core/consola/_acceso.html' %}{% endif %}
+
+<div class="card card--pad mb-3">
+    <div class="vigencia">
+        <span class="stat__icon" style="width:46px;height:46px;font-size:22px"><i class="ph ph-calendar-check"></i></span>
+        <div class="vigencia__fecha">
+            {% if agencia.vence_el %}
+            <small>Vence el</small><strong>{{ agencia.vence_el|date:"j \d\e F \d\e Y" }}</strong>
+            <small>{% with d=agencia.dias_restantes %}{% if d > 1 %}Faltan {{ d }} días{% elif d == 1 %}Vence mañana{% elif d == 0 %}Vence hoy{% else %}Venció hace {{ d|cut:"-" }} día{{ d|cut:"-"|pluralize }}{% endif %}{% endwith %}</small>
+            {% else %}<small>Vigencia</small><strong>Sin vencimiento</strong>{% endif %}
+        </div>
+        <div class="vigencia__botones">
+            <div class="dropdown">
+                <button class="btn btn--sm btn--ghost" data-dropdown><i class="ph ph-calendar-plus"></i>Extender sin pago<i class="ph ph-caret-down"></i></button>
+                <div class="dropdown__menu">
+                    {% for meses, datos in extensiones.items %}
+                    <button class="menu-item" data-post="{% url 'plataforma:extender' agencia.pk meses %}" data-confirm="¿Extender {{ datos.1 }} sin registrar pago?" data-confirm-text="Útil para cortesías o ajustes. Si te pagaron, mejor registra el pago."><i class="ph ph-plus"></i>{{ datos.1 }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <button class="btn btn--sm btn--success" data-modal="{% url 'plataforma:agencia_pago' agencia.pk %}"><i class="ph ph-hand-coins"></i>Registrar pago</button>
+        </div>
+    </div>
+</div>
+
+<div data-tabs-scope>
+    <nav class="tabs mb-3" data-tabs data-tabs-hash>
+        <a href="#resumen" class="tab is-active" data-tab="resumen"><i class="ph ph-squares-four"></i>Resumen</a>
+        <a href="#equipo" class="tab" data-tab="equipo"><i class="ph ph-users"></i>Equipo <span class="count">{{ equipo|length }}</span></a>
+        <a href="#eventos" class="tab" data-tab="eventos"><i class="ph ph-sparkle"></i>Eventos <span class="count">{{ stats.eventos }}</span></a>
+        <a href="#pagos" class="tab" data-tab="pagos"><i class="ph ph-currency-dollar"></i>Pagos <span class="count">{{ pagos|length }}</span></a>
+        <a href="#actividad" class="tab" data-tab="actividad"><i class="ph ph-list-magnifying-glass"></i>Actividad</a>
+    </nav>
+
+    {# ---------------- Resumen ---------------- #}
+    <section data-panel="resumen">
+        <div class="grid grid-4 mb-3">
+            <div class="card stat"><div class="stat__top"><span class="stat__label">Eventos</span><span class="stat__icon"><i class="ph ph-sparkle"></i></span></div><div class="stat__value">{{ stats.eventos }}</div><div class="stat__meta">{{ stats.proximos }} próximo{{ stats.proximos|pluralize }} · {{ stats.este_mes }} este mes</div></div>
+            <div class="card stat"><div class="stat__top"><span class="stat__label">Invitados</span><span class="stat__icon"><i class="ph ph-user-list"></i></span></div><div class="stat__value">{{ stats.invitados|intcomma }}</div><div class="stat__meta">{{ stats.mensajes|intcomma }} mensajes en vivo</div></div>
+            <div class="card stat"><div class="stat__top"><span class="stat__label">Sub-agencias</span><span class="stat__icon"><i class="ph ph-users-three"></i></span></div><div class="stat__value">{{ stats.colaboradores }}</div></div>
+            <div class="card stat tone-success"><div class="stat__top"><span class="stat__label">Total pagado</span><span class="stat__icon"><i class="ph ph-currency-dollar"></i></span></div><div class="stat__value">{{ stats.pagado|moneda }}</div><div class="stat__meta">{{ pagos|length }} pago{{ pagos|length|pluralize }}</div></div>
+        </div>
+        <div class="grid grid-2">
+            <div class="card card--pad">
+                <div class="row between mb-2"><h3 style="font-size:15px"><i class="ph ph-gauge"></i> Uso de su plan</h3><span class="chip chip--muted">{{ agencia.plan|default:"Sin plan" }}</span></div>
+                {% include 'core/consola/_uso.html' with filas=uso %}
+            </div>
+            <div class="card card--pad">
+                <h3 style="font-size:15px"><i class="ph ph-storefront"></i> Su marca y contacto</h3>
+                <div class="row mt-2" style="gap:14px">
+                    {% if ajustes.logo %}<span style="display:inline-grid;place-items:center;padding:8px 12px;border-radius:12px;background:#0f172a"><img src="{{ ajustes.logo.url }}" alt="" style="max-height:34px;max-width:140px"></span>{% endif %}
+                    <div class="small"><strong>{{ ajustes.nombre }}</strong>{% if ajustes.eslogan %}<div class="muted">{{ ajustes.eslogan }}</div>{% endif %}</div>
+                </div>
+                <div class="small mt-2 stack" style="gap:4px">
+                    {% if ajustes.whatsapp_url %}<a class="text-brand" href="{{ ajustes.whatsapp_url }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i> {{ ajustes.whatsapp }}</a>{% endif %}
+                    {% if ajustes.email %}<a class="text-brand" href="mailto:{{ ajustes.email }}"><i class="ph ph-envelope-simple"></i> {{ ajustes.email }}</a>{% endif %}
+                    {% if not ajustes.whatsapp_url and not ajustes.email %}<span class="muted">Aún no registra su contacto en sus Ajustes.</span>{% endif %}
+                </div>
+                {% if agencia.notas %}<div class="form-section mt-3"><div class="form-section__title"><i class="ph ph-note"></i>Notas</div><p class="small" style="white-space:pre-line">{{ agencia.notas }}</p></div>{% endif %}
+            </div>
+        </div>
+    </section>
+
+    {# ---------------- Equipo ---------------- #}
+    <section data-panel="equipo" hidden>
+        <div class="card">
+            <div class="card__head">
+                <div><h3>Equipo</h3><p>Quiénes de {{ agencia.nombre }} entran al panel. Puedes editarlos, restablecer su contraseña o entrar como ellos para dar soporte.</p></div>
+                <div class="row row-wrap">
+                    <button class="btn btn--sm" data-modal="{% url 'plataforma:usuario_crear' %}?agencia={{ agencia.pk|stringformat:'d' }}"><i class="ph ph-user-plus"></i>Agregar usuario</button>
+                </div>
+            </div>
+            {% if equipo %}
+            <div class="table-wrap mt-2">
+                <table class="table">
+                    <thead><tr><th>Integrante</th><th>Rol</th><th class="hide-mobile">Último acceso</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                    {% for u in equipo %}
+                    <tr>
+                        <td><div class="cell-user">{% avatar u %}<div><div class="t-title">{{ u }}</div><div class="t-sub">@{{ u.username }}{% if u.colaborador %} · {{ u.colaborador }}{% endif %}</div></div></div></td>
+                        <td><span class="chip {% if u.is_superuser %}chip--live{% elif u.rol == 'admin' %}chip--info{% else %}chip--muted{% endif %}">{% if u.is_superuser %}EventPro{% else %}{{ u.get_rol_display }}{% endif %}</span></td>
+                        <td class="hide-mobile t-muted">{{ u.last_login|hace|default:"Nunca" }}</td>
+                        <td>{% if u.is_active %}<span class="chip chip--success chip--dot">Activo</span>{% else %}<span class="chip chip--muted chip--dot">Inactivo</span>{% endif %}</td>
+                        <td class="t-actions">{% include 'core/consola/_acciones_usuario.html' %}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'components/vacio.html' with icono='ph ph-user-focus' titulo='Sin equipo' texto='Agrega a su administrador para que pueda entrar.' %}
+            {% endif %}
+        </div>
+    </section>
+
+    {# ---------------- Eventos ---------------- #}
+    <section data-panel="eventos" hidden>
+        <div class="card">
+            <div class="card__head"><div><h3>Eventos</h3><p>Los más recientes de {{ agencia.nombre }}. Para administrarlos, entra como uno de sus usuarios.</p></div></div>
+            {% if eventos %}
+            <div class="table-wrap mt-2">
+                <table class="table">
+                    <thead><tr><th>Evento</th><th>Fecha</th><th class="hide-mobile">Sub-agencia</th><th class="hide-mobile">Invitados</th><th class="hide-mobile">Mensajes</th><th></th></tr></thead>
+                    <tbody>
+                    {% for e in eventos %}
+                    <tr>
+                        <td><div class="t-title">{{ e.nombre_evento }}</div><div class="t-sub">{{ e.tipo_corto }} · {{ e.get_etapa_display }}</div></td>
+                        <td class="nowrap">{{ e.fecha_inicio_evento|date:"j M Y" }}<div class="t-sub">{{ e.fecha_inicio_evento|date:"H:i" }} h</div></td>
+                        <td class="hide-mobile">{{ e.colaborador|default:"—" }}</td>
+                        <td class="hide-mobile">{{ e.n_invitados }}</td>
+                        <td class="hide-mobile">{{ e.n_mensajes }}</td>
+                        <td class="t-actions">
+                            <a class="btn btn--sm btn--ghost" href="{{ e.url_invitados }}" target="_blank" data-tip="Pantalla de invitados"><i class="ph ph-device-mobile"></i></a>
+                            <a class="btn btn--sm btn--ghost" href="{{ e.url_pantalla }}" target="_blank" data-tip="Proyector"><i class="ph ph-television-simple"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'components/vacio.html' with icono='ph ph-sparkle' titulo='Sin eventos' texto='Esta agencia aún no registra eventos.' %}
+            {% endif %}
+        </div>
+    </section>
+
+    {# ---------------- Pagos ---------------- #}
+    <section data-panel="pagos" hidden>
+        <div class="card">
+            <div class="card__head">
+                <div><h3>Pagos</h3><p>Cada pago extiende su vencimiento los meses que cubre.</p></div>
+                <button class="btn btn--sm btn--success" data-modal="{% url 'plataforma:agencia_pago' agencia.pk %}"><i class="ph ph-hand-coins"></i>Registrar pago</button>
+            </div>
+            {% include 'core/consola/_tabla_pagos.html' with con_agencia=False %}
+        </div>
+    </section>
+
+    {# ---------------- Actividad ---------------- #}
+    <section data-panel="actividad" hidden>
+        <div class="card">
+            <div class="card__head"><div><h3>Actividad</h3><p>Accesos, eventos creados, pagos y cambios de {{ agencia.nombre }}.</p></div>
+                <a class="btn btn--ghost btn--sm" href="{% url 'plataforma:bitacora' %}?agencia={{ agencia.pk|stringformat:'d' }}">Ver todo <i class="ph ph-arrow-right"></i></a></div>
+            <div class="card__body" style="padding-top:4px">{% include 'core/consola/_actividad.html' with registros=actividad con_agencia=False %}</div>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{# Consola de EventPro (superusuarios): mismo armazón que el panel, con su propio menú #}
+{% block url_inicio %}{% url 'plataforma:dashboard' %}{% endblock %}
+
+{% block menu %}
+<div class="consola-sello"><i class="ph ph-shield-star"></i><span>Consola EventPro</span></div>
+
+<div class="nav-label">General</div>
+<a href="{% url 'plataforma:dashboard' %}" class="nav-link {% activo 'plataforma:dashboard' %}">
+    <i class="ph ph-gauge"></i><span>Dashboard</span>
+</a>
+
+<div class="nav-label">Clientes</div>
+<a href="{% url 'plataforma:agencias' %}" class="nav-link {% activo 'plataforma:agencias' 'plataforma:agencia' %}">
+    <i class="ph ph-buildings"></i><span>Agencias</span>
+    {% if consola_atencion %}<span class="nav-count" data-tip="Vencidas o por vencer">{{ consola_atencion }}</span>{% endif %}
+</a>
+<a href="{% url 'plataforma:usuarios' %}" class="nav-link {% activo 'plataforma:usuarios' %}">
+    <i class="ph ph-users"></i><span>Usuarios</span>
+</a>
+
+<div class="nav-label">Ingresos</div>
+<a href="{% url 'plataforma:pagos' %}" class="nav-link {% activo 'plataforma:pagos' %}">
+    <i class="ph ph-currency-dollar"></i><span>Pagos</span>
+</a>
+<a href="{% url 'plataforma:planes' %}" class="nav-link {% activo 'plataforma:planes' %}">
+    <i class="ph ph-stack"></i><span>Planes</span>
+</a>
+
+<div class="nav-label">Sistema</div>
+<a href="{% url 'plataforma:bitacora' %}" class="nav-link {% activo 'plataforma:bitacora' %}">
+    <i class="ph ph-list-magnifying-glass"></i><span>Bitácora</span>
+</a>
+<a href="{% url 'plataforma:contacto' %}" class="nav-link" data-modal="{% url 'plataforma:contacto' %}">
+    <i class="ph ph-whatsapp-logo"></i><span>Contacto para renovar</span>
+</a>
+{% endblock %}
+
+{% block menu_pie %}
+{% if user.agencia_id %}
+<a href="{% url 'core:dashboard' %}" class="nav-link">
+    <i class="ph ph-storefront"></i><span>Ir a {{ user.agencia }}</span>
+</a>
+{% endif %}
+{% endblock %}
+
+{% block buscador %}
+<div class="topbar__titulo"><i class="ph ph-shield-star"></i>Consola EventPro <small>· Administración de la plataforma</small></div>
+{% endblock %}
+
+{% block accion_principal %}
+<button class="btn btn--primary btn--sm only-desktop" data-modal="{% url 'plataforma:agencia_crear' %}">
+    <i class="ph ph-plus"></i>Nueva agencia
+</button>
+{% endblock %}
+
+{% block notificaciones %}{% endblock %}

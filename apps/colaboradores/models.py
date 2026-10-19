@@ -6,7 +6,7 @@ from apps.core.utils import iniciales
 
 
 class Colaborador(models.Model):
-    """Sub-agencia o proveedor que opera eventos bajo la marca Grupo EM."""
+    """Sub-agencia o proveedor que opera eventos para una agencia."""
 
     class Tipo(models.TextChoices):
         SONIDO = 'sonido', 'Sonido / DJ'
@@ -17,6 +17,7 @@ class Colaborador(models.Model):
         DECORACION = 'decoracion', 'Decoración'
         OTRO = 'otro', 'Otro'
 
+    agencia = models.ForeignKey('core.Agencia', on_delete=models.PROTECT, related_name='colaboradores', editable=False)
     nombre = models.CharField(max_length=200)
     tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.SONIDO)
     eslogan = models.TextField(blank=True, null=True)

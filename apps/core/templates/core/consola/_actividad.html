@@ -1,0 +1,15 @@
+{% load ui %}
+{# Lista de registros de la bitácora (registros, con_agencia) #}
+<div class="actividad">
+    {% for r in registros %}
+    <div class="actividad__item {{ r.tono }}">
+        <span class="actividad__icono"><i class="{{ r.icono }}"></i></span>
+        <div class="actividad__texto">
+            <strong>{{ r.get_accion_display }}</strong>{% if r.usuario and r.accion != 'inicio_sesion' %} · {{ r.usuario }}{% endif %}{% if r.detalle %} · {{ r.detalle }}{% endif %}
+            <small>{{ r.fecha|hace }} · {% if r.actor %}{{ r.actor }}{% else %}Sistema{% endif %}{% if con_agencia and r.agencia %} · <a class="text-brand" href="{% url 'plataforma:agencia' r.agencia_id %}">{{ r.agencia }}</a>{% endif %}</small>
+        </div>
+    </div>
+    {% empty %}
+    <p class="muted small" style="padding:14px 0">Aún no hay actividad registrada.</p>
+    {% endfor %}
+</div>

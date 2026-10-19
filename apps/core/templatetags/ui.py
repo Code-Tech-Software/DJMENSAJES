@@ -1,4 +1,4 @@
-"""Etiquetas y filtros de la interfaz Grupo EM."""
+"""Etiquetas y filtros de la interfaz EventPro."""
 from decimal import Decimal, InvalidOperation
 
 from django import forms, template
@@ -74,6 +74,20 @@ def moneda(valor):
     if entero.endswith('.00'):
         entero = entero[:-3]
     return f'${entero}'
+
+
+@register.filter
+def moneda_corta(valor):
+    """Para etiquetas pequeñas (barras): $850, $12.5k, $1.2M."""
+    try:
+        numero = float(valor or 0)
+    except (TypeError, ValueError):
+        return valor
+    for limite, sufijo in ((1_000_000, 'M'), (1_000, 'k')):
+        if abs(numero) >= limite:
+            corto = f'{numero / limite:.1f}'.rstrip('0').rstrip('.')
+            return f'${corto}{sufijo}'
+    return f'${numero:,.0f}'
 
 
 @register.filter

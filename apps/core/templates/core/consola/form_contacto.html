@@ -1,0 +1,8 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="stack" style="gap:16px">
+    {% campo form.whatsapp icono="ph ph-whatsapp-logo" %}
+    {% campo form.email icono="ph ph-envelope-simple" %}
+</div>
+{% endblock %}

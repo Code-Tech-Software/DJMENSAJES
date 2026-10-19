@@ -6,12 +6,14 @@
     {# El menú contraído se aplica antes de dibujarse: sin expandirse y contraerse al cambiar de página #}
     <script>try { if (localStorage.getItem('em-sidebar') === 'min' && matchMedia('(min-width: 1025px)').matches) document.currentScript.parentNode.classList.add('is-collapsed'); } catch (e) {}</script>
     <aside class="sidebar" aria-label="Menú principal">
-        <a href="{% url 'core:dashboard' %}" class="sidebar__brand">
-            <img src="{% static 'img/isotipo.png' %}" alt="{{ ajustes.nombre }}">
-            <span class="sidebar__brand-text"><strong>{{ ajustes.nombre }}</strong><small>Eventos</small></span>
+        {# Logo completo; con el menú contraído solo el isotipo. Sus colores cambian con el tema #}
+        <a href="{% block url_inicio %}{% url 'core:dashboard' %}{% endblock %}" class="sidebar__brand" aria-label="{{ ajustes.nombre }} · Inicio">
+            {% include 'components/logo.html' with clase='sidebar__logo' %}
+            {% include 'components/isotipo.html' with clase='sidebar__iso' %}
         </a>
 
         <nav class="sidebar__nav scroll-thin">
+            {% block menu %}
             <div class="nav-label">General</div>
             <a href="{% url 'core:dashboard' %}" class="nav-link {% activo 'core:dashboard' %}">
                 <i class="ph ph-gauge"></i><span>Dashboard</span>
@@ -51,28 +53,51 @@
                 <i class="ph ph-storefront"></i><span>{{ user.colaborador.nombre|truncatechars:22 }}</span>
             </a>
             {% endif %}
+
+            {% if user.is_superuser %}
+            <div class="nav-label">EventPro</div>
+            <a href="{% url 'plataforma:dashboard' %}" class="nav-link">
+                <i class="ph ph-shield-star"></i><span>Consola EventPro</span>
+            </a>
+            {% endif %}
+            {% endblock %}
         </nav>
 
         <div class="sidebar__footer">
+            {% block menu_pie %}
             <a href="{% url 'core:ajustes' %}" class="nav-link {% activo 'core:ajustes' %}">
                 <i class="ph ph-gear-six"></i><span>Ajustes</span>
             </a>
+            {% endblock %}
         </div>
     </aside>
     <div class="sidebar-backdrop"></div>
 
     <div class="main">
+        {% if soporte %}
+        {# El superusuario entró como alguien de una agencia para darle soporte #}
+        <div class="barra-soporte" role="status">
+            <i class="ph-fill ph-mask-happy"></i>
+            <span>Estás viendo EventPro como <strong>{{ user }}</strong>{% if user.agencia %} de <strong>{{ user.agencia }}</strong>{% endif %}. Lo que hagas queda a su nombre.</span>
+            <form method="post" action="{% url 'plataforma:salir_de' %}">{% csrf_token %}<button type="submit" class="btn btn--sm"><i class="ph ph-arrow-u-up-left"></i>Volver a la consola</button></form>
+        </div>
+        {% endif %}
         <header class="topbar">
             <button class="icon-btn" data-sidebar-toggle aria-label="Mostrar u ocultar menú"><i class="ph ph-list"></i></button>
+            {% block buscador %}
             <button class="topbar__search" data-palette>
                 <i class="ph ph-magnifying-glass"></i><span>Buscar eventos, invitados…</span><kbd>Ctrl K</kbd>
             </button>
+            {% endblock %}
 
             <div class="topbar__actions">
+                {% block accion_principal %}
                 <button class="btn btn--primary btn--sm only-desktop" data-modal="{% url 'eventos:crear' %}">
                     <i class="ph ph-plus"></i>Nuevo evento
                 </button>
+                {% endblock %}
 
+                {% block notificaciones %}
                 <div class="dropdown">
                     <button class="icon-btn" data-dropdown aria-label="Notificaciones">
                         <i class="ph ph-bell"></i>
@@ -88,6 +113,7 @@
                         </div>
                     </div>
                 </div>
+                {% endblock %}
 
                 <button class="icon-btn" data-theme-toggle aria-label="Cambiar tema"><i data-theme-icon class="ph ph-moon-stars"></i></button>
 
@@ -106,6 +132,9 @@
                             <small>@{{ user.username }}{% if user.colaborador %} · {{ user.colaborador }}{% endif %}</small>
                         </div>
                         <div class="menu-sep"></div>
+                        {% if user.is_superuser %}<a href="{% url 'plataforma:dashboard' %}" class="menu-item"><i class="ph ph-shield-star"></i>Consola EventPro</a>
+                        {% if user.agencia_id %}<a href="{% url 'core:dashboard' %}" class="menu-item"><i class="ph ph-storefront"></i>Panel de {{ user.agencia }}</a>{% endif %}
+                        <div class="menu-sep"></div>{% endif %}
                         <a href="{% url 'cuentas:perfil' %}" class="menu-item"><i class="ph ph-user-circle"></i>Mi perfil</a>
                         <a href="{% url 'core:ajustes' %}" class="menu-item"><i class="ph ph-gear-six"></i>Ajustes</a>
                         <button class="menu-item" data-modal="{% url 'cuentas:cambiar_contrasena' %}"><i class="ph ph-password"></i>Cambiar contraseña</button>
@@ -122,6 +151,13 @@
         </header>
 
         <main class="content {% block content_class %}{% endblock %}" id="contenido">
+            {% if aviso_vigencia %}
+            {# Al administrador de la agencia: su plan vence en unos días #}
+            <div class="alert alert--warning mb-3"><i class="ph ph-hourglass-medium"></i>
+                <div><strong>Tu plan de EventPro vence {% if aviso_vigencia.dias > 1 %}en {{ aviso_vigencia.dias }} días{% elif aviso_vigencia.dias == 1 %}mañana{% else %}hoy{% endif %}</strong> ({{ aviso_vigencia.fecha|date:"j \d\e F" }}).
+                    Renuévalo para no perder el acceso al panel; tus invitaciones y pantallas siguen funcionando.
+                    {% if aviso_vigencia.contacto.whatsapp_url %}<a class="strong" href="{{ aviso_vigencia.contacto.whatsapp_url }}?text={{ 'Hola, quiero renovar mi plan de EventPro'|urlencode }}" target="_blank" rel="noopener">Escribir a EventPro</a>{% elif aviso_vigencia.contacto.email %}<a class="strong" href="mailto:{{ aviso_vigencia.contacto.email }}">Escribir a EventPro</a>{% endif %}</div></div>
+            {% endif %}
             {% block content %}{% endblock %}
         </main>
     </div>

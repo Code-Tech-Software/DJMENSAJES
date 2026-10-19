@@ -1,0 +1,30 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-section">
+    <div class="form-section__title"><i class="ph ph-identification-badge"></i>Datos</div>
+    <div class="form-grid">
+        {% campo form.first_name icono="ph ph-user" %}
+        {% campo form.last_name %}
+        {% campo form.username icono="ph ph-at" %}
+        {% campo form.email icono="ph ph-envelope-simple" %}
+        {% if form.clave %}{% campo form.clave icono="ph ph-key" clase="span-2" %}{% endif %}
+    </div>
+</div>
+<div class="form-section">
+    <div class="form-section__title"><i class="ph ph-lock-key"></i>Acceso</div>
+    <div class="form-grid">
+        {% campo form.agencia icono="ph ph-buildings" clase="span-2" %}
+    </div>
+    <div class="field mt-2 {% if form.rol.errors %}field--error{% endif %}">
+        <span class="field__label">Rol en su agencia</span>
+        <div class="segmented" style="display:flex">
+            {% for radio in form.rol %}<label class="grow">{{ radio.tag }}<span style="justify-content:center">{{ radio.choice_label }}</span></label>{% endfor %}
+        </div>
+    </div>
+    <div class="stack mt-3" style="gap:10px">
+        {% campo form.is_active %}
+        {% campo form.is_superuser %}
+    </div>
+</div>
+{% endblock %}

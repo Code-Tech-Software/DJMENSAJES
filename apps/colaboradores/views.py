@@ -7,7 +7,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, UpdateView
 
-from apps.core.mixins import FormularioModalMixin, respuesta_ok
+from apps.core.limites import LimitePlanMixin
+from apps.core.mixins import AsignarAgenciaMixin, DeLaAgenciaMixin, FormularioModalMixin, respuesta_ok
 from apps.cuentas.permisos import CatalogosRequeridoMixin, catalogos_requerido
 
 from .forms import ColaboradorForm
@@ -20,7 +21,8 @@ def lista(request):
     tipo = request.GET.get('tipo', '')
     estado = request.GET.get('estado', '')
     ahora = timezone.now()
-    colaboradores = Colaborador.objects.annotate(
+    de_la_agencia = Colaborador.objects.filter(agencia_id=request.user.agencia_id)
+    colaboradores = de_la_agencia.annotate(
         n_eventos=Count('eventos', distinct=True),
         n_proximos=Count('eventos', filter=Q(eventos__fecha_inicio_evento__gt=ahora), distinct=True),
         n_usuarios=Count('usuarios', distinct=True),
@@ -34,14 +36,14 @@ def lista(request):
     return render(request, 'colaboradores/lista.html', {
         'colaboradores': colaboradores, 'q': q, 'tipo': tipo, 'estado': estado,
         'tipos': Colaborador.Tipo.choices,
-        'total': Colaborador.objects.count(),
-        'activos': Colaborador.objects.filter(estado=True).count(),
+        'total': de_la_agencia.count(),
+        'activos': de_la_agencia.filter(estado=True).count(),
     })
 
 
 @login_required
 def detalle(request, pk):
-    colaborador = get_object_or_404(Colaborador, pk=pk)
+    colaborador = get_object_or_404(Colaborador, pk=pk, agencia_id=request.user.agencia_id)
     if not (request.user.ve_todo or request.user.colaborador_id == colaborador.pk):
         raise PermissionDenied
     ahora = timezone.now()
@@ -61,7 +63,8 @@ def detalle(request, pk):
     })
 
 
-class ColaboradorCrear(CatalogosRequeridoMixin, FormularioModalMixin, CreateView):
+class ColaboradorCrear(LimitePlanMixin, AsignarAgenciaMixin, CatalogosRequeridoMixin, FormularioModalMixin, CreateView):
+    recurso_limitado = 'colaboradores'
     model = Colaborador
     form_class = ColaboradorForm
     template_modal = 'colaboradores/partials/form.html'
@@ -73,7 +76,7 @@ class ColaboradorCrear(CatalogosRequeridoMixin, FormularioModalMixin, CreateView
     mensaje_exito = 'Colaborador registrado.'
 
 
-class ColaboradorEditar(CatalogosRequeridoMixin, FormularioModalMixin, UpdateView):
+class ColaboradorEditar(DeLaAgenciaMixin, CatalogosRequeridoMixin, FormularioModalMixin, UpdateView):
     model = Colaborador
     form_class = ColaboradorForm
     template_modal = 'colaboradores/partials/form.html'
@@ -89,7 +92,7 @@ class ColaboradorEditar(CatalogosRequeridoMixin, FormularioModalMixin, UpdateVie
 @catalogos_requerido
 @require_POST
 def eliminar(request, pk):
-    colaborador = get_object_or_404(Colaborador, pk=pk)
+    colaborador = get_object_or_404(Colaborador, pk=pk, agencia_id=request.user.agencia_id)
     nombre = colaborador.nombre
     colaborador.delete()
     return respuesta_ok(request, f'Se eliminó a {nombre}. Sus eventos se conservan sin agencia asignada.',

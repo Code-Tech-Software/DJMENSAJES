@@ -17,6 +17,7 @@
         <a href="#negocio" class="tab {% if seccion_activa == 'negocio' %}is-active{% endif %}" data-tab="negocio"><i class="ph ph-storefront"></i>Negocio</a>
         <a href="#eventos" class="tab {% if seccion_activa == 'eventos' %}is-active{% endif %}" data-tab="eventos"><i class="ph ph-sparkle"></i>Eventos nuevos</a>
         {% endif %}
+        {% if mi_plan %}<a href="#plan" class="tab" data-tab="plan"><i class="ph ph-stack"></i>Mi plan</a>{% endif %}
     </div>
 
     {# ---------------- Apariencia (cada usuario, en su dispositivo) ---------------- #}
@@ -61,7 +62,7 @@
     </section>
 
     {% if form %}
-    <form method="post" novalidate id="form-ajustes">
+    <form method="post" enctype="multipart/form-data" novalidate id="form-ajustes">
         {% csrf_token %}
         <input type="hidden" name="seccion" value="{{ seccion_activa }}">
         {% if form.non_field_errors %}<div class="alert alert--danger mb-3"><i class="ph ph-warning-circle"></i><div>{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
@@ -76,6 +77,9 @@
                             <div class="form-grid">
                                 {% campo form.nombre icono="ph ph-buildings" %}
                                 {% campo form.eslogan icono="ph ph-quotes" %}
+                                {% campo form.logo_principal oscuro=True %}
+                                {% campo form.logo_secundario oscuro=True %}
+                                {% campo form.color_marca tipo="color" clase="span-2" %}
                             </div>
                         </div>
                         <div class="form-section">
@@ -101,7 +105,8 @@
                 <aside class="ajustes__previa">
                     <p class="ajustes__previa-titulo"><i class="ph ph-eye"></i>Así lo ven los invitados</p>
                     <div class="pie-muestra" id="pie-muestra">
-                        <strong class="pie-muestra__marca" data-m="nombre">{{ form.nombre.value|default:"Grupo EM" }}</strong>
+                        {% if form.instance.logo_pie %}<img class="pie-muestra__logo" src="{{ form.instance.logo_pie.url }}" alt="">
+                        {% else %}<strong class="pie-muestra__marca" data-m="nombre">{{ form.nombre.value|default:"Tu agencia" }}</strong>{% endif %}
                         <p class="pie-muestra__eslogan" data-m="eslogan">{{ form.eslogan.value|default:"" }}</p>
                         <span class="pie-muestra__cotizar" data-m="whatsapp"><i class="ph ph-whatsapp-logo"></i>Cotiza tu evento</span>
                         <div class="pie-muestra__redes">
@@ -109,9 +114,9 @@
                             <i class="ph-fill ph-facebook-logo" data-m="facebook"></i>
                             <i class="ph-fill ph-tiktok-logo" data-m="tiktok"></i>
                         </div>
-                        <small class="pie-muestra__creditos">Experiencia en vivo por <span data-m="nombre">{{ form.nombre.value|default:"Grupo EM" }}</span></small>
+                        <small class="pie-muestra__creditos">{% include 'components/credito_eventpro.html' %}</small>
                     </div>
-                    <p class="ajustes__nota">Aparece en la pantalla de invitados de los eventos <strong>sin sub-agencia</strong>; las sub-agencias muestran su propia marca. El nombre también se usa en el menú, los créditos de las invitaciones y la orden de servicio.</p>
+                    <p class="ajustes__nota"><i class="ph ph-info"></i><span>Tu marca aparece en la pantalla de invitados, el proyector, la invitación, el álbum y la orden de servicio de los eventos <strong>sin sub-agencia</strong>; las sub-agencias muestran la suya. Abajo queda un pequeño crédito de EventPro.</span></p>
                 </aside>
             </div>
             <div class="ajustes__pie"><button type="submit" class="btn btn--primary"><i class="ph ph-check"></i>Guardar ajustes</button></div>
@@ -147,6 +152,28 @@
             <div class="ajustes__pie"><button type="submit" class="btn btn--primary"><i class="ph ph-check"></i>Guardar ajustes</button></div>
         </section>
     </form>
+    {% endif %}
+
+    {% if mi_plan %}
+    {# ---------------- Mi plan (administradores): plan de EventPro, vigencia y uso ---------------- #}
+    <section data-panel="plan" hidden>
+        <div class="grid grid-2">
+            <div class="card card--pad">
+                <div class="row between"><h3 style="font-size:16px"><i class="ph ph-stack"></i> {% if mi_plan.agencia.plan %}Plan {{ mi_plan.agencia.plan }}{% else %}Plan sin límites{% endif %}</h3>
+                    <span class="chip chip--{{ mi_plan.agencia.estado_tono }} chip--dot">{{ mi_plan.agencia.estado_visible }}</span></div>
+                <p class="small muted mt-1">{% if mi_plan.agencia.vence_el %}Vigente hasta el <strong>{{ mi_plan.agencia.vence_el|date:"j \d\e F \d\e Y" }}</strong>.{% else %}Sin fecha de vencimiento.{% endif %}</p>
+                <div class="mt-3">{% include 'core/consola/_uso.html' with filas=mi_plan.uso %}</div>
+            </div>
+            <div class="card card--pad">
+                <h3 style="font-size:16px"><i class="ph ph-chat-circle-text"></i> ¿Necesitas más?</h3>
+                <p class="small muted mt-1">Para renovar o ampliar tu plan (más eventos, usuarios o sub-agencias), escríbele a EventPro.</p>
+                <div class="row row-wrap mt-3">
+                    {% if mi_plan.contacto.whatsapp_url %}<a class="btn btn--whatsapp" href="{{ mi_plan.contacto.whatsapp_url }}?text={{ 'Hola, quiero ampliar o renovar mi plan de EventPro'|urlencode }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Escribir a EventPro</a>{% endif %}
+                    {% if mi_plan.contacto.email %}<a class="btn" href="mailto:{{ mi_plan.contacto.email }}"><i class="ph ph-envelope-simple"></i>{{ mi_plan.contacto.email }}</a>{% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
     {% endif %}
 </div>
 {% endblock %}
@@ -192,7 +219,7 @@
         const muestra = document.getElementById('pie-muestra');
         const pintar = () => {
             const v = n => (form.elements[n] ? form.elements[n].value.trim() : '');
-            muestra.querySelectorAll('[data-m="nombre"]').forEach(el => { el.textContent = v('nombre') || 'Grupo EM'; });
+            muestra.querySelectorAll('[data-m="nombre"]').forEach(el => { el.textContent = v('nombre') || 'Tu agencia'; });
             const eslogan = muestra.querySelector('[data-m="eslogan"]');
             eslogan.textContent = v('eslogan');
             eslogan.hidden = !v('eslogan');

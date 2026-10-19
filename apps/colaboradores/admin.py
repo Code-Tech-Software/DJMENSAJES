@@ -6,8 +6,13 @@ from .models import Colaborador
 
 @admin.register(Colaborador)
 class ColaboradorAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'tipo', 'ciudad', 'responsable', 'telefono', 'estado', 'vista_logo')
-    list_filter = ('tipo', 'estado')
+    list_display = ('nombre', 'agencia', 'tipo', 'ciudad', 'responsable', 'telefono', 'estado', 'vista_logo')
+    list_filter = ('agencia', 'tipo', 'estado')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.agencia_id:
+            obj.agencia_id = request.user.agencia_id
+        super().save_model(request, obj, form, change)
     search_fields = ('nombre', 'ciudad', 'responsable', 'email')
 
     @admin.display(description='Logo')

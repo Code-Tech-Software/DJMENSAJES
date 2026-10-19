@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, FormView, UpdateView
 
 from apps.core.mixins import FormularioModalMixin, respuesta_ok
+from apps.core.marca import Marca
 from apps.core.models import Ajustes
 from apps.core.utils import generar_token, qr_svg, slug_unico
 from apps.eventos.models import Evento
@@ -33,7 +34,7 @@ def obtener_invitacion(evento):
     try:
         return evento.invitacion
     except Invitacion.DoesNotExist:
-        ajustes = Ajustes.cargar()
+        ajustes = Ajustes.de(evento.agencia_id)
         plantilla = ajustes.plantilla or PLANTILLA_SUGERIDA.get(evento.tipo_evento, 'moderna')
         invitacion = Invitacion.objects.create(
             evento=evento,
@@ -391,6 +392,8 @@ def _contexto_publico(request, invitacion, invitado=None):
         'rsvp_cerrado': cerrado,
         'es_equipo': request.user.is_authenticated and eventos_de(request.user).filter(pk=evento.pk).exists(),
         'es_anfitrion': es_anfitrion(request, invitacion),
+        'ajustes': Ajustes.de(evento.agencia_id),
+        'marca': Marca(evento),
     }
     imagen = invitacion.imagen_portada
     if imagen:
@@ -505,8 +508,8 @@ def calendario_ics(request, slug):
         return (texto or '').replace('\\', '\\\\').replace(',', '\\,').replace(';', '\\;').replace('\n', '\\n')
 
     contenido = '\r\n'.join([
-        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Grupo EM//Invitaciones//ES', 'BEGIN:VEVENT',
-        f'UID:evento-{evento.pk}@grupoem',
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//EventPro//Invitaciones//ES', 'BEGIN:VEVENT',
+        f'UID:evento-{evento.pk}@eventpro',
         f'DTSTAMP:{timezone.now().astimezone(dt_timezone.utc).strftime(formato)}',
         f'DTSTART:{evento.fecha_inicio_evento.astimezone(dt_timezone.utc).strftime(formato)}',
         f'DTEND:{evento.fecha_fin_evento.astimezone(dt_timezone.utc).strftime(formato)}',

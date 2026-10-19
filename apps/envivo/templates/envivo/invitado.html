@@ -17,7 +17,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/envivo-invitado.css' %}">
-    <style>:root { --marca: {% if colaborador %}{{ colaborador.color_marca }}{% else %}#0098DA{% endif %}; }</style>
+    <style>:root { --marca: {{ marca.color }}; }</style>
 </head>
 <body class="{% if es_vip %}es-vip-activo{% endif %}">
 {% if banner and banner.imagen_movil %}
@@ -85,34 +85,23 @@
     </section>
 
     <footer class="pie-inv">
-        {% if colaborador %}
+        {# La marca de la sub-agencia del evento o, si no tiene, la de la agencia #}
         <div class="pie-inv__marca">
-            {% if colaborador.logo_pie %}<img src="{{ colaborador.logo_pie.url }}" alt="{{ colaborador.nombre }}">{% else %}<strong>{{ colaborador.nombre }}</strong>{% endif %}
+            {% if marca.logo_pie %}<img src="{{ marca.logo_pie.url }}" alt="{{ marca.nombre }}">{% else %}<strong>{{ marca.nombre }}</strong>{% endif %}
         </div>
-        {% if colaborador.eslogan %}<p class="pie-inv__eslogan">{{ colaborador.eslogan }}</p>{% endif %}
-        {% if colaborador.whatsapp_url %}
-        <a class="cotizar" href="{{ colaborador.whatsapp_url }}?text={{ 'Hola, vi su servicio en el evento '|urlencode }}{{ evento.nombre_evento|urlencode }}{{ ' y me gustaría cotizar.'|urlencode }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Cotiza tu evento</a>
+        {% if marca.eslogan %}<p class="pie-inv__eslogan">{{ marca.eslogan }}</p>{% endif %}
+        {% if marca.whatsapp_url %}
+        <a class="cotizar" href="{{ marca.whatsapp_url }}?text={{ 'Hola, vi su servicio en el evento '|urlencode }}{{ evento.nombre_evento|urlencode }}{{ ' y me gustaría cotizar.'|urlencode }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Cotiza tu evento</a>
         {% endif %}
+        {% if marca.tiene_redes %}
         <div class="redes">
-            {% if colaborador.instagram %}<a href="{{ colaborador.instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="ph ph-instagram-logo"></i></a>{% endif %}
-            {% if colaborador.facebook %}<a href="{{ colaborador.facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="ph-fill ph-facebook-logo"></i></a>{% endif %}
-            {% if colaborador.tiktok %}<a href="{{ colaborador.tiktok }}" target="_blank" rel="noopener" aria-label="TikTok"><i class="ph-fill ph-tiktok-logo"></i></a>{% endif %}
-        </div>
-        {% else %}
-        {# Sin sub-agencia: la marca y el contacto del negocio (Ajustes) #}
-        <div class="pie-inv__marca"><strong>{{ ajustes.nombre }}</strong></div>
-        {% if ajustes.eslogan %}<p class="pie-inv__eslogan">{{ ajustes.eslogan }}</p>{% endif %}
-        {% if ajustes.whatsapp_url %}
-        <a class="cotizar" href="{{ ajustes.whatsapp_url }}?text={{ 'Hola, vi su servicio en el evento '|urlencode }}{{ evento.nombre_evento|urlencode }}{{ ' y me gustaría cotizar.'|urlencode }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Cotiza tu evento</a>
-        {% endif %}
-        <div class="redes">
-            {% if ajustes.instagram %}<a href="{{ ajustes.instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="ph ph-instagram-logo"></i></a>{% endif %}
-            {% if ajustes.facebook %}<a href="{{ ajustes.facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="ph-fill ph-facebook-logo"></i></a>{% endif %}
-            {% if ajustes.tiktok %}<a href="{{ ajustes.tiktok }}" target="_blank" rel="noopener" aria-label="TikTok"><i class="ph-fill ph-tiktok-logo"></i></a>{% endif %}
-            {% if ajustes.sitio_web %}<a href="{{ ajustes.sitio_web }}" target="_blank" rel="noopener" aria-label="Sitio web"><i class="ph ph-globe"></i></a>{% endif %}
+            {% if marca.instagram %}<a href="{{ marca.instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="ph ph-instagram-logo"></i></a>{% endif %}
+            {% if marca.facebook %}<a href="{{ marca.facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="ph-fill ph-facebook-logo"></i></a>{% endif %}
+            {% if marca.tiktok %}<a href="{{ marca.tiktok }}" target="_blank" rel="noopener" aria-label="TikTok"><i class="ph-fill ph-tiktok-logo"></i></a>{% endif %}
+            {% if marca.sitio_web %}<a href="{{ marca.sitio_web }}" target="_blank" rel="noopener" aria-label="Sitio web"><i class="ph ph-globe"></i></a>{% endif %}
         </div>
         {% endif %}
-        <p class="creditos">Experiencia en vivo por {{ ajustes.nombre }}</p>
+        <p class="creditos">{% include 'components/credito_eventpro.html' %}</p>
     </footer>
 </div>
 

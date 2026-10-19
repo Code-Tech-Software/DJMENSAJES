@@ -1,0 +1,22 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-section">
+    <div class="form-section__title"><i class="ph ph-buildings"></i>Agencia</div>
+    <div class="form-grid">
+        {% campo form.nombre icono="ph ph-buildings" clase="span-2" %}
+        {% campo form.plan icono="ph ph-stack" %}
+        {% campo form.vence_el icono="ph ph-calendar-check" %}
+        {% campo form.notas clase="span-2" %}
+    </div>
+</div>
+<div class="form-section">
+    <div class="form-section__title"><i class="ph ph-shield-star"></i>Su administrador <small>· entra al panel y configura todo lo demás</small></div>
+    <div class="form-grid">
+        {% campo form.admin_nombre icono="ph ph-user" %}
+        {% campo form.admin_usuario icono="ph ph-at" %}
+        {% campo form.admin_correo icono="ph ph-envelope-simple" %}
+        {% campo form.admin_clave icono="ph ph-key" %}
+    </div>
+</div>
+{% endblock %}
