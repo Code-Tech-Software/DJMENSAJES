@@ -279,7 +279,7 @@
       const validate = i => {
         let firstBad = null;
         $$('input, select, textarea', panels[i]).forEach(f => {
-          if (f.type === 'hidden' || f.disabled) return;
+          if (f.type === 'hidden' || f.disabled || f.closest('[hidden]')) return;
           if (!f.checkValidity()) {
             showError(f, f.validationMessage);
             firstBad = firstBad || f;
@@ -330,7 +330,7 @@
       form.addEventListener('submit', e => {
         // Antes de enviar valida todos los pasos y salta al primero con error
         for (let i = 0; i < panels.length; i++) {
-          const bad = $$('input, select, textarea', panels[i]).some(f => f.type !== 'hidden' && !f.disabled && !f.checkValidity());
+          const bad = $$('input, select, textarea', panels[i]).some(f => f.type !== 'hidden' && !f.disabled && !f.closest('[hidden]') && !f.checkValidity());
           if (bad) { e.preventDefault(); e.stopImmediatePropagation(); go(i); validate(i); return; }
         }
       }, true);
@@ -550,6 +550,333 @@
     });
   }
 
+  // Muestra un bloque solo mientras su casilla está marcada (data-mostrar-si="id"), o apagada con "!id"
+  function initMostrarSi(root) {
+    $$('[data-mostrar-si]', root).forEach(el => {
+      if (el.dataset.ready) return;
+      el.dataset.ready = '1';
+      const negado = el.dataset.mostrarSi.startsWith('!');
+      const casilla = document.getElementById(el.dataset.mostrarSi.replace(/^!/, ''));
+      if (!casilla) return;
+      const pintar = animar => {
+        const ver = negado ? !casilla.checked : casilla.checked;
+        if (ver && el.hidden && animar) { el.classList.remove('aparece'); void el.offsetWidth; el.classList.add('aparece'); }
+        el.hidden = !ver;
+      };
+      casilla.addEventListener('change', () => pintar(true));
+      pintar(false);
+    });
+  }
+
+  /* ------------------------------------------------------------------ Formulario de eventos */
+  // Se adapta mientras se llena: textos según el tipo, fin por duración, choques de agenda, lugares y
+  // clientes anteriores, servicios con un toque, saldo, itinerario sugerido y resumen final.
+  function initAsistenteEvento(root) {
+    $$('[data-asistente-evento]', root).forEach(caja => {
+      if (caja.dataset.ready) return;
+      caja.dataset.ready = '1';
+      const A = JSON.parse(caja.dataset.asistenteEvento);
+      const form = caja.closest('form') || document;
+      const campo = n => form.querySelector(`[name="${n}"]`);
+      const valor = n => {
+        const el = form.querySelector(`[name="${n}"]:checked`) || campo(n);
+        return !el || (el.type === 'radio' && !el.checked) ? '' : el.value.trim();
+      };
+      const dinero = n => `$${Number(n || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`;
+      const fecha = s => (s ? new Date(s) : null); // "2026-10-24T19:00" se toma como hora local
+      const aCampo = d => { const p = x => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+      const hora = d => d.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
+      const dia = d => d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+      const horas = h => `${Math.round(h * 10) / 10} h`;
+      const enLista = xs => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}` : xs[0] || '');
+      const avisar = el => el && el.dispatchEvent(new Event('input', { bubbles: true }));
+      const inicio = campo('fecha_inicio_evento');
+      const fin = campo('fecha_fin_evento');
+
+      // --- Tipo de evento: el nombre se pide según lo que se celebra
+      const nombre = campo('nombre_evento');
+      const etiquetaNombre = nombre && form.querySelector(`label[for="${nombre.id}"]`);
+      const ayudaNombre = nombre && $('.field__help', nombre.closest('.field'));
+      const textosTipo = () => {
+        const t = A.tipos[valor('tipo_evento')] || A.tipos.otro;
+        if (etiquetaNombre && etiquetaNombre.firstChild) etiquetaNombre.firstChild.textContent = t.etiqueta;
+        if (nombre) nombre.placeholder = t.ejemplo;
+        if (ayudaNombre) ayudaNombre.textContent = t.ayuda;
+        const ayudaEtapa = $('[data-etapa-ayuda]', form);
+        if (ayudaEtapa) ayudaEtapa.textContent = A.etapas[valor('etapa')] || '';
+      };
+
+      // --- Duración: el fin se calcula solo; "Otra" deja escribirlo
+      const botonesDuracion = $$('[data-horas]', form);
+      const cajaFin = $('[data-fin-campo]', form);
+      const textoFin = $('[data-fin-resumen]', form);
+      const duracion = () => { const a = fecha(inicio.value), b = fecha(fin.value); return a && b ? (b - a) / 36e5 : null; };
+      let elegida = duracion();
+      if (elegida === null) elegida = 7;
+      else if (!A.duraciones.includes(elegida)) elegida = null;
+      const fijarFin = () => { const a = fecha(inicio.value); if (a && elegida !== null) fin.value = aCampo(new Date(a.getTime() + elegida * 36e5)); };
+      const pintarDuracion = () => {
+        botonesDuracion.forEach(b => b.classList.toggle('is-active', b.dataset.horas === (elegida === null ? 'otra' : String(elegida))));
+        if (cajaFin) cajaFin.hidden = elegida !== null && !$('.field--error', cajaFin);
+        const a = fecha(inicio.value), b = fecha(fin.value);
+        if (textoFin) {
+          textoFin.classList.toggle('is-error', !(a && b && b > a));
+          textoFin.innerHTML = a && b && b > a
+            ? `<i class="ph ph-flag-checkered"></i><span>Termina el <strong>${dia(b)}</strong> a las <strong>${hora(b)}</strong> · ${horas((b - a) / 36e5)}</span>`
+            : '<i class="ph ph-warning-circle"></i><span>La hora de término debe ser después del inicio.</span>';
+        }
+      };
+
+      // --- Agenda: avisa si ese día ya hay eventos o si se cruzan los horarios
+      const agenda = $('[data-disponibilidad]', form);
+      let espera, pedido = 0;
+      const pintarAgenda = eventos => {
+        const choques = eventos.filter(e => e.cruza);
+        agenda.hidden = false;
+        agenda.className = `span-2 disponibilidad ${choques.length ? 'is-choque' : eventos.length ? 'is-aviso' : 'is-libre'}`;
+        if (!eventos.length) {
+          agenda.innerHTML = '<i class="ph ph-check-circle"></i><div><strong>Día libre</strong><small>No tienes otros eventos ese día.</small></div>';
+          return;
+        }
+        const titulo = choques.length
+          ? `Se cruza con ${choques.length === 1 ? 'otro evento' : `${choques.length} eventos`}`
+          : `Ese día ya tienes ${eventos.length === 1 ? 'un evento' : `${eventos.length} eventos`}`;
+        agenda.innerHTML = `<i class="ph ${choques.length ? 'ph-warning' : 'ph-info'}"></i><div><strong>${titulo}</strong>${eventos.map(e =>
+          `<small class="${e.cruza ? 'is-cruza' : ''}"><i class="${e.icono}"></i>${escapeHtml(e.nombre)} · ${e.horario}${e.lugar ? ` · ${escapeHtml(e.lugar)}` : ''}${e.colaborador ? ` · ${escapeHtml(e.colaborador)}` : ''}</small>`).join('')
+        }<small class="disponibilidad__nota">Puedes guardarlo de todos modos.</small></div>`;
+      };
+      const revisarAgenda = () => {
+        if (!agenda || !inicio.value) return;
+        clearTimeout(espera);
+        espera = setTimeout(async () => {
+          const n = ++pedido;
+          const q = new URLSearchParams({ inicio: inicio.value, fin: fin.value, excepto: A.excepto || '' });
+          try {
+            const res = await fetch(`${A.disponibilidad}?${q}`, { headers: AJAX, credentials: 'same-origin' });
+            const datos = await res.json();
+            if (n === pedido) pintarAgenda(datos.eventos || []);
+          } catch (e) { agenda.hidden = true; }
+        }, 250);
+      };
+      botonesDuracion.forEach(b => b.addEventListener('click', () => {
+        elegida = b.dataset.horas === 'otra' ? null : Number(b.dataset.horas);
+        fijarFin();
+        pintarDuracion();
+        revisarAgenda();
+        actualizar();
+        if (elegida === null) fin.focus();
+      }));
+      ['input', 'change'].forEach(ev => {
+        inicio.addEventListener(ev, () => { fijarFin(); pintarDuracion(); revisarAgenda(); });
+        fin.addEventListener(ev, () => { pintarDuracion(); revisarAgenda(); });
+      });
+
+      // --- Lugares y clientes anteriores: panel de sugerencias bajo el campo; al elegir uno se completa lo que falte
+      const sinAcentos = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const sugerir = (input, items, { titulo, icono, texto, detalle }) => {
+        if (!input || !items.length) return;
+        const caja = input.closest('.field__control') || input.parentElement;
+        const panel = document.createElement('div');
+        panel.className = 'sugerencias';
+        panel.hidden = true;
+        panel.setAttribute('role', 'listbox');
+        caja.appendChild(panel);
+        let visibles = [], marcado = -1;
+        const cerrar = () => { panel.hidden = true; marcado = -1; };
+        const marcar = i => {
+          marcado = i;
+          $$('.sugerencia', panel).forEach((b, j) => b.classList.toggle('is-marcada', j === i));
+          const b = $$('.sugerencia', panel)[i];
+          if (b) b.scrollIntoView({ block: 'nearest' });
+        };
+        const elegir = item => {
+          input.value = texto(item);
+          avisar(input);
+          cerrar();
+        };
+        const pintar = () => {
+          const q = sinAcentos(input.value);
+          visibles = items.filter(x => !q || sinAcentos(texto(x)).includes(q) || sinAcentos(detalle(x)).includes(q)).slice(0, 6);
+          if (!visibles.length || (visibles.length === 1 && sinAcentos(texto(visibles[0])) === q)) { cerrar(); return; }
+          panel.innerHTML = `<div class="sugerencias__titulo">${titulo}</div>${visibles.map((x, i) =>
+            `<button type="button" class="sugerencia" role="option" data-i="${i}"><i class="${icono}"></i><span><strong>${escapeHtml(texto(x))}</strong>${detalle(x) ? `<small>${escapeHtml(detalle(x))}</small>` : ''}</span></button>`).join('')}`;
+          panel.hidden = false;
+          marcado = -1;
+        };
+        input.addEventListener('focus', pintar);
+        input.addEventListener('input', e => { if (e.isTrusted) pintar(); });
+        input.addEventListener('blur', () => setTimeout(cerrar, 120));
+        panel.addEventListener('mousedown', e => e.preventDefault()); // no perder el foco al hacer clic
+        panel.addEventListener('click', e => {
+          const b = e.target.closest('.sugerencia');
+          if (b) elegir(visibles[Number(b.dataset.i)]);
+        });
+        input.addEventListener('keydown', e => {
+          if (panel.hidden) return;
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            marcar((marcado + (e.key === 'ArrowDown' ? 1 : -1) + visibles.length) % visibles.length);
+          } else if (e.key === 'Enter' && marcado >= 0) {
+            e.preventDefault();
+            e.stopPropagation(); // que el asistente no avance de paso
+            elegir(visibles[marcado]);
+          } else if (e.key === 'Escape') {
+            e.stopPropagation(); // cierra las sugerencias, no el formulario
+            cerrar();
+          }
+        });
+      };
+      sugerir(campo('lugar'), A.lugares, {
+        titulo: 'Lugares que ya usaste', icono: 'ph ph-building', texto: l => l.lugar, detalle: l => l.direccion || '',
+      });
+      sugerir(campo('cliente_nombre'), A.clientes, {
+        titulo: 'Clientes anteriores', icono: 'ph ph-user', texto: c => c.nombre,
+        detalle: c => [c.telefono, c.email].filter(Boolean).join(' · '),
+      });
+      const completar = (n, v) => {
+        const el = campo(n);
+        if (!el || el.value || !v) return;
+        el.value = v;
+        avisar(el);
+        const caja = el.closest('.field');
+        if (caja) { caja.classList.remove('is-autollenado'); void caja.offsetWidth; caja.classList.add('is-autollenado'); }
+      };
+      const buscar = (lista, clave, texto) => lista.find(x => x[clave].toLowerCase() === texto.trim().toLowerCase());
+      const lugar = campo('lugar');
+      if (lugar) lugar.addEventListener('input', () => {
+        const l = buscar(A.lugares, 'lugar', lugar.value);
+        if (l) { completar('direccion', l.direccion); completar('url_mapa', l.url_mapa); }
+      });
+      const cliente = campo('cliente_nombre');
+      if (cliente) cliente.addEventListener('input', () => {
+        const c = buscar(A.clientes, 'nombre', cliente.value);
+        if (c) { completar('cliente_telefono', c.telefono); completar('cliente_email', c.email); }
+      });
+
+      // --- Enlace de Maps a partir del lugar y la dirección
+      const mapa = campo('url_mapa');
+      const abrirMapa = $('[data-mapa-abrir]', form);
+      const pintarMapa = () => { if (abrirMapa && mapa) { abrirMapa.hidden = !mapa.value; abrirMapa.href = mapa.value || '#'; } };
+      const generar = $('[data-mapa-generar]', form);
+      if (generar && mapa) generar.addEventListener('click', () => {
+        const q = [valor('lugar'), valor('direccion')].filter(Boolean).join(', ');
+        if (!q) { toast('Escribe primero el lugar o la dirección.', 'error'); return; }
+        mapa.value = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+        avisar(mapa);
+        pintarMapa();
+      });
+      if (mapa) mapa.addEventListener('input', pintarMapa);
+
+      // --- Anticipo y saldo (solo al crear)
+      const saldo = $('[data-saldo]', form);
+      const pintarSaldo = () => {
+        const precio = parseFloat(valor('precio_total')) || 0;
+        const anticipo = parseFloat(valor('anticipo')) || 0;
+        $$('[data-solo-con-anticipo]', form).forEach(el => { el.hidden = !(anticipo > 0); });
+        if (!saldo) return;
+        saldo.hidden = !precio;
+        if (!precio) return;
+        const pct = Math.min(100, Math.round(anticipo * 100 / precio));
+        saldo.classList.toggle('is-excede', anticipo > precio);
+        saldo.innerHTML = anticipo > precio
+          ? '<i class="ph ph-warning-circle"></i><span>El anticipo es mayor al precio total.</span>'
+          : `<div class="saldo__barra"><span style="width:${pct}%"></span></div><span>Por cobrar: <strong>${dinero(precio - anticipo)}</strong>${anticipo ? ` · ${pct}% pagado` : ''}</span>`;
+      };
+
+      // --- Servicios con un toque (los más usados por la agencia primero)
+      const servicios = campo('servicios');
+      const chips = $('[data-servicios-chips]', form);
+      const limpio = x => x.replace(/^[\s\-•]+/, '').trim();
+      const lineas = () => (servicios ? servicios.value.split('\n').map(limpio).filter(Boolean) : []);
+      const pintarChips = () => {
+        if (!chips) return;
+        const actuales = lineas().map(x => x.toLowerCase());
+        $$('[data-servicio]', chips).forEach(b => b.classList.toggle('is-on', actuales.includes(b.dataset.servicio.toLowerCase())));
+      };
+      if (chips && servicios) {
+        chips.innerHTML = A.servicios.map(x => `<button type="button" class="chip-opcion" data-servicio="${escapeHtml(x)}"><i class="ph ph-plus"></i><i class="ph ph-check"></i>${escapeHtml(x)}</button>`).join('');
+        chips.addEventListener('click', e => {
+          const b = e.target.closest('[data-servicio]');
+          if (!b) return;
+          const actuales = lineas();
+          const i = actuales.findIndex(x => x.toLowerCase() === b.dataset.servicio.toLowerCase());
+          if (i >= 0) actuales.splice(i, 1); else actuales.push(b.dataset.servicio);
+          servicios.value = actuales.join('\n');
+          avisar(servicios);
+        });
+        servicios.addEventListener('input', pintarChips);
+      }
+
+      // --- Itinerario sugerido (solo al crear): con las horas reales del evento
+      const vistaItinerario = $('[data-itinerario-preview]', form);
+      const actividades = () => {
+        if (!A.itinerarios) return [];
+        const a = fecha(inicio.value), b = fecha(fin.value);
+        const minutos = a && b ? (b - a) / 6e4 : Infinity;
+        return (A.itinerarios[valor('tipo_evento')] || A.itinerarios.otro)
+          .filter(([m]) => m < minutos).map(([m, titulo, icono]) => ({ hora: a ? hora(new Date(a.getTime() + m * 6e4)) : '', titulo, icono }));
+      };
+      const pintarItinerario = () => {
+        if (!vistaItinerario) return;
+        vistaItinerario.innerHTML = actividades().map(x => `<li><span>${x.hora}</span><i class="${x.icono}"></i>${escapeHtml(x.titulo)}</li>`).join('');
+      };
+
+      // --- Resumen final con accesos para cambiar cada parte
+      const resumen = $('[data-resumen-evento]', form);
+      const pasos = $$('[data-step]', form);
+      const pintarResumen = () => {
+        if (!resumen) return;
+        const tipo = valor('tipo_evento');
+        const marcado = form.querySelector('[name="tipo_evento"]:checked');
+        const icono = marcado ? $('i', marcado.closest('.tile')).className : 'ph ph-sparkle';
+        const etapa = form.querySelector('[name="etapa"]:checked');
+        const a = fecha(inicio.value), b = fecha(fin.value);
+        const precio = parseFloat(valor('precio_total')) || 0;
+        const anticipo = parseFloat(valor('anticipo')) || 0;
+        const fila = (ico, titulo, contenido, paso) => `<div class="resumen-evento__fila"><i class="${ico}"></i><div><small>${titulo}</small><span>${contenido || '<em>Pendiente</em>'}</span></div><button type="button" class="btn btn--ghost btn--sm" data-ir-paso="${paso}">Cambiar</button></div>`;
+        const lugarTxt = [valor('lugar'), valor('direccion')].filter(Boolean).map(escapeHtml).join(' · ');
+        const clienteTxt = [valor('cliente_nombre'), valor('cliente_telefono'), valor('cliente_email')].filter(Boolean).map(escapeHtml).join(' · ');
+        const lista = lineas();
+        let vivo = '';
+        if (campo('cooldown')) {
+          const envia = [['permitir_canciones', 'canciones'], ['permitir_saludos', 'saludos'], ['permitir_fotos', 'fotos']]
+            .filter(([n]) => campo(n) && campo(n).checked).map(([, txt]) => txt);
+          const limite = envia.includes('fotos') && valor('limite_fotos') ? ` (hasta ${valor('limite_fotos')} fotos)` : '';
+          vivo = campo('estado') && !campo('estado').checked ? 'Interacción apagada por ahora'
+            : envia.length ? `Reciben ${enLista(envia)}${limite}` : 'Sin envíos de los invitados';
+        }
+        const fondo = form.querySelector('[name="banner"]:checked');
+        const fondoTxt = fondo ? $('.thumb__name', fondo.closest('.thumb')).textContent.trim() : 'Sin fondo';
+        const invitados = valor('num_invitados');
+        resumen.innerHTML = `
+          <div class="resumen-evento__head" style="--tipo: var(--t-${tipo || 'otro'})">
+            <span class="resumen-evento__icono"><i class="${icono}"></i></span>
+            <div><strong>${escapeHtml(valor('nombre_evento')) || '<em>Sin nombre</em>'}</strong>
+              <small>${tipo ? A.tipos[tipo].nombre : 'Sin tipo'}${etapa ? ` · ${escapeHtml(etapa.closest('label').textContent.trim())}` : ''}</small></div>
+            <button type="button" class="btn btn--ghost btn--sm" data-ir-paso="0">Cambiar</button>
+          </div>
+          ${fila('ph ph-calendar-dots', 'Cuándo', a && b ? `${dia(a)} · ${hora(a)} a ${hora(b)} (${horas((b - a) / 36e5)})` : '', 1)}
+          ${fila('ph ph-map-pin', 'Dónde', lugarTxt + (invitados ? ` · ${escapeHtml(invitados)} invitados` : ''), 1)}
+          ${fila('ph ph-user', 'Cliente', clienteTxt, 2)}
+          ${fila('ph ph-hand-coins', 'Precio', precio ? `${dinero(precio)}${anticipo ? ` · anticipo ${dinero(anticipo)} · por cobrar ${dinero(Math.max(precio - anticipo, 0))}` : ''}` : '', 2)}
+          ${fila('ph ph-list-checks', 'Servicios', lista.length ? `${lista.length} · ${escapeHtml(enLista(lista.slice(0, 4)))}${lista.length > 4 ? '…' : ''}` : '', 2)}
+          ${fila(campo('cooldown') ? 'ph ph-broadcast' : 'ph ph-image', campo('cooldown') ? 'En vivo' : 'Fondo', campo('cooldown') ? `${vivo} · fondo: ${escapeHtml(fondoTxt)}` : escapeHtml(fondoTxt), 3)}`;
+      };
+      if (resumen) resumen.addEventListener('click', e => {
+        const b = e.target.closest('[data-ir-paso]');
+        if (b && pasos[b.dataset.irPaso]) pasos[b.dataset.irPaso].click();
+      });
+
+      const actualizar = () => { textosTipo(); pintarSaldo(); pintarChips(); pintarItinerario(); pintarResumen(); };
+      form.addEventListener('input', actualizar);
+      form.addEventListener('change', actualizar);
+      pintarDuracion();
+      pintarMapa();
+      actualizar();
+      revisarAgenda();
+    });
+  }
+
   function init(root = document) {
     initWizard(root);
     initDropzones(root);
@@ -561,6 +888,8 @@
     initSinLimite(root);
     initModulosPlan(root);
     initBolsaFotos(root);
+    initMostrarSi(root);
+    initAsistenteEvento(root);
   }
 
   /* ------------------------------------------------------------------ Acciones POST */

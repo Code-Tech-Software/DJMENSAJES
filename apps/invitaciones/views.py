@@ -382,7 +382,7 @@ def _contexto_publico(request, invitacion, invitado=None):
         'invitado': invitado,
         'inicio': inicio,
         'fin': fin,
-        'itinerario': evento.itinerario.all(),
+        'itinerario': evento.itinerario_en_orden(),
         'ubicaciones': invitacion.ubicaciones.all(),
         'menciones': invitacion.menciones.all(),
         'fotos': invitacion.fotos.all(),

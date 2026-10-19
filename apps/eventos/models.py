@@ -219,6 +219,11 @@ class Evento(models.Model):
     def duracion_horas(self):
         return round((self.fecha_fin_evento - self.fecha_inicio_evento).total_seconds() / 3600, 1)
 
+    def itinerario_en_orden(self):
+        """Actividades en el orden de la fiesta: las de la madrugada (antes de las 8:00) van después de las de la noche."""
+        inicio = timezone.localtime(self.fecha_inicio_evento).time()
+        return sorted(self.itinerario.all(), key=lambda a: (a.hora < inicio and a.hora.hour < 8, a.hora, a.pk))
+
     @property
     def lista_servicios(self):
         return [s.strip(' -•\t') for s in self.servicios.splitlines() if s.strip(' -•\t')]

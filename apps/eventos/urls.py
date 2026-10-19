@@ -10,6 +10,7 @@ urlpatterns = [
     path('calendario/datos/', views.api_calendario, name='api_calendario'),
     path('en-vivo/', views.centro_envivo, name='centro_envivo'),
     path('nuevo/', views.EventoCrear.as_view(), name='crear'),
+    path('disponibilidad/', views.disponibilidad, name='disponibilidad'),
 
     path('<int:pk>/', views.detalle, name='detalle'),
     path('<int:pk>/vista-rapida/', views.vista_rapida, name='vista_rapida'),

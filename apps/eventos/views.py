@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Lower
 from django.http import HttpResponse, JsonResponse
@@ -26,6 +27,7 @@ from apps.envivo.models import Mensaje
 from apps.envivo.servicios import notificar_evento, notificar_proyector
 from apps.invitaciones.models import Invitado
 
+from .asistente import crear_itinerario, eventos_cercanos
 from .forms import ActividadForm, EventoForm, PagoForm, ProyectorForm
 from .models import ActividadItinerario, Evento, Pago, TipoEvento
 
@@ -173,7 +175,7 @@ def detalle(request, pk):
         'rsvp': evento.invitados.resumen(),
         'mensajes_resumen': _resumen_mensajes(evento),
         'mensajes': evento.mensajes.all()[:60],
-        'itinerario': evento.itinerario.all(),
+        'itinerario': evento.itinerario_en_orden(),
         'pagos': evento.pagos.select_related('registrado_por'),
         'url_invitados': url_invitados,
         'url_pantalla': request.build_absolute_uri(evento.url_pantalla()),
@@ -185,6 +187,23 @@ def detalle(request, pk):
         'qr': qr_svg(url_invitados),
         'puede_eliminar': puede_eliminar(request.user, evento),
     })
+
+
+@login_required
+def disponibilidad(request):
+    """Para el formulario: qué otros eventos hay ese día o se cruzan con el horario elegido."""
+    inicio, fin = parse_datetime(request.GET.get('inicio', '')), parse_datetime(request.GET.get('fin', ''))
+    if inicio is None:
+        return JsonResponse({'eventos': []})
+    inicio = timezone.make_aware(inicio) if timezone.is_naive(inicio) else inicio
+    fin = (timezone.make_aware(fin) if fin and timezone.is_naive(fin) else fin) or inicio + timedelta(hours=1)
+    excepto = request.GET.get('excepto', '')
+    return JsonResponse({'eventos': [{
+        'nombre': e.nombre_evento, 'tipo': e.tipo_corto, 'icono': e.icono, 'lugar': e.lugar,
+        'horario': f'{timezone.localtime(e.fecha_inicio_evento):%H:%M} a {timezone.localtime(e.fecha_fin_evento):%H:%M}',
+        'dia': timezone.localtime(e.fecha_inicio_evento).date().isoformat(), 'cruza': cruza,
+        'colaborador': str(e.colaborador) if e.colaborador_id else '',
+    } for e, cruza in eventos_cercanos(request.user, inicio, fin, excepto=excepto if excepto.isdigit() else None)]})
 
 
 @login_required
@@ -203,7 +222,7 @@ def orden(request, pk):
     return render(request, 'eventos/orden.html', {
         'evento': evento,
         'pagos': evento.pagos.all(),
-        'itinerario': evento.itinerario.all(),
+        'itinerario': evento.itinerario_en_orden(),
         'folio': f'EP-{evento.pk:05d}',  # EP = EventPro
         'hoy': timezone.localdate(),
         'agencia': Ajustes.de(evento.agencia_id),
@@ -278,8 +297,19 @@ class EventoCrear(LimitePlanMixin, AsignarAgenciaMixin, EventoFormMixin, CreateV
         form.instance.creado_por = self.request.user
         if not self.request.user.ve_todo and self.request.user.colaborador_id:
             form.instance.colaborador_id = self.request.user.colaborador_id
-        self.object = form.save()
-        return respuesta_ok(self.request, f'¡Listo! "{self.object.nombre_evento}" fue creado.',
+        extras = []
+        with transaction.atomic():
+            self.object = form.save()
+            if form.cleaned_data.get('anticipo'):
+                Pago.objects.create(evento=self.object, monto=form.cleaned_data['anticipo'], referencia='Anticipo',
+                                    metodo=form.cleaned_data.get('anticipo_metodo') or Pago.Metodo.TRANSFERENCIA,
+                                    registrado_por=self.request.user)
+                extras.append('anticipo registrado')
+            if form.cleaned_data.get('itinerario_base'):
+                crear_itinerario(self.object)
+                extras.append('itinerario sugerido')
+        detalle = f' ({" e ".join(extras)})' if extras else ''
+        return respuesta_ok(self.request, f'¡Listo! "{self.object.nombre_evento}" fue creado{detalle}.',
                             redirect=self.object.get_absolute_url())
 
 

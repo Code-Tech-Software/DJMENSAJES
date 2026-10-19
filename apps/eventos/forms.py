@@ -3,13 +3,15 @@ from datetime import datetime, time, timedelta
 
 from django import forms
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.banners.models import Banner
 from apps.colaboradores.models import Colaborador
 from apps.core.modulos import MESES, bolsa_de, bolsa_del_mes, bolsa_por_mes, fotos_subidas, modulos_de
 
-from .models import ActividadItinerario, Evento, Pago
+from .asistente import DURACIONES, ETAPAS, ITINERARIOS, TEXTOS_TIPO, sugerencias
+from .models import ActividadItinerario, Evento, Pago, TipoEvento
 
 FORMATO_FECHA_HORA = '%Y-%m-%dT%H:%M'
 
@@ -19,6 +21,14 @@ def _fecha_hora(attrs=None):
 
 
 class EventoForm(forms.ModelForm):
+    # Solo al crear: el anticipo se registra como primer pago y el itinerario base según el tipo de evento
+    anticipo = forms.DecimalField(label='Anticipo recibido', required=False, min_value=0, max_digits=12, decimal_places=2,
+                                  widget=forms.NumberInput(attrs={'min': 0, 'step': '0.01', 'placeholder': '0.00'}))
+    anticipo_metodo = forms.ChoiceField(label='Cómo pagó', choices=Pago.Metodo.choices, initial=Pago.Metodo.TRANSFERENCIA,
+                                        required=False, widget=forms.RadioSelect)
+    itinerario_base = forms.BooleanField(label='Agregar el itinerario sugerido', required=False,
+                                         help_text='Lo puedes ajustar después en la pestaña Itinerario.')
+
     class Meta:
         model = Evento
         fields = [
@@ -82,11 +92,19 @@ class EventoForm(forms.ModelForm):
         # Opciones del proyector: si no llegan en el envío se conserva el valor actual (o el de fábrica)
         for campo in ('pantalla_contenido', 'pantalla_qr'):
             self.fields[campo].required = False
+        # Con la interacción apagada sus opciones se ocultan: el tiempo de espera no se exige (se conserva el actual)
+        self.fields['cooldown'].required = False
+        self.fields['estado'].help_text = ('Los invitados escanean el QR y te mandan canciones, saludos y fotos. '
+                                           'Puedes pausarla o activarla en cualquier momento.')
 
         # Lo que no incluye el plan de la agencia no se ofrece
         agencia = usuario.agencia if usuario and usuario.agencia_id else None
         self.modulos = modulos_de(agencia)
         quitar = self.CAMPOS_EN_VIVO if not self.modulos['en_vivo'] else (('permitir_fotos', 'limite_fotos') if not self.modulos['fotos'] else ())
+        if not self.modulos['subagencias']:
+            quitar += ('colaborador',)
+        if self.instance.pk:
+            quitar += ('anticipo', 'anticipo_metodo', 'itinerario_base')  # al editar se usan las pestañas Pagos e Itinerario
         for campo in quitar:
             self.fields.pop(campo, None)
 
@@ -115,6 +133,29 @@ class EventoForm(forms.ModelForm):
                 self.fields['limite_fotos'].help_text = ''
                 self.fields['limite_fotos'].widget.attrs.update({'max': total, 'data-bolsa-apartar': ''})
                 self.bolsa = self._bolsa_inicial(agencia, total)
+        self.duraciones = DURACIONES
+        # Sugerencias de lugares y clientes anteriores: el asistente muestra su propio panel (sin <datalist>,
+        # que el navegador dibuja con una flecha de menú aunque no haya nada que sugerir)
+        self.fields['lugar'].widget.attrs.update({'data-sugerencias': 'lugares', 'autocomplete': 'off'})
+        self.fields['cliente_nombre'].widget.attrs.update({'data-sugerencias': 'clientes', 'autocomplete': 'off'})
+        self.asistente = self._asistente(usuario)
+
+    def _asistente(self, usuario):
+        """Datos para que el formulario se adapte mientras se llena (ver initAsistenteEvento en em.js)."""
+        nombres = dict(TipoEvento.choices)
+        datos = {
+            'tipos': {t: {'nombre': nombres.get(t, ''), 'etiqueta': e, 'ejemplo': ej, 'ayuda': a} for t, (e, ej, a) in TEXTOS_TIPO.items()},
+            'etapas': ETAPAS,
+            'duraciones': DURACIONES,
+            'disponibilidad': reverse('eventos:disponibilidad'),
+            'excepto': self.instance.pk,
+            'modulos': self.modulos,
+            **(sugerencias(usuario) if usuario and usuario.is_authenticated else {'lugares': [], 'clientes': [], 'servicios': []}),
+        }
+        if 'itinerario_base' in self.fields:
+            datos['itinerarios'] = {t: [(m, titulo, ActividadItinerario.ICONOS[icono]) for m, titulo, icono in lista]
+                                    for t, lista in ITINERARIOS.items()}
+        return json.dumps(datos)
 
     def _bolsa_inicial(self, agencia, total):
         """Libres por mes (para que el formulario lo actualice al cambiar la fecha) y el mes de la fecha actual."""
@@ -146,12 +187,17 @@ class EventoForm(forms.ModelForm):
         if inicio and fin and fin <= inicio:
             self.add_error('fecha_fin_evento', 'La hora de término debe ser posterior al inicio.')
         cooldown = datos.get('cooldown')
-        if cooldown is not None and cooldown < 0:
+        if cooldown is None and 'cooldown' in self.fields:
+            datos['cooldown'] = self.instance.cooldown if self.instance.cooldown is not None else 2
+        elif cooldown is not None and cooldown < 0:
             self.add_error('cooldown', 'No puede ser negativo.')
         if datos.get('precio_total') is not None and datos['precio_total'] < 0:
             self.add_error('precio_total', 'No puede ser negativo.')
         if 'limite_fotos' in self.fields:
             self._validar_fotos(datos)
+        anticipo, precio = datos.get('anticipo'), datos.get('precio_total')
+        if anticipo and precio is not None and anticipo > precio:
+            self.add_error('anticipo', 'El anticipo no puede ser mayor al precio total.' if precio else 'Escribe primero el precio total.')
         if not self.modulos['fotos']:
             self.instance.permitir_fotos = False  # sin fotos en el plan no se reciben
         return datos
