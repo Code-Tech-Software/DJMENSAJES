@@ -1,0 +1,8 @@
+{# Qué secciones incluye el plan (modulos = modulos.lista_modulos(agencia)) #}
+<div class="modulos-plan">
+    {% for m in modulos %}
+    <div class="modulos-plan__item {% if not m.incluido %}is-fuera{% endif %}" data-tip="{{ m.descripcion }}">
+        <i class="{% if m.incluido %}ph-fill ph-check-circle{% else %}ph ph-x-circle{% endif %}"></i><span>{{ m.nombre }}</span>
+    </div>
+    {% endfor %}
+</div>

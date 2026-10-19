@@ -22,14 +22,14 @@
             </div>
             <div class="row row-wrap mt-3">
                 <button class="btn btn--primary" data-modal="{% url 'eventos:editar' evento.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
-                <a class="btn" href="{% url 'invitaciones:panel' evento.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a>
+                {% if modulos.invitaciones %}<a class="btn" href="{% url 'invitaciones:panel' evento.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a>{% endif %}
                 <a class="btn" href="{% url 'eventos:orden' evento.pk %}" target="_blank"><i class="ph ph-printer"></i>Orden de servicio</a>
                 <div class="dropdown">
                     <button class="btn" data-dropdown aria-label="Más acciones"><i class="ph ph-dots-three"></i></button>
                     <div class="dropdown__menu dropdown__menu--left">
                         <button class="menu-item" data-post="{% url 'eventos:duplicar' evento.pk %}" data-confirm="¿Duplicar este evento?" data-confirm-text="Se copiarán los datos y el itinerario como una nueva cotización."><i class="ph ph-copy"></i>Duplicar evento</button>
-                        <a class="menu-item" href="{% url 'eventos:qr_png' evento.pk %}"><i class="ph ph-download-simple"></i>Descargar QR (PNG)</a>
-                        <a class="menu-item" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ph ph-scan"></i>Registro de entrada</a>
+                        {% if modulos.en_vivo %}<a class="menu-item" href="{% url 'eventos:qr_png' evento.pk %}"><i class="ph ph-download-simple"></i>Descargar QR (PNG)</a>{% endif %}
+                        {% if modulos.invitaciones %}<a class="menu-item" href="{% url 'invitaciones:checkin' evento.pk %}"><i class="ph ph-scan"></i>Registro de entrada</a>{% endif %}
                         {% if puede_eliminar %}
                         <div class="menu-sep"></div>
                         <button class="menu-item menu-item--danger" data-post="{% url 'eventos:eliminar' evento.pk %}" data-danger data-confirm="¿Eliminar “{{ evento.nombre_evento }}”?" data-confirm-text="Se eliminarán sus invitados, mensajes, itinerario y pagos. No se puede deshacer."><i class="ph ph-trash"></i>Eliminar evento</button>
@@ -49,8 +49,9 @@
     </div>
 </section>
 
-{# ---------------- Accesos en vivo ---------------- #}
-<div class="grid grid-4 mt-3 reveal">
+{# ---------------- Accesos en vivo (si el plan incluye la experiencia en vivo) ---------------- #}
+{% if modulos.en_vivo %}
+<div class="grid {% if modulos.album %}grid-4{% else %}grid-3{% endif %} mt-3 reveal">
     <div class="live-tile">
         <div class="live-tile__head"><span class="stat__icon"><i class="ph ph-device-mobile"></i></span>
             <div><h3>Pantalla de invitados</h3><p>Se abre al escanear el QR</p></div></div>
@@ -82,31 +83,34 @@
             </label>
         </div>
     </div>
+    {% if modulos.album %}
     <div class="live-tile tone-album">
         <div class="live-tile__head"><span class="stat__icon"><i class="ph ph-images"></i></span>
-            <div><h3>Álbum digital</h3><p>{{ mensajes_resumen.fotos_album }} foto{{ mensajes_resumen.fotos_album|pluralize }} · {{ mensajes_resumen.saludos }} mensaje{{ mensajes_resumen.saludos|pluralize }}{% if mensajes_resumen.fotos_por_revisar %} · <strong>{{ mensajes_resumen.fotos_por_revisar }} por revisar</strong>{% endif %}</p></div></div>
+            <div><h3>Álbum digital</h3><p>{{ mensajes_resumen.fotos_album }} foto{{ mensajes_resumen.fotos_album|pluralize }} · {{ mensajes_resumen.saludos }} mensaje{{ mensajes_resumen.saludos|pluralize }}{% if mensajes_resumen.fotos_por_revisar %} · <strong>{{ mensajes_resumen.fotos_por_revisar }} por revisar</strong>{% endif %}{% if limite_fotos %} · <span {% if fotos_subidas >= limite_fotos %}class="text-danger strong"{% endif %}>{{ fotos_subidas }}/{{ limite_fotos }} fotos</span>{% endif %}</p></div></div>
         <div class="copy-field"><code>{{ url_album }}</code><button class="icon-btn icon-btn--sm" data-copy="{{ url_album }}" data-copy-msg="Enlace del álbum copiado" aria-label="Copiar"><i class="ph ph-copy"></i></button></div>
         <div class="live-tile__actions">
             <a class="btn btn--sm grow" href="{{ url_album }}" target="_blank"><i class="ph ph-arrow-square-out"></i>Ver</a>
             <a class="btn btn--sm btn--whatsapp grow" target="_blank" href="https://wa.me/?text={{ "Aquí están las fotos y mensajes del evento: "|urlencode }}{{ url_album|urlencode }}"><i class="ph ph-whatsapp-logo"></i>Enviar</a>
-            {% if evento.permitir_fotos %}<a class="icon-btn icon-btn--sm icon-btn--bordered" href="{{ url_pantalla_fotos }}" target="_blank" data-tip="Carrusel de fotos" aria-label="Carrusel de fotos"><i class="ph ph-slideshow"></i></a>{% endif %}
+            {% if evento.permitir_fotos and modulos.fotos %}<a class="icon-btn icon-btn--sm icon-btn--bordered" href="{{ url_pantalla_fotos }}" target="_blank" data-tip="Carrusel de fotos" aria-label="Carrusel de fotos"><i class="ph ph-slideshow"></i></a>{% endif %}
         </div>
     </div>
+    {% endif %}
 </div>
+{% endif %}
 
 {# ---------------- Pestañas ---------------- #}
 <div class="mt-4" data-tabs-scope>
     <nav class="tabs" data-tabs data-tabs-hash>
         <a href="#resumen" class="tab is-active" data-tab="resumen"><i class="ph ph-squares-four"></i>Resumen</a>
-        <a href="#invitados" class="tab" data-tab="invitados"><i class="ph ph-user-list"></i>Invitados<span class="count">{{ rsvp.total|default:0 }}</span></a>
+        {% if modulos.invitaciones %}<a href="#invitados" class="tab" data-tab="invitados"><i class="ph ph-user-list"></i>Invitados<span class="count">{{ rsvp.total|default:0 }}</span></a>{% endif %}
         <a href="#itinerario" class="tab" data-tab="itinerario"><i class="ph ph-clock"></i>Itinerario<span class="count">{{ itinerario|length }}</span></a>
-        <a href="#mensajes" class="tab" data-tab="mensajes"><i class="ph ph-chats"></i>Mensajes<span class="count">{{ mensajes_resumen.total }}</span></a>
+        {% if modulos.en_vivo %}<a href="#mensajes" class="tab" data-tab="mensajes"><i class="ph ph-chats"></i>Mensajes<span class="count">{{ mensajes_resumen.total }}</span></a>{% endif %}
         <a href="#pagos" class="tab" data-tab="pagos"><i class="ph ph-wallet"></i>Pagos</a>
     </nav>
 
     {# Resumen #}
     <section class="tab-panel" data-panel="resumen">
-        <div class="grid grid-sidebar">
+        <div class="grid{% if modulos.en_vivo %} grid-sidebar{% endif %}">
             <div class="stack">
                 <div class="card card--pad">
                     <div class="card-title mb-3"><span class="ico"><i class="ph ph-info"></i></span><h3>Información general</h3></div>
@@ -135,6 +139,7 @@
                     </div>
                 </div>
             </div>
+            {% if modulos.en_vivo %}
             <div class="stack">
                 <div class="card card--pad center">
                     <h3 style="font-size:15px">QR para invitados</h3>
@@ -151,7 +156,7 @@
                     <div class="stack small" style="gap:9px">
                         <div class="row between"><span class="text-2">Saludos</span>{% if evento.permitir_saludos %}<span class="chip chip--success">Sí</span>{% else %}<span class="chip chip--muted">No</span>{% endif %}</div>
                         <div class="row between"><span class="text-2">Canciones</span>{% if evento.permitir_canciones %}<span class="chip chip--success">Sí</span>{% else %}<span class="chip chip--muted">No</span>{% endif %}</div>
-                        <div class="row between"><span class="text-2">Fotos</span>{% if evento.permitir_fotos %}<span class="chip chip--success">Sí</span>{% else %}<span class="chip chip--muted">No</span>{% endif %}</div>
+                        {% if modulos.fotos %}<div class="row between"><span class="text-2">Fotos</span>{% if evento.permitir_fotos %}<span class="chip chip--success">Sí{% if limite_fotos %} · hasta {{ limite_fotos }}{% endif %}</span>{% else %}<span class="chip chip--muted">No</span>{% endif %}</div>{% endif %}
                         <div class="row between"><span class="text-2">Espera entre mensajes</span><strong>{{ evento.cooldown|floatformat:"-1" }} min</strong></div>
                         <div class="row between"><span class="text-2">Moderar proyector</span><strong>{{ evento.moderar_pantalla|yesno:"Sí,No" }}</strong></div>
                         <div class="row between"><span class="text-2">El proyector muestra</span><strong>{{ evento.get_pantalla_contenido_display }}</strong></div>
@@ -160,9 +165,11 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
     </section>
 
+    {% if modulos.invitaciones %}
     {# Invitados #}
     <section class="tab-panel" data-panel="invitados" hidden>
         <div class="grid grid-sidebar">
@@ -188,6 +195,8 @@
             </div>
         </div>
     </section>
+
+    {% endif %}
 
     {# Itinerario #}
     <section class="tab-panel" data-panel="itinerario" hidden>
@@ -220,6 +229,7 @@
         </div>
     </section>
 
+    {% if modulos.en_vivo %}
     {# Mensajes #}
     <section class="tab-panel" data-panel="mensajes" hidden>
         <div class="grid grid-sidebar">
@@ -264,6 +274,8 @@
             </div>
         </div>
     </section>
+
+    {% endif %}
 
     {# Pagos #}
     <section class="tab-panel" data-panel="pagos" hidden>

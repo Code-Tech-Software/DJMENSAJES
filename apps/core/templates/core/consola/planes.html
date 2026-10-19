@@ -1,17 +1,37 @@
 {% extends 'layouts/consola.html' %}
-{% load ui %}
+{% load ui humanize %}
 {% block title %}Planes · Consola EventPro{% endblock %}
 {% block head %}
 <style>
-    .planes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-    .plan-card { display: flex; flex-direction: column; gap: 14px; }
-    .plan-card.is-inactivo { opacity: .65; }
-    .plan-card__precio { font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
-    .plan-card__precio small { font-size: 14px; font-weight: 600; color: var(--text-3); }
-    .plan-card__limites { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
-    .plan-card__limites div { display: flex; align-items: center; gap: 8px; }
-    .plan-card__limites i { font-size: 17px; color: var(--brand); }
-    .plan-card__pie { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .planes { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; align-items: stretch; }
+    .plan { display: flex; flex-direction: column; overflow: hidden; }
+    .plan__head { padding: 20px 20px 18px; background: linear-gradient(180deg, var(--brand-soft), transparent); border-bottom: 1px solid var(--border); }
+    .plan.is-retirado .plan__head { background: var(--surface-2); }
+    .plan__nombre { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .plan__nombre h3 { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+    .plan__desc { margin-top: 3px; font-size: 13px; color: var(--text-3); min-height: 18px; }
+    .plan__precio { margin-top: 14px; font-size: 32px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+    .plan__precio small { font-size: 13.5px; font-weight: 600; color: var(--text-3); letter-spacing: 0; }
+    .plan__agencias { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 10px; border-radius: var(--r-full); background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; font-weight: 650; color: var(--text-2); }
+    .plan__agencias:hover { border-color: var(--brand); color: var(--brand); }
+    .plan__agencias i { font-size: 15px; }
+    .plan__bloque { padding: 16px 20px 4px; }
+    .plan__subtitulo { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+    .plan__subtitulo span { letter-spacing: 0; text-transform: none; font-weight: 650; }
+    .plan__capacidad div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; font-size: 13.5px; border-bottom: 1px dashed var(--border); }
+    .plan__capacidad div:last-child { border-bottom: 0; }
+    .plan__capacidad dt { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+    .plan__capacidad dt i { font-size: 16px; color: var(--brand); }
+    .plan__capacidad dd { margin: 0; font-weight: 750; text-align: right; }
+    .plan__capacidad dd.is-libre { color: var(--success); }
+    .plan__capacidad dd.is-no { font-weight: 500; color: var(--text-3); }
+    .plan__incluye { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; font-size: 13.5px; }
+    .plan__incluye li { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 600; }
+    .plan__incluye li i { font-size: 17px; color: var(--success); flex-shrink: 0; }
+    .plan__incluye li.is-fuera { color: var(--text-3); font-weight: 500; }
+    .plan__incluye li.is-fuera i { color: var(--border-strong); }
+    .plan__pie { display: flex; align-items: center; gap: 8px; margin-top: auto; padding: 16px 20px 20px; }
+    .plan__pie .btn { flex: 1; justify-content: center; }
 </style>
 {% endblock %}
 {% block content %}
@@ -19,7 +39,7 @@
     <div class="page-head__title">
         <div class="breadcrumb"><a href="{% url 'plataforma:dashboard' %}">Consola</a><i class="ph ph-caret-right"></i>Ingresos</div>
         <h1>Planes</h1>
-        <p>Lo que ofreces a las agencias: precio de referencia y límites. Deja un límite vacío para que no tenga tope.</p>
+        <p>Lo que ofreces a las agencias: precio de referencia, capacidad y qué secciones incluye cada plan.</p>
     </div>
     <div class="page-head__actions">
         <button class="btn btn--primary" data-modal="{% url 'plataforma:plan_crear' %}"><i class="ph ph-plus"></i>Nuevo plan</button>
@@ -29,23 +49,34 @@
 {% if planes %}
 <div class="planes reveal">
     {% for p in planes %}
-    <div class="card card--pad plan-card {% if not p.activo %}is-inactivo{% endif %}">
-        <div class="row between"><h3 style="font-size:17px">{{ p.nombre }}</h3>{% if not p.activo %}<span class="chip chip--muted">Retirado</span>{% endif %}</div>
-        {% if p.descripcion %}<p class="small muted" style="margin-top:-8px">{{ p.descripcion }}</p>{% endif %}
-        <div class="plan-card__precio">{{ p.precio_mensual|moneda }}<small> /mes</small></div>
-        <div class="plan-card__limites">
-            <div><i class="ph ph-sparkle"></i>{% if p.max_eventos_mes %}{{ p.max_eventos_mes }} evento{{ p.max_eventos_mes|pluralize }} al mes{% else %}Eventos ilimitados{% endif %}</div>
-            <div><i class="ph ph-users"></i>{% if p.max_usuarios %}{{ p.max_usuarios }} usuario{{ p.max_usuarios|pluralize }}{% else %}Usuarios ilimitados{% endif %}</div>
-            <div><i class="ph ph-users-three"></i>{% if p.max_colaboradores is not None %}{{ p.max_colaboradores }} sub-agencia{{ p.max_colaboradores|pluralize }}{% else %}Sub-agencias ilimitadas{% endif %}</div>
+    <article class="card plan {% if not p.activo %}is-retirado{% endif %}">
+        <header class="plan__head">
+            <div class="plan__nombre"><h3>{{ p.nombre }}</h3>{% if not p.activo %}<span class="chip chip--muted">Retirado</span>{% endif %}</div>
+            <p class="plan__desc">{{ p.descripcion }}</p>
+            <div class="plan__precio">{{ p.precio_mensual|moneda }}<small> /mes</small></div>
+            <a class="plan__agencias" href="{% url 'plataforma:agencias' %}?plan={{ p.pk|stringformat:'d' }}"><i class="ph ph-buildings"></i>{{ p.n_agencias }} agencia{{ p.n_agencias|pluralize }}{% if p.n_agencias and p.n_activas != p.n_agencias %} · {{ p.n_activas }} activa{{ p.n_activas|pluralize }}{% endif %}</a>
+        </header>
+        <div class="plan__bloque">
+            <div class="plan__subtitulo">Capacidad</div>
+            <dl class="plan__capacidad">
+                <div><dt><i class="ph ph-sparkle"></i>Eventos al mes</dt>{% if p.max_eventos_mes %}<dd>{{ p.max_eventos_mes }}</dd>{% else %}<dd class="is-libre">Sin límite</dd>{% endif %}</div>
+                <div><dt><i class="ph ph-users"></i>Usuarios</dt>{% if p.max_usuarios %}<dd>{{ p.max_usuarios }}</dd>{% else %}<dd class="is-libre">Sin límite</dd>{% endif %}</div>
+                <div><dt><i class="ph ph-images"></i>Fotos al mes</dt>{% if not p.con_fotos_invitados %}<dd class="is-no">No incluye</dd>{% elif p.max_fotos_mes %}<dd>{{ p.max_fotos_mes|intcomma }}</dd>{% else %}<dd class="is-libre">Sin límite</dd>{% endif %}</div>
+                <div><dt><i class="ph ph-users-three"></i>Sub-agencias</dt>{% if p.max_colaboradores == 0 %}<dd class="is-no">No incluye</dd>{% elif p.max_colaboradores %}<dd>{{ p.max_colaboradores }}</dd>{% else %}<dd class="is-libre">Sin límite</dd>{% endif %}</div>
+            </dl>
         </div>
-        <div class="plan-card__pie">
-            <a class="small strong text-brand" href="{% url 'plataforma:agencias' %}?plan={{ p.pk|stringformat:'d' }}">{{ p.n_agencias }} agencia{{ p.n_agencias|pluralize }}</a>
-            <div class="row">
-                <button class="btn btn--sm" data-modal="{% url 'plataforma:plan_editar' p.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
-                {% if not p.n_agencias %}<button class="icon-btn icon-btn--sm" data-post="{% url 'plataforma:plan_eliminar' p.pk %}" data-danger data-confirm="¿Eliminar el plan {{ p.nombre }}?" data-confirm-button="Eliminar" aria-label="Eliminar"><i class="ph ph-trash"></i></button>{% endif %}
-            </div>
+        <div class="plan__bloque">
+            <div class="plan__subtitulo">Incluye <span>{{ p.n_incluidos }} de {{ n_modulos }}</span></div>
+            <ul class="plan__incluye">
+                {% for m in p.modulos %}<li {% if not m.incluido %}class="is-fuera"{% endif %}><i class="{% if m.incluido %}ph-fill ph-check-circle{% else %}ph ph-minus-circle{% endif %}"></i>{{ m.nombre }}</li>{% endfor %}
+                <li {% if p.max_colaboradores == 0 %}class="is-fuera"{% endif %}><i class="{% if p.max_colaboradores != 0 %}ph-fill ph-check-circle{% else %}ph ph-minus-circle{% endif %}"></i>Sub-agencias</li>
+            </ul>
         </div>
-    </div>
+        <footer class="plan__pie">
+            <button class="btn" data-modal="{% url 'plataforma:plan_editar' p.pk %}"><i class="ph ph-pencil-simple"></i>Editar plan</button>
+            {% if not p.n_agencias %}<button class="icon-btn" data-post="{% url 'plataforma:plan_eliminar' p.pk %}" data-danger data-confirm="¿Eliminar el plan {{ p.nombre }}?" data-confirm-button="Eliminar" aria-label="Eliminar plan"><i class="ph ph-trash"></i></button>{% endif %}
+        </footer>
+    </article>
     {% endfor %}
 </div>
 {% if sin_plan %}<p class="small muted mt-3"><i class="ph ph-info"></i> {{ sin_plan }} agencia{{ sin_plan|pluralize }} sin plan: no tienen límites. <a class="text-brand" href="{% url 'plataforma:agencias' %}?plan=sin">Verlas</a></p>{% endif %}
@@ -54,7 +85,7 @@
     <div class="empty">
         <div class="empty__art"><i class="ph ph-stack"></i></div>
         <h3>Arma tus planes</h3>
-        <p>Por ejemplo: Básico (4 eventos al mes, 2 usuarios), Pro (15 eventos, 5 usuarios) y Agencia (sin límites). Asígnalos al crear o editar una agencia.</p>
+        <p>Por ejemplo: Calendario (solo agenda), Básico (invitaciones y en vivo), Pro (con fotos y álbum) y Agencia (todo, sin límites). Asígnalos al crear o editar una agencia.</p>
         <button class="btn btn--primary" data-modal="{% url 'plataforma:plan_crear' %}"><i class="ph ph-plus"></i>Nuevo plan</button>
     </div>
 </div>

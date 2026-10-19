@@ -18,6 +18,7 @@ from django.views.generic import CreateView, UpdateView
 
 from apps.colaboradores.models import Colaborador
 from apps.core.limites import LimitePlanMixin, bloquear_si_lleno
+from apps.core.modulos import fotos_subidas, limite_fotos
 from apps.core.mixins import AsignarAgenciaMixin, FormularioModalMixin, es_ajax, respuesta_ok
 from apps.core.models import Ajustes
 from apps.core.utils import generar_codigo, generar_token, qr_svg
@@ -179,6 +180,8 @@ def detalle(request, pk):
         'url_dj': request.build_absolute_uri(evento.url_dj()),
         'url_album': request.build_absolute_uri(evento.url_album()),
         'url_pantalla_fotos': request.build_absolute_uri(evento.url_pantalla_fotos()),
+        'limite_fotos': limite_fotos(evento),
+        'fotos_subidas': fotos_subidas(evento),
         'qr': qr_svg(url_invitados),
         'puede_eliminar': puede_eliminar(request.user, evento),
     })

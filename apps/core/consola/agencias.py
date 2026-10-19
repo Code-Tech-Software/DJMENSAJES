@@ -17,6 +17,7 @@ from apps.invitaciones.models import Invitado
 
 from ..bitacora import Accion, registrar
 from ..limites import uso
+from ..modulos import lista_modulos
 from ..mixins import FormularioModalMixin, respuesta_ok
 from ..models import Agencia, Ajustes, Plan
 from . import PlataformaMixin, clave_temporal, recordar_acceso, slug_para, solo_plataforma, sumar_meses, tomar_acceso
@@ -80,6 +81,7 @@ def agencia(request, pk):
         'pagos': agencia.pagos.select_related('registrado_por')[:60],
         'actividad': agencia.bitacora.select_related('actor', 'usuario')[:60],
         'uso': uso(agencia),
+        'modulos': lista_modulos(agencia),
         'ajustes': Ajustes.de(agencia),
         'stats': {
             'eventos': eventos.count(),

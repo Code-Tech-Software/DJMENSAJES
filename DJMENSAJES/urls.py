@@ -9,6 +9,7 @@ from apps.banners import urls as urls_banners
 from apps.colaboradores import urls as urls_colaboradores
 from apps.core import urls as urls_core
 from apps.core.acceso import agencia_vigente, decorar_urls
+from apps.core.modulos import requiere_modulo
 from apps.cuentas import urls as urls_cuentas
 from apps.eventos import urls as urls_eventos
 from apps.invitaciones import urls as urls_invitaciones
@@ -21,6 +22,11 @@ admin.site.index_title = 'Panel técnico'
 for modulo in (urls_core, urls_eventos, urls_colaboradores, urls_banners, urls_invitaciones):
     decorar_urls(modulo.urlpatterns, agencia_vigente)
 decorar_urls(urls_cuentas.urlpatterns, agencia_vigente, excepto={'login', 'logout'})
+
+# Secciones que dependen del plan de la agencia. Ver apps/core/modulos.py
+decorar_urls(urls_invitaciones.urlpatterns, requiere_modulo('invitaciones'))
+decorar_urls(urls_banners.urlpatterns, requiere_modulo('banners'))
+decorar_urls(urls_eventos.urlpatterns, requiere_modulo('en_vivo'), solo={'centro_envivo', 'proyector', 'qr_png', 'alternar_estado'})
 
 urlpatterns = [
     path('admin/', admin.site.urls),

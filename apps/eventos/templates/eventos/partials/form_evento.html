@@ -8,7 +8,7 @@
     <button type="button" class="step" data-step><span><i class="ph ph-sparkle"></i>Evento</span></button>
     <button type="button" class="step" data-step><span><i class="ph ph-map-pin-line"></i>Fecha y lugar</span></button>
     <button type="button" class="step" data-step><span><i class="ph ph-user-circle"></i>Cliente</span></button>
-    <button type="button" class="step" data-step><span><i class="ph ph-broadcast"></i>En vivo</span></button>
+    <button type="button" class="step" data-step><span>{% if form.cooldown %}<i class="ph ph-broadcast"></i>En vivo{% else %}<i class="ph ph-image"></i>Fondo{% endif %}</span></button>
 </div>
 {% endblock %}
 
@@ -97,6 +97,7 @@
         </div>
     </div>
 
+    {% if form.cooldown %}{# Solo si el plan incluye la experiencia en vivo #}
     <div class="form-grid mt-3">
         {% campo form.estado clase="span-2" %}
         {% campo form.mensaje_bienvenida icono="ph ph-hand-waving" clase="span-2" %}
@@ -104,11 +105,25 @@
         {% campo form.cooldown icono="ph ph-timer" %}
         {% campo form.permitir_canciones %}
         {% campo form.permitir_saludos %}
-        {% campo form.permitir_fotos %}
+        {% if form.permitir_fotos %}{% campo form.permitir_fotos %}{% endif %}
         {% campo form.moderar_pantalla %}
+        {% if form.limite_fotos %}
+        <div class="span-2 stack" style="gap:8px">
+            {% campo form.limite_fotos icono="ph ph-images" %}
+            {% if form.bolsa %}{# Bolsa de fotos al mes del plan: cuántas quedan en el mes del evento #}
+            <div class="bolsa-fotos" data-bolsa-fotos="{{ form.bolsa.json }}">
+                <div class="bolsa-fotos__barra" aria-hidden="true">
+                    <span class="bolsa-fotos__ocupadas" style="width:{% widthratio form.bolsa.ocupadas form.bolsa.total 100 %}%"></span><span class="bolsa-fotos__este"></span>
+                </div>
+                <small class="bolsa-fotos__texto" data-bolsa-texto>Bolsa de {{ form.bolsa.mes }}: quedan <strong>{{ form.bolsa.libres }}</strong> de {{ form.bolsa.total }} fotos. Vacío = usa lo que quede libre del mes.</small>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
         {% campo form.pantalla_contenido icono="ph ph-projector-screen" %}
         {% campo form.pantalla_qr icono="ph ph-qr-code" %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 

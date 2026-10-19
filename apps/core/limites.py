@@ -1,11 +1,13 @@
 """
-Límites del plan de cada agencia: eventos al mes, usuarios activos y sub-agencias.
+Límites del plan de cada agencia: eventos al mes, usuarios activos y sub-agencias (la bolsa de fotos al mes
+vive en modulos.py y aquí solo se muestra su uso).
 Sin plan, o con el límite vacío, no hay límite. Al llegar al tope ya no se puede crear más de eso.
 """
 from django.utils import timezone
 
 from .bitacora import Accion, registrar
 from .mixins import respuesta_error
+from .modulos import bolsa_del_mes, tiene
 
 PORCENTAJE_AVISO = 80
 
@@ -31,19 +33,24 @@ RECURSOS = {
 }
 
 
+def _fila(recurso, etiqueta, icono, usado, limite):
+    porcentaje = min(100, round(usado * 100 / limite)) if limite else 0
+    return {
+        'recurso': recurso, 'etiqueta': etiqueta, 'icono': icono, 'usado': usado, 'limite': limite,
+        'porcentaje': porcentaje, 'lleno': bool(limite is not None and usado >= limite),
+        'cerca': bool(limite and porcentaje >= PORCENTAJE_AVISO),
+    }
+
+
 def uso(agencia):
     """Cuánto usa la agencia de cada límite de su plan (para barras de uso)."""
     plan = agencia.plan if agencia and agencia.plan_id else None
-    filas = []
-    for recurso, (campo, etiqueta, icono) in RECURSOS.items():
-        limite = getattr(plan, campo) if plan else None
-        usado = _contar(agencia, recurso)
-        porcentaje = min(100, round(usado * 100 / limite)) if limite else 0
-        filas.append({
-            'recurso': recurso, 'etiqueta': etiqueta, 'icono': icono, 'usado': usado, 'limite': limite,
-            'porcentaje': porcentaje, 'lleno': bool(limite is not None and usado >= limite),
-            'cerca': bool(limite and porcentaje >= PORCENTAJE_AVISO),
-        })
+    filas = [_fila(recurso, etiqueta, icono, _contar(agencia, recurso), getattr(plan, campo) if plan else None)
+             for recurso, (campo, etiqueta, icono) in RECURSOS.items()]
+    if plan is not None and plan.max_fotos_mes is not None and tiene(agencia, 'fotos'):
+        hoy = timezone.localdate()
+        bolsa = bolsa_del_mes(agencia, hoy.year, hoy.month)
+        filas.append(_fila('fotos', 'Fotos apartadas este mes', 'ph ph-images', bolsa['ocupadas'], bolsa['total']))
     return filas
 
 

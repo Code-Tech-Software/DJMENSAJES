@@ -1,0 +1,15 @@
+{% extends 'layouts/app.html' %}
+{% block title %}No incluido en tu plan{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;margin:40px auto 0">
+    <div class="empty">
+        <div class="empty__art"><i class="{% if modulo %}{{ modulo.2 }}{% else %}ph ph-lock-key{% endif %}"></i></div>
+        <h3>{% if modulo %}{{ modulo.1 }} no está en tu plan{% else %}Esta sección no está en tu plan{% endif %}</h3>
+        <p>{% if modulo %}{{ modulo.3 }} {% endif %}Para agregarlo, escríbele a EventPro y amplía tu plan.</p>
+        <div class="row" style="justify-content:center">
+            <a class="btn" href="{% url 'core:dashboard' %}"><i class="ph ph-house"></i>Ir al inicio</a>
+            {% if contacto.whatsapp_url %}<a class="btn btn--whatsapp" href="{{ contacto.whatsapp_url }}?text={% if modulo %}{{ 'Hola, quiero agregar '|urlencode }}{{ modulo.1|urlencode }}{{ ' a mi plan de EventPro'|urlencode }}{% else %}{{ 'Hola, quiero ampliar mi plan de EventPro'|urlencode }}{% endif %}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Escribir a EventPro</a>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

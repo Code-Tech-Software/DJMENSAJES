@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, time, timedelta
 
 from django import forms
@@ -6,6 +7,7 @@ from django.utils import timezone
 
 from apps.banners.models import Banner
 from apps.colaboradores.models import Colaborador
+from apps.core.modulos import MESES, bolsa_de, bolsa_del_mes, bolsa_por_mes, fotos_subidas, modulos_de
 
 from .models import ActividadItinerario, Evento, Pago
 
@@ -24,7 +26,7 @@ class EventoForm(forms.ModelForm):
             'fecha_inicio_evento', 'fecha_fin_evento', 'lugar', 'direccion', 'url_mapa', 'num_invitados',
             'cliente_nombre', 'cliente_telefono', 'cliente_email', 'precio_total', 'servicios', 'notas',
             'banner', 'estado', 'mensaje_bienvenida', 'password_vip', 'cooldown',
-            'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla',
+            'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'limite_fotos', 'moderar_pantalla',
             'pantalla_contenido', 'pantalla_qr',
         ]
         widgets = {
@@ -47,7 +49,12 @@ class EventoForm(forms.ModelForm):
             'mensaje_bienvenida': forms.TextInput(attrs={'placeholder': '¡Gracias por acompañarnos! Pide tu canción favorita.'}),
             'password_vip': forms.TextInput(attrs={'placeholder': 'Ej. padrinos2026', 'autocomplete': 'off'}),
             'cooldown': forms.NumberInput(attrs={'min': 0, 'max': 120, 'step': '0.5'}),
+            'limite_fotos': forms.NumberInput(attrs={'min': 1, 'placeholder': 'Ej. 300'}),
         }
+
+    # Opciones de la experiencia en vivo (desaparecen si el plan de la agencia no la incluye)
+    CAMPOS_EN_VIVO = ('estado', 'mensaje_bienvenida', 'password_vip', 'cooldown', 'permitir_saludos', 'permitir_canciones',
+                      'permitir_fotos', 'limite_fotos', 'moderar_pantalla', 'pantalla_contenido', 'pantalla_qr')
 
     def __init__(self, *args, usuario=None, fecha=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,6 +83,13 @@ class EventoForm(forms.ModelForm):
         for campo in ('pantalla_contenido', 'pantalla_qr'):
             self.fields[campo].required = False
 
+        # Lo que no incluye el plan de la agencia no se ofrece
+        agencia = usuario.agencia if usuario and usuario.agencia_id else None
+        self.modulos = modulos_de(agencia)
+        quitar = self.CAMPOS_EN_VIVO if not self.modulos['en_vivo'] else (('permitir_fotos', 'limite_fotos') if not self.modulos['fotos'] else ())
+        for campo in quitar:
+            self.fields.pop(campo, None)
+
         if not self.instance.pk and not self.is_bound:
             dia = None
             if fecha:
@@ -90,9 +104,42 @@ class EventoForm(forms.ModelForm):
             self.initial.setdefault('fecha_inicio_evento', inicio)
             self.initial.setdefault('fecha_fin_evento', inicio + timedelta(hours=7))
 
+        self.agencia = agencia
+        self.bolsa = None  # bolsa de fotos al mes del plan: el organizador aparta aquí las de este evento
+        if 'limite_fotos' in self.fields:
+            self.fields['limite_fotos'].label = 'Fotos para este evento'
+            total = bolsa_de(agencia)
+            if total is None:
+                self.fields['limite_fotos'].help_text = 'Cuántas fotos pueden subir los invitados. Vacío = sin límite.'
+            else:
+                self.fields['limite_fotos'].help_text = ''
+                self.fields['limite_fotos'].widget.attrs.update({'max': total, 'data-bolsa-apartar': ''})
+                self.bolsa = self._bolsa_inicial(agencia, total)
+
+    def _bolsa_inicial(self, agencia, total):
+        """Libres por mes (para que el formulario lo actualice al cambiar la fecha) y el mes de la fecha actual."""
+        hoy = timezone.localdate()
+        meses = [((hoy.month - 1 + i) // 12 + hoy.year, (hoy.month - 1 + i) % 12 + 1) for i in range(24)]
+        fecha = self.instance.fecha_inicio_evento if self.instance.pk else self.initial.get('fecha_inicio_evento')
+        if self.is_bound:
+            try:
+                fecha = datetime.strptime(self.data.get('fecha_inicio_evento', '')[:10], '%Y-%m-%d')
+            except ValueError:
+                pass
+        if fecha:
+            fecha = timezone.localtime(fecha) if timezone.is_aware(fecha) else fecha
+            meses.append((fecha.year, fecha.month))
+        libres = bolsa_por_mes(agencia, sorted(set(meses)), excepto=self.instance)
+        actual = libres.get(f'{fecha.year}-{fecha.month:02d}', total) if fecha else total
+        return {
+            'total': total, 'libres': actual, 'ocupadas': total - actual, 'mes': MESES[fecha.month - 1] if fecha else '',
+            'json': json.dumps({'total': total, 'libres': libres}),
+        }
+
     def clean(self):
         for campo in ('pantalla_contenido', 'pantalla_qr'):
-            if not self.cleaned_data.get(campo):
+            # (sin experiencia en vivo en el plan estos campos no existen en el formulario)
+            if campo in self.fields and not self.cleaned_data.get(campo):
                 self.cleaned_data[campo] = getattr(self.instance, campo)
         datos = super().clean()
         inicio, fin = datos.get('fecha_inicio_evento'), datos.get('fecha_fin_evento')
@@ -103,7 +150,34 @@ class EventoForm(forms.ModelForm):
             self.add_error('cooldown', 'No puede ser negativo.')
         if datos.get('precio_total') is not None and datos['precio_total'] < 0:
             self.add_error('precio_total', 'No puede ser negativo.')
+        if 'limite_fotos' in self.fields:
+            self._validar_fotos(datos)
+        if not self.modulos['fotos']:
+            self.instance.permitir_fotos = False  # sin fotos en el plan no se reciben
         return datos
+
+    def _validar_fotos(self, datos):
+        if not datos.get('permitir_fotos'):
+            datos['limite_fotos'] = None  # sin fotos no se aparta nada de la bolsa
+            return
+        limite, inicio = datos.get('limite_fotos'), datos.get('fecha_inicio_evento')
+        if limite is None:
+            return
+        if self.instance.pk:
+            ya = fotos_subidas(self.instance)
+            if limite < ya:
+                self.add_error('limite_fotos', f'Este evento ya recibió {ya:,} fotos; no puedes apartar menos.')
+                return
+        if self.bolsa is None or inicio is None:
+            return
+        fecha = timezone.localtime(inicio)
+        bolsa = bolsa_del_mes(self.agencia, fecha.year, fecha.month, excepto=self.instance)
+        anterior = self.instance.fecha_inicio_evento and timezone.localtime(self.instance.fecha_inicio_evento)
+        reduce = (self.instance.pk and self.instance.limite_fotos is not None and limite <= self.instance.limite_fotos
+                  and (anterior.year, anterior.month) == (fecha.year, fecha.month))
+        if limite > bolsa['libres'] and not reduce:
+            self.add_error('limite_fotos', f'En {bolsa["mes"]} solo quedan {bolsa["libres"]:,} fotos libres '
+                                           f'de tu bolsa de {bolsa["total"]:,} al mes.')
 
 
 class ActividadForm(forms.ModelForm):

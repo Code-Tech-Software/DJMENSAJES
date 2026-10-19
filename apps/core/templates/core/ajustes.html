@@ -163,6 +163,7 @@
                     <span class="chip chip--{{ mi_plan.agencia.estado_tono }} chip--dot">{{ mi_plan.agencia.estado_visible }}</span></div>
                 <p class="small muted mt-1">{% if mi_plan.agencia.vence_el %}Vigente hasta el <strong>{{ mi_plan.agencia.vence_el|date:"j \d\e F \d\e Y" }}</strong>.{% else %}Sin fecha de vencimiento.{% endif %}</p>
                 <div class="mt-3">{% include 'core/consola/_uso.html' with filas=mi_plan.uso %}</div>
+                <div class="mt-3">{% include 'core/consola/_modulos.html' with modulos=mi_plan.modulos %}</div>
             </div>
             <div class="card card--pad">
                 <h3 style="font-size:16px"><i class="ph ph-chat-circle-text"></i> ¿Necesitas más?</h3>

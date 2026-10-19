@@ -6,7 +6,7 @@
     <div class="page-head__title">
         <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ph ph-caret-right"></i>Eventos</div>
         <h1>Eventos</h1>
-        <p>Administra fechas, clientes, invitaciones y pantallas en vivo de cada evento.</p>
+        <p>Administra fechas, clientes{% if modulos.invitaciones %}, invitaciones{% endif %}{% if modulos.en_vivo %} y pantallas en vivo{% else %} y cobros{% endif %} de cada evento.</p>
     </div>
     <div class="page-head__actions">
         <div class="segmented" id="vista-toggle">
@@ -65,7 +65,7 @@
                     <td class="hide-mobile">{% if e.n_invitados %}<strong>{{ e.pases_confirmados|default:0 }}</strong><span class="t-muted"> / {{ e.pases|default:0 }}</span>{% else %}<span class="t-muted">—</span>{% endif %}</td>
                     <td><span class="chip estado-{{ e.estado_temporal }} chip--dot">{% if e.estado_temporal == 'proximo' %}{{ e.dias_restantes|dias_texto }}{% else %}{{ e.estado_temporal_display }}{% endif %}</span></td>
                     <td class="t-actions">
-                        <a class="icon-btn icon-btn--sm" href="{% url 'invitaciones:panel' e.pk %}" data-tip="Invitación"><i class="ph ph-envelope-open"></i></a>
+                        {% if modulos.invitaciones %}<a class="icon-btn icon-btn--sm" href="{% url 'invitaciones:panel' e.pk %}" data-tip="Invitación"><i class="ph ph-envelope-open"></i></a>{% endif %}
                         <button class="icon-btn icon-btn--sm" data-modal="{% url 'eventos:editar' e.pk %}" data-tip="Editar"><i class="ph ph-pencil-simple"></i></button>
                         <a class="icon-btn icon-btn--sm" href="{{ e.get_absolute_url }}" data-tip="Abrir"><i class="ph ph-arrow-up-right"></i></a>
                     </td>

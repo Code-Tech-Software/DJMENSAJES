@@ -3,6 +3,7 @@ from django.utils.functional import SimpleLazyObject
 
 from apps.core.acceso import IMPERSONADOR
 from apps.core.models import Agencia, Ajustes
+from apps.core.modulos import modulos_de
 from apps.eventos.models import Evento
 
 
@@ -22,6 +23,8 @@ def interfaz(request):
 
     from apps.core.actividad import contar_no_vistas
 
+    modulos = modulos_de(usuario.agencia if usuario.agencia_id else None)
+
     acciones = [
         {'titulo': 'Nuevo evento', 'sub': 'Registrar un evento', 'url': reverse('eventos:crear'), 'icono': 'ph ph-plus-circle', 'modal': True},
         {'titulo': 'Dashboard', 'sub': 'Resumen general', 'url': reverse('core:dashboard'), 'icono': 'ph ph-gauge'},
@@ -30,12 +33,17 @@ def interfaz(request):
         {'titulo': 'Mi perfil', 'sub': 'Datos y contraseña', 'url': reverse('cuentas:perfil'), 'icono': 'ph ph-user-circle'},
         {'titulo': 'Ajustes', 'sub': 'Apariencia, negocio y eventos nuevos', 'url': reverse('core:ajustes'), 'icono': 'ph ph-gear-six'},
     ]
-    if usuario.ve_todo:
+    if modulos['invitaciones']:
+        acciones.append({'titulo': 'Invitaciones', 'sub': 'Invitaciones digitales', 'url': reverse('invitaciones:indice'), 'icono': 'ph ph-envelope-open'})
+    if modulos['en_vivo']:
+        acciones.append({'titulo': 'En vivo', 'sub': 'Eventos en curso', 'url': reverse('eventos:centro_envivo'), 'icono': 'ph ph-broadcast'})
+    if usuario.ve_todo and modulos['subagencias']:
         acciones += [
             {'titulo': 'Colaboradores', 'sub': 'Sub-agencias', 'url': reverse('colaboradores:lista'), 'icono': 'ph ph-users-three'},
             {'titulo': 'Nuevo colaborador', 'sub': 'Registrar sub-agencia', 'url': reverse('colaboradores:crear'), 'icono': 'ph ph-user-plus', 'modal': True},
-            {'titulo': 'Banners', 'sub': 'Fondos visuales', 'url': reverse('banners:lista'), 'icono': 'ph ph-image'},
         ]
+    if usuario.ve_todo and modulos['banners']:
+        acciones.append({'titulo': 'Banners', 'sub': 'Fondos visuales', 'url': reverse('banners:lista'), 'icono': 'ph ph-image'})
     if usuario.es_admin:
         acciones.append({'titulo': 'Equipo', 'sub': 'Usuarios y roles', 'url': reverse('cuentas:usuarios'), 'icono': 'ph ph-shield-check'})
     if usuario.is_superuser:
@@ -57,6 +65,7 @@ def interfaz(request):
     return {
         **base,
         'soporte': soporte,
+        'modulos': modulos,
         'consola_atencion': consola_atencion,
         'es_admin': usuario.es_admin,
         've_todo': usuario.ve_todo,

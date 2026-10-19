@@ -1,0 +1,17 @@
+{# Límite numérico con "Sin límite" (vacío = sin límite). Recibe field, icono, unidad; compacto dentro de un módulo #}
+<div class="field limite {% if compacto %}limite--compacto{% endif %} {% if field.errors %}field--error{% endif %}" data-limite data-field="{{ field.name }}">
+    {% if compacto %}
+    <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% else %}
+    <div class="limite__head">
+        <span class="limite__icono"><i class="{{ icono }}"></i></span>
+        <div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}</div>
+    </div>
+    {% endif %}
+    <div class="limite__control">
+        <div class="limite__numero">{{ field }}{% if unidad %}<span class="limite__unidad">{{ unidad }}</span>{% endif %}</div>
+        <label class="limite__sin"><input type="checkbox" data-sin-limite {% if field.value is None or field.value == '' %}checked{% endif %}><span><i class="ph ph-infinity"></i>Sin límite</span></label>
+    </div>
+    {% if compacto and field.help_text %}<small class="field__help">{{ field.help_text }}</small>{% endif %}
+    {% for e in field.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
+</div>

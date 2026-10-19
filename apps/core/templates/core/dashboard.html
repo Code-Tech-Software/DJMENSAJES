@@ -19,7 +19,7 @@
     <i class="ph ph-broadcast"></i>
     <div class="grow"><strong>{{ en_curso|length }} evento{{ en_curso|pluralize }} en curso ahora mismo</strong>
         {% for e in en_curso %}<a class="text-brand strong" href="{{ e.get_absolute_url }}">{{ e.nombre_evento }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
-    <a class="btn btn--live btn--sm" href="{% url 'eventos:centro_envivo' %}"><i class="ph ph-headphones"></i>Centro en vivo</a>
+    {% if modulos.en_vivo %}<a class="btn btn--live btn--sm" href="{% url 'eventos:centro_envivo' %}"><i class="ph ph-headphones"></i>Centro en vivo</a>{% endif %}
 </div>
 {% endif %}
 
@@ -29,16 +29,32 @@
         <div class="stat__value">{{ stats.proximos_30 }}</div>
         <div class="stat__meta">{{ stats.este_mes }} este mes · {{ stats.total_eventos }} en total</div>
     </div>
+    {% if modulos.invitaciones %}
     <div class="card stat tone-success">
         <div class="stat__top"><span class="stat__label">Pases confirmados</span><span class="stat__icon"><i class="ph ph-user-check"></i></span></div>
         <div class="stat__value">{{ stats.confirmados|intcomma }}<small> / {{ stats.pases|intcomma }}</small></div>
         <div class="stat__meta">{{ stats.pendientes_rsvp }} invitación{{ stats.pendientes_rsvp|pluralize:"es" }} sin responder</div>
     </div>
+    {% else %}
+    <div class="card stat tone-success">
+        <div class="stat__top"><span class="stat__label">Por confirmar</span><span class="stat__icon"><i class="ph ph-handshake"></i></span></div>
+        <div class="stat__value">{{ stats.cotizaciones }}</div>
+        <div class="stat__meta">Evento{{ stats.cotizaciones|pluralize }} próximo{{ stats.cotizaciones|pluralize }} en cotización</div>
+    </div>
+    {% endif %}
+    {% if modulos.en_vivo %}
     <div class="card stat tone-live">
         <div class="stat__top"><span class="stat__label">Mensajes en vivo</span><span class="stat__icon"><i class="ph ph-chats"></i></span></div>
         <div class="stat__value">{{ stats.mensajes|intcomma }}</div>
         <div class="stat__meta"><i class="ph ph-music-notes"></i>{{ stats.canciones }} canciones · últimos 30 días</div>
     </div>
+    {% else %}
+    <div class="card stat tone-live">
+        <div class="stat__top"><span class="stat__label">Invitados estimados</span><span class="stat__icon"><i class="ph ph-users-three"></i></span></div>
+        <div class="stat__value">{{ stats.invitados_estimados|intcomma }}</div>
+        <div class="stat__meta">En los eventos de los próximos 30 días</div>
+    </div>
+    {% endif %}
     {% if stats.por_cobrar is not None %}
     <div class="card stat tone-warning">
         <div class="stat__top"><span class="stat__label">Por cobrar</span><span class="stat__icon"><i class="ph ph-wallet"></i></span></div>
@@ -76,9 +92,11 @@
             {% else %}<div style="height:16px"></div>{% endif %}
             <div class="row row-wrap">
                 <a class="btn btn--primary" href="{{ destacado.get_absolute_url }}"><i class="ph ph-eye"></i>Ver evento</a>
-                <a class="btn" href="{% url 'invitaciones:panel' destacado.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a>
+                {% if modulos.invitaciones %}<a class="btn" href="{% url 'invitaciones:panel' destacado.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a>{% endif %}
+                {% if modulos.en_vivo %}
                 <a class="btn" href="{{ destacado.url_pantalla }}" target="_blank"><i class="ph ph-qr-code"></i>Pantalla QR</a>
                 <a class="btn" href="{{ destacado.url_dj }}" target="_blank"><i class="ph ph-headphones"></i>Panel DJ</a>
+                {% endif %}
             </div>
         </div>
         {% else %}
@@ -154,7 +172,7 @@
         {% endif %}
 
         <div class="card">
-            <div class="card__head"><div class="card-title"><span class="ico" style="background:var(--live-soft);color:var(--live)"><i class="ph ph-pulse"></i></span><div><h3>Actividad reciente</h3><p>Confirmaciones, VIP y registros</p></div></div></div>
+            <div class="card__head"><div class="card-title"><span class="ico" style="background:var(--live-soft);color:var(--live)"><i class="ph ph-pulse"></i></span><div><h3>Actividad reciente</h3><p>{% if modulos.invitaciones %}Confirmaciones, VIP y registros{% else %}Movimientos del equipo{% endif %}</p></div></div></div>
             <div class="card__body">
                 {% for a in actividad %}
                 <a class="feed-item {{ a.tono }}" href="{{ a.url }}">
@@ -171,10 +189,10 @@
             <div class="card-title mb-2"><span class="ico"><i class="ph ph-lightning"></i></span><div><h3 style="font-size:15px">Accesos rápidos</h3></div></div>
             <div class="grid grid-2" style="gap:10px">
                 <button class="btn btn--soft" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus-circle"></i>Evento</button>
-                <a class="btn btn--soft" href="{% url 'invitaciones:indice' %}"><i class="ph ph-paper-plane-right"></i>Invitaciones</a>
+                {% if modulos.invitaciones %}<a class="btn btn--soft" href="{% url 'invitaciones:indice' %}"><i class="ph ph-paper-plane-right"></i>Invitaciones</a>{% endif %}
                 {% if ve_todo %}
-                <button class="btn btn--soft" data-modal="{% url 'colaboradores:crear' %}"><i class="ph ph-users-three"></i>Colaborador</button>
-                <button class="btn btn--soft" data-modal="{% url 'banners:crear' %}"><i class="ph ph-image"></i>Banner</button>
+                {% if modulos.subagencias %}<button class="btn btn--soft" data-modal="{% url 'colaboradores:crear' %}"><i class="ph ph-users-three"></i>Colaborador</button>{% endif %}
+                {% if modulos.banners %}<button class="btn btn--soft" data-modal="{% url 'banners:crear' %}"><i class="ph ph-image"></i>Banner</button>{% endif %}
                 {% endif %}
             </div>
         </div>

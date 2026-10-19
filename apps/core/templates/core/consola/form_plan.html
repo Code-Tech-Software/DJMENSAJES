@@ -1,21 +1,41 @@
 {% extends 'components/modal_form.html' %}
 {% load ui %}
 {% block cuerpo %}
-<div class="form-grid">
-    {% campo form.nombre icono="ph ph-stack" %}
-    {% campo form.precio_mensual icono="ph ph-currency-dollar" %}
-    {% campo form.descripcion icono="ph ph-text-align-left" clase="span-2" %}
-</div>
-<div class="form-section mt-3">
-    <div class="form-section__title"><i class="ph ph-gauge"></i>Límites <small>· vacío = sin límite</small></div>
-    <div class="form-grid form-grid--3">
-        {% campo form.max_eventos_mes icono="ph ph-sparkle" %}
-        {% campo form.max_usuarios icono="ph ph-users" %}
-        {% campo form.max_colaboradores icono="ph ph-users-three" %}
-    </div>
-</div>
-<div class="form-grid mt-3">
-    {% campo form.orden icono="ph ph-sort-ascending" %}
-    <div>{% campo form.activo %}</div>
+<div class="plan-form">
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-tag"></i>Datos del plan</div>
+        <div class="form-grid">
+            {% campo form.nombre icono="ph ph-stack" %}
+            {% campo form.precio_mensual icono="ph ph-currency-dollar" %}
+            {% campo form.descripcion icono="ph ph-text-align-left" clase="span-2" %}
+        </div>
+    </section>
+
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-gauge"></i>Capacidad</div>
+        <div class="form-grid">
+            {% include 'core/consola/_limite.html' with field=form.max_eventos_mes icono='ph ph-sparkle' unidad='al mes' %}
+            {% include 'core/consola/_limite.html' with field=form.max_usuarios icono='ph ph-users' unidad='usuarios' %}
+        </div>
+    </section>
+
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-squares-four"></i>Qué incluye <small>· enciende lo que tendrá la agencia</small></div>
+        <div class="incluido-siempre">
+            <strong><i class="ph-fill ph-check-circle"></i>Siempre incluido</strong>
+            <span>Calendario</span><span>Eventos y clientes</span><span>Itinerario</span><span>Pagos</span><span>Orden de servicio</span>
+        </div>
+        <div class="modulos-form">
+            {% for m in form.tarjetas_modulos %}{% include 'core/consola/_modulo_plan.html' %}{% endfor %}
+        </div>
+    </section>
+
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-eye"></i>Publicación</div>
+        <div class="form-grid">
+            {% campo form.activo %}
+            {% campo form.orden icono="ph ph-sort-ascending" %}
+        </div>
+    </section>
 </div>
 {% endblock %}

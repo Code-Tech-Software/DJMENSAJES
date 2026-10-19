@@ -5,6 +5,7 @@ from django.utils import timezone
 from apps.cuentas.models import Usuario
 
 from ..models import Agencia, Ajustes, PagoAgencia, Plan
+from ..modulos import DEPENDE_DE, MODULOS
 
 
 class AgenciaForm(forms.ModelForm):
@@ -83,18 +84,72 @@ class ContactoPlataformaForm(forms.ModelForm):
 
 
 class PlanForm(forms.ModelForm):
+    # Sub-agencias se ofrece como un módulo más: apagado = max_colaboradores 0 (sin esa sección)
+    con_subagencias = forms.BooleanField(label='Sub-agencias', required=False)
+
     class Meta:
         model = Plan
-        fields = ['nombre', 'precio_mensual', 'max_eventos_mes', 'max_usuarios', 'max_colaboradores', 'descripcion', 'activo', 'orden']
+        fields = ['nombre', 'precio_mensual', 'descripcion', 'max_eventos_mes', 'max_usuarios',
+                  'con_invitaciones', 'con_en_vivo', 'con_fotos', 'max_fotos_mes', 'con_album', 'con_banners',
+                  'max_colaboradores', 'activo', 'orden']
+        labels = {
+            'max_eventos_mes': 'Eventos al mes', 'max_usuarios': 'Usuarios activos', 'max_fotos_mes': 'Bolsa de fotos al mes',
+            'max_colaboradores': 'Máximo de sub-agencias', 'activo': 'Disponible para agencias nuevas', 'orden': 'Posición en la lista',
+        }
+        help_texts = {
+            'descripcion': 'Se muestra en la tarjeta del plan.',
+            'max_eventos_mes': 'Eventos que puede registrar cada mes.',
+            'max_usuarios': 'Cuentas de su equipo con acceso al panel.',
+            'max_fotos_mes': 'Para todos sus eventos del mes: en cada evento el organizador aparta las que necesita.',
+            'max_colaboradores': '',
+            'activo': 'Apagado ya no se ofrece, pero las agencias que lo tienen lo conservan.',
+            'orden': 'Los planes se muestran de menor a mayor.',
+        }
         widgets = {
             'nombre': forms.TextInput(attrs={'placeholder': 'Ej. Básico, Pro, Agencia'}),
             'precio_mensual': forms.NumberInput(attrs={'min': 0, 'step': '1', 'placeholder': '499'}),
+            'descripcion': forms.TextInput(attrs={'placeholder': 'Ej. Para DJs que empiezan'}),
             'max_eventos_mes': forms.NumberInput(attrs={'min': 1, 'placeholder': 'Sin límite'}),
             'max_usuarios': forms.NumberInput(attrs={'min': 1, 'placeholder': 'Sin límite'}),
-            'max_colaboradores': forms.NumberInput(attrs={'min': 0, 'placeholder': 'Sin límite'}),
-            'descripcion': forms.TextInput(attrs={'placeholder': 'Ej. Para DJs que empiezan'}),
+            'max_fotos_mes': forms.NumberInput(attrs={'min': 1, 'step': 50, 'placeholder': 'Sin límite'}),
+            'max_colaboradores': forms.NumberInput(attrs={'min': 1, 'placeholder': 'Sin límite'}),
             'orden': forms.NumberInput(attrs={'min': 0}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        sin_subagencias = self.instance.pk is not None and self.instance.max_colaboradores == 0
+        self.fields['con_subagencias'].initial = not sin_subagencias
+        if sin_subagencias:
+            self.initial['max_colaboradores'] = None
+
+    def tarjetas_modulos(self):
+        """Los módulos como tarjetas con su switch (y su límite cuando lo tienen) para el formulario."""
+        extras = {'fotos': (self['max_fotos_mes'], 'fotos'), 'subagencias': (self['max_colaboradores'], 'sub-agencias')}
+        tarjetas = []
+        for clave, (campo, nombre, icono, descripcion) in MODULOS.items():
+            padre = DEPENDE_DE.get(clave)
+            limite, unidad = extras.get(clave, (None, ''))
+            tarjetas.append({'campo': self[campo], 'nombre': nombre, 'icono': icono, 'descripcion': descripcion,
+                             'requiere': MODULOS[padre][0] if padre else '', 'requiere_nombre': MODULOS[padre][1] if padre else '',
+                             'limite': limite, 'unidad': unidad})
+        limite, unidad = extras['subagencias']
+        tarjetas.append({'campo': self['con_subagencias'], 'nombre': 'Sub-agencias', 'icono': 'ph ph-users-three',
+                         'descripcion': 'Que la agencia organice a sus DJs o socios en sub-agencias con su propia marca.',
+                         'limite': limite, 'unidad': unidad})
+        return tarjetas
+
+    def clean(self):
+        datos = super().clean()
+        if not datos.get('con_en_vivo'):
+            for campo in ('con_fotos', 'con_album'):
+                if datos.get(campo):
+                    self.add_error(campo, 'Requiere la experiencia en vivo (de ahí salen las fotos y los saludos).')
+        if not datos.get('con_subagencias'):
+            datos['max_colaboradores'] = 0
+        elif datos.get('max_colaboradores') == 0:
+            datos['max_colaboradores'] = None
+        return datos
 
 
 class PagoForm(forms.ModelForm):

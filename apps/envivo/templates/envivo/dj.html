@@ -74,7 +74,8 @@
         {% if mostrar_fotos %}
         <section class="columna columna--foto" style="--c:var(--foto)">
             <div class="columna__cab"><i class="ph-fill ph-camera"></i>Fotos <span class="num" id="c-foto">0</span>
-                <a class="columna__enlace" href="{{ url_album }}" target="_blank"><i class="ph ph-images"></i>Álbum</a></div>
+                {% if limite_fotos %}<span class="cupo-fotos" id="cupo-fotos" title="Fotos subidas de las que permite el evento">0/{{ limite_fotos }}</span>{% endif %}
+                {% if con_album %}<a class="columna__enlace" href="{{ url_album }}" target="_blank"><i class="ph ph-images"></i>Álbum</a>{% endif %}</div>
             <div class="lista lista--fotos" id="lista-foto"></div>
         </section>
         {% endif %}
@@ -111,6 +112,7 @@
         const TOKEN = "{{ evento.token_dj }}";
         // Con el proyector moderado, aprobar un saludo (✓) también lo manda a la pantalla
         const MODERADO = {{ evento.moderar_pantalla|yesno:"true,false" }};
+        const LIMITE_FOTOS = {% if limite_fotos %}{{ limite_fotos|stringformat:"d" }}{% else %}null{% endif %};
         const TIPOS = {% if mostrar_fotos %}['cancion', 'saludo', 'foto']{% else %}['cancion', 'saludo']{% endif %};
         const URLS = {
             accion: (id, accion) => `/envivo/dj/${TOKEN}/mensajes/${id}/${accion}/`,
@@ -235,6 +237,12 @@
             $('#n-vip').textContent = pend.filter(m => m.vip).length;
             contar('n-atendido', todos.filter(m => m.estatus === 'atendido').length, 'atendido', 'atendidos');
             $('#t-pendientes').textContent = pend.length;
+            const cupo = $('#cupo-fotos');  // cuántas fotos se han subido de las que permite el evento
+            if (cupo) {
+                const subidas = todos.filter(m => m.tipo === 'foto').length;
+                cupo.textContent = `${subidas}/${LIMITE_FOTOS}`;
+                cupo.classList.toggle('lleno', subidas >= LIMITE_FOTOS);
+            }
             $('#t-historial').textContent = todos.length - pend.length;
         }
         setInterval(() => document.querySelectorAll('[data-hace]').forEach(el => { el.textContent = EnVivo.haceCuanto(el.dataset.hace); }), 30000);

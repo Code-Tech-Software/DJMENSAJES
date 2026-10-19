@@ -14,6 +14,7 @@ from apps.colaboradores.models import Colaborador
 from apps.core.actividad import actividad_reciente, recordatorios
 from apps.core.forms import AjustesForm
 from apps.core.limites import uso
+from apps.core.modulos import lista_modulos
 from apps.core.models import Ajustes
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
@@ -45,6 +46,10 @@ def dashboard(request):
         total=Count('id'),
         canciones=Count('id', filter=Q(tipo='cancion')),
     )
+
+    # Para planes sin invitaciones o sin experiencia en vivo, el dashboard muestra datos de agenda
+    cotizaciones = futuros.filter(etapa=Evento.Etapa.COTIZACION).count()
+    invitados_estimados = proximos_30.aggregate(t=Sum('num_invitados'))['t'] or 0
 
     por_cobrar = None
     if request.user.ve_todo:
@@ -98,6 +103,8 @@ def dashboard(request):
             'canciones': mensajes['canciones'],
             'por_cobrar': por_cobrar,
             'total_eventos': eventos.count(),
+            'cotizaciones': cotizaciones,
+            'invitados_estimados': invitados_estimados,
         },
         'destacado': destacado,
         'en_curso': en_curso,
@@ -218,7 +225,7 @@ def ajustes(request):
     mi_plan = None
     if request.user.es_admin and request.user.agencia_id:
         agencia = request.user.agencia
-        mi_plan = {'agencia': agencia, 'uso': uso(agencia), 'contacto': Ajustes.plataforma()}
+        mi_plan = {'agencia': agencia, 'uso': uso(agencia), 'modulos': lista_modulos(agencia), 'contacto': Ajustes.plataforma()}
     return render(request, 'core/ajustes.html', {'form': form, 'seccion_activa': seccion, 'mi_plan': mi_plan})
 
 

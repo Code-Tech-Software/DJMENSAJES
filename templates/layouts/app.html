@@ -27,21 +27,29 @@
                 <i class="ph ph-sparkle"></i><span>Eventos</span>
                 {% if total_proximos %}<span class="nav-count">{{ total_proximos }}</span>{% endif %}
             </a>
+            {% if modulos.invitaciones %}
             <a href="{% url 'invitaciones:indice' %}" class="nav-link {% activo 'invitaciones:*' %}">
                 <i class="ph ph-envelope-open"></i><span>Invitaciones</span>
             </a>
+            {% endif %}
+            {% if modulos.en_vivo %}
             <a href="{% url 'eventos:centro_envivo' %}" class="nav-link {% activo 'eventos:centro_envivo' %}">
                 <i class="ph ph-broadcast"></i><span>En vivo</span>
             </a>
+            {% endif %}
 
             {% if ve_todo %}
             <div class="nav-label">Administración</div>
+            {% if modulos.subagencias %}
             <a href="{% url 'colaboradores:lista' %}" class="nav-link {% activo 'colaboradores:*' %}">
                 <i class="ph ph-users-three"></i><span>Colaboradores</span>
             </a>
+            {% endif %}
+            {% if modulos.banners %}
             <a href="{% url 'banners:lista' %}" class="nav-link {% activo 'banners:*' %}">
                 <i class="ph ph-image"></i><span>Banners</span>
             </a>
+            {% endif %}
             {% if es_admin %}
             <a href="{% url 'cuentas:usuarios' %}" class="nav-link {% activo 'cuentas:usuarios' %}">
                 <i class="ph ph-shield-check"></i><span>Equipo</span>

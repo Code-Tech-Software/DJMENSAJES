@@ -84,6 +84,9 @@ button { cursor: pointer; border: 0; background: none; }
 .accion--saludo::after { animation-delay: 2s; }
 .accion--foto { --grad: linear-gradient(120deg, #00c9a7, #00a6ff 60%, #845ef7); --sombra: rgba(0, 166, 255, .6); }
 .accion--foto::after { animation-delay: 1s; }
+/* El evento llegó a su límite de fotos */
+.accion.is-lleno { opacity: .55; cursor: default; filter: saturate(.4); }
+.accion.is-lleno::after { animation: none; }
 .accion__icono { width: 58px; height: 58px; flex-shrink: 0; border-radius: 18px; display: grid; place-items: center; font-size: 28px; background: rgba(255, 255, 255, .2); backdrop-filter: blur(6px); }
 .accion strong { display: block; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
 .accion small { font-size: 13px; opacity: .88; }

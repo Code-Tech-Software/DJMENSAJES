@@ -140,6 +140,10 @@ class Evento(models.Model):
     )
     permitir_saludos = models.BooleanField('recibir saludos', default=True)
     permitir_canciones = models.BooleanField('recibir canciones', default=True)
+    limite_fotos = models.PositiveIntegerField(
+        'límite de fotos', null=True, blank=True,
+        help_text='Cuántas fotos pueden subir los invitados. Vacío = lo que permita el plan.',
+    )
     permitir_fotos = models.BooleanField(
         'recibir fotos', default=True,
         help_text='Los invitados comparten fotos; el DJ las aprueba para la pantalla y el álbum.',

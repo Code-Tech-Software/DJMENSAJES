@@ -465,6 +465,91 @@
     });
   }
 
+  // Límites con "Sin límite": al marcarlo se vacía y bloquea el número (vacío = sin límite)
+  function initSinLimite(root) {
+    $$('[data-sin-limite]', root).forEach(chk => {
+      if (chk.dataset.ready) return;
+      chk.dataset.ready = '1';
+      const caja = chk.closest('[data-limite]');
+      const input = caja && $('input[type=number]', caja);
+      if (!input) return;
+      const aplicar = enfocar => {
+        caja.classList.toggle('is-ilimitado', chk.checked);
+        if (chk.checked) {
+          if (input.value) input.dataset.antes = input.value;
+          input.value = '';
+        } else if (!input.value && input.dataset.antes) {
+          input.value = input.dataset.antes;
+        }
+        input.disabled = chk.checked;
+        if (!chk.checked && enfocar) input.focus();
+      };
+      chk.addEventListener('change', () => aplicar(true));
+      input.addEventListener('blur', () => { if (!input.value && !chk.checked) { chk.checked = true; aplicar(false); } });
+      aplicar(false);
+    });
+  }
+
+  // Módulos del plan: la tarjeta se marca al encenderla y las que dependen de otra se apagan con ella
+  function initModulosPlan(root) {
+    const tarjetas = $$('[data-modulo]', root).filter(t => !t.dataset.ready);
+    if (!tarjetas.length) return;
+    const interruptor = t => $('input[type=checkbox][name]', t);
+    const porCampo = {};
+    tarjetas.forEach(t => { t.dataset.ready = '1'; porCampo[t.dataset.modulo] = t; });
+    const pintar = () => tarjetas.forEach(t => {
+      const chk = interruptor(t);
+      const padre = porCampo[t.dataset.requiere];
+      const disponible = !padre || interruptor(padre).checked;
+      if (!disponible && !chk.disabled) {
+        chk.dataset.antes = chk.checked ? '1' : '';
+        chk.checked = false;
+        chk.disabled = true;
+      } else if (disponible && chk.disabled) {
+        chk.disabled = false;
+        chk.checked = chk.dataset.antes === '1';
+      }
+      t.classList.toggle('is-on', chk.checked);
+      t.classList.toggle('is-bloqueado', !disponible);
+    });
+    tarjetas.forEach(t => interruptor(t).addEventListener('change', pintar));
+    pintar();
+  }
+
+  // Bolsa de fotos al mes del plan: al cambiar la fecha o las fotos del evento dice cuántas quedan ese mes
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  function initBolsaFotos(root) {
+    $$('[data-bolsa-fotos]', root).forEach(el => {
+      if (el.dataset.ready) return;
+      el.dataset.ready = '1';
+      const datos = JSON.parse(el.dataset.bolsaFotos);
+      const form = el.closest('form') || document;
+      const fecha = $('[name=fecha_inicio_evento]', form);
+      const input = $('[data-bolsa-apartar]', form);
+      const texto = $('[data-bolsa-texto]', el);
+      const fmt = n => Number(n).toLocaleString('es-MX');
+      const pintar = () => {
+        const valor = (fecha && fecha.value) || '';
+        const mes = MESES[parseInt(valor.slice(5, 7), 10) - 1];
+        const libres = valor.slice(0, 7) in datos.libres ? datos.libres[valor.slice(0, 7)] : datos.total;
+        const apartar = input ? Math.max(0, parseInt(input.value, 10) || 0) : 0;
+        const excede = apartar > libres;
+        $('.bolsa-fotos__ocupadas', el).style.width = `${(datos.total - libres) * 100 / datos.total}%`;
+        $('.bolsa-fotos__este', el).style.width = `${Math.min(apartar, libres) * 100 / datos.total}%`;
+        el.classList.toggle('is-excedida', excede);
+        const bolsa = mes ? `Bolsa de ${mes}` : 'Bolsa del mes';
+        texto.innerHTML = excede
+          ? `En ${mes || 'ese mes'} solo quedan <strong>${fmt(libres)}</strong> fotos libres de tu bolsa de ${fmt(datos.total)}.`
+          : apartar
+            ? `${bolsa}: quedan <strong>${fmt(libres)}</strong> de ${fmt(datos.total)} fotos · con este evento quedarían <strong>${fmt(libres - apartar)}</strong>.`
+            : `${bolsa}: quedan <strong>${fmt(libres)}</strong> de ${fmt(datos.total)} fotos. Vacío = usa lo que quede libre del mes.`;
+      };
+      if (fecha) ['input', 'change'].forEach(ev => fecha.addEventListener(ev, pintar));
+      if (input) input.addEventListener('input', pintar);
+      pintar();
+    });
+  }
+
   function init(root = document) {
     initWizard(root);
     initDropzones(root);
@@ -473,6 +558,9 @@
     initCountdowns(root);
     initBars(root);
     initAutosubmit(root);
+    initSinLimite(root);
+    initModulosPlan(root);
+    initBolsaFotos(root);
   }
 
   /* ------------------------------------------------------------------ Acciones POST */

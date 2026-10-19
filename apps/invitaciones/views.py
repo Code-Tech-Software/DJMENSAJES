@@ -15,6 +15,7 @@ from django.views.generic import CreateView, FormView, UpdateView
 
 from apps.core.mixins import FormularioModalMixin, respuesta_ok
 from apps.core.marca import Marca
+from apps.core.modulos import tiene
 from apps.core.models import Ajustes
 from apps.core.utils import generar_token, qr_svg, slug_unico
 from apps.eventos.models import Evento
@@ -419,6 +420,8 @@ def es_anfitrion(request, invitacion):
 
 
 def _verificar_publicada(request, invitacion):
+    if not tiene(invitacion.evento.agencia, 'invitaciones'):
+        return False  # el plan de la agencia ya no incluye invitaciones digitales
     if invitacion.publicada or es_anfitrion(request, invitacion):
         return True
     return request.user.is_authenticated and eventos_de(request.user).filter(pk=invitacion.evento_id).exists()
@@ -457,6 +460,8 @@ def invitacion_personal(request, slug, token):
 def rsvp(request, slug, token):
     invitacion = get_object_or_404(Invitacion, slug=slug)
     invitado = get_object_or_404(Invitado, token=token, evento_id=invitacion.evento_id)
+    if not tiene(invitacion.evento.agencia, 'invitaciones'):
+        raise Http404
     url = invitado.get_absolute_url()
     if invitacion.rsvp_vencido or invitacion.evento.fecha_inicio_evento < timezone.now():
         return redirect(url + '#confirmar')
@@ -501,6 +506,8 @@ def rsvp_abierto(request, slug):
 
 def calendario_ics(request, slug):
     invitacion = get_object_or_404(Invitacion.objects.select_related('evento'), slug=slug)
+    if not tiene(invitacion.evento.agencia, 'invitaciones'):
+        raise Http404
     evento = invitacion.evento
     formato = '%Y%m%dT%H%M%SZ'
 

@@ -11,6 +11,7 @@ from django.utils.crypto import constant_time_compare
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.marca import Marca
+from apps.core.modulos import fotos_disponibles, limite_fotos, tiene
 from apps.core.models import Ajustes
 from apps.core.utils import ip_cliente, qr_svg
 from apps.eventos.models import Evento
@@ -23,12 +24,21 @@ MAX_INTENTOS_VIP = 5
 BLOQUEO_VIP_SEG = 300
 
 
-def _evento(codigo):
-    return get_object_or_404(Evento.objects.select_related('colaborador', 'banner'), codigo=codigo)
+def _con_modulo(evento, *modulos):
+    """Las páginas en vivo solo existen si el plan de la agencia incluye la experiencia en vivo (y lo que se pida)."""
+    if not all(tiene(evento.agencia, m) for m in ('en_vivo',) + modulos):
+        raise Http404
+    return evento
+
+
+def _evento(codigo, *modulos):
+    evento = get_object_or_404(Evento.objects.select_related('colaborador', 'banner', 'agencia__plan'), codigo=codigo)
+    return _con_modulo(evento, *modulos)
 
 
 def _evento_dj(token):
-    return get_object_or_404(Evento.objects.select_related('colaborador', 'banner'), token_dj=token)
+    evento = get_object_or_404(Evento.objects.select_related('colaborador', 'banner', 'agencia__plan'), token_dj=token)
+    return _con_modulo(evento)
 
 
 def _sesion(request):
@@ -85,6 +95,8 @@ def invitado(request, codigo):
         'invitacion': getattr(evento, 'invitacion', None),
         'ajustes': Ajustes.de(evento.agencia_id),
         'marca': Marca(evento),
+        'con_fotos': evento.permitir_fotos and tiene(evento.agencia, 'fotos'),
+        'fotos_llenas': fotos_disponibles(evento) == 0,
     })
 
 
@@ -147,11 +159,13 @@ def _respuesta_espera(request, evento):
 @require_POST
 def enviar_foto(request, codigo):
     """Foto de un invitado: llega al DJ y solo sale en pantalla y álbum cuando él la aprueba."""
-    evento = _evento(codigo)
+    evento = _evento(codigo, 'fotos')
     if not evento.estado:
         return JsonResponse({'ok': False, 'msg': 'En este momento el DJ no está recibiendo fotos.'}, status=403)
     if not evento.permitir_fotos:
         return JsonResponse({'ok': False, 'msg': 'Este evento no recibe fotos.'}, status=403)
+    if fotos_disponibles(evento) == 0:  # el almacenamiento de fotos cuesta: cada evento tiene un tope
+        return JsonResponse({'ok': False, 'lleno': True, 'msg': 'Ya se llenó el espacio de fotos de este evento. ¡Gracias por compartir!'}, status=403)
     espera = _respuesta_espera(request, evento)
     if espera:
         return espera
@@ -249,7 +263,7 @@ def pantalla(request, codigo):
 
 def pantalla_fotos(request, codigo):
     """Carrusel de fotos a pantalla completa (ideal para una segunda pantalla)."""
-    evento = _evento(codigo)
+    evento = _evento(codigo, 'fotos')
     url_invitados = request.build_absolute_uri(evento.url_invitados())
     fotos = evento.mensajes.en_proyector().filter(tipo=Mensaje.Tipo.FOTO).order_by('-fecha_creacion')[:80]
     return render(request, 'envivo/pantalla_fotos.html', {
@@ -264,7 +278,7 @@ def pantalla_fotos(request, codigo):
 
 def album(request, codigo):
     """Álbum digital del evento: fotos aprobadas por el DJ y saludos de los invitados."""
-    evento = _evento(codigo)
+    evento = _evento(codigo, 'album')
     fotos = list(evento.mensajes.fotos_album().order_by('fecha_creacion'))
     saludos = list(evento.mensajes.saludos_album().order_by('fecha_creacion'))
     return render(request, 'envivo/album.html', {
@@ -285,7 +299,7 @@ def album_descargar(request, codigo, pk):
     Descarga una foto del álbum. Con Cloudinary la imagen está en otro dominio y el navegador ignora el
     atributo "download" (solo la abre en otra pestaña); aquí se entrega como archivo adjunto.
     """
-    evento = _evento(codigo)
+    evento = _evento(codigo, 'album')
     mensaje = get_object_or_404(evento.mensajes.fotos_album(), pk=pk)
     if not mensaje.foto:
         raise Http404
@@ -307,7 +321,9 @@ def dj(request, token):
     url_invitados = request.build_absolute_uri(evento.url_invitados())
     return render(request, 'envivo/dj.html', {
         'evento': evento,
-        'mostrar_fotos': evento.permitir_fotos or evento.mensajes.filter(tipo=Mensaje.Tipo.FOTO).exists(),
+        'mostrar_fotos': tiene(evento.agencia, 'fotos') and (evento.permitir_fotos or evento.mensajes.filter(tipo=Mensaje.Tipo.FOTO).exists()),
+        'limite_fotos': limite_fotos(evento),
+        'con_album': tiene(evento.agencia, 'album'),
         'url_fotos': request.build_absolute_uri(evento.url_pantalla_fotos()),
         'url_album': request.build_absolute_uri(evento.url_album()),
         'mensajes': [m.a_dict() for m in mensajes],

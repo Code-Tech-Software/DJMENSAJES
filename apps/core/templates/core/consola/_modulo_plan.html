@@ -1,0 +1,14 @@
+{# Tarjeta de un módulo en el formulario de planes (m = una de PlanForm.tarjetas_modulos) #}
+<div class="modulo {% if m.campo.value %}is-on{% endif %}" data-modulo="{{ m.campo.name }}"{% if m.requiere %} data-requiere="{{ m.requiere }}"{% endif %}>
+    <label class="modulo__head" for="{{ m.campo.id_for_label }}">
+        <span class="modulo__icono"><i class="{{ m.icono }}"></i></span>
+        <span class="switch">{{ m.campo }}<span class="switch__track"></span></span>
+    </label>
+    <label class="modulo__texto" for="{{ m.campo.id_for_label }}">
+        <strong>{{ m.nombre }}</strong>
+        <small>{{ m.descripcion }}</small>
+        {% if m.requiere %}<small class="modulo__requiere"><i class="ph ph-link-simple"></i>Requiere {{ m.requiere_nombre }}</small>{% endif %}
+    </label>
+    {% if m.limite %}<div class="modulo__extra">{% include 'core/consola/_limite.html' with field=m.limite unidad=m.unidad compacto=True %}</div>{% endif %}
+    {% for e in m.campo.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
+</div>

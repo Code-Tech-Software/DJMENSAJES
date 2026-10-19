@@ -12,7 +12,28 @@ class Plan(models.Model):
     precio_mensual = models.DecimalField('precio mensual', max_digits=10, decimal_places=2, default=0)
     max_eventos_mes = models.PositiveIntegerField('eventos al mes', null=True, blank=True, help_text='Vacío = sin límite.')
     max_usuarios = models.PositiveIntegerField('usuarios activos', null=True, blank=True, help_text='Vacío = sin límite.')
-    max_colaboradores = models.PositiveIntegerField('sub-agencias', null=True, blank=True, help_text='Vacío = sin límite.')
+    max_colaboradores = models.PositiveIntegerField('sub-agencias', null=True, blank=True, help_text='Vacío = sin límite. 0 = sin sección de sub-agencias.')
+    max_fotos_mes = models.PositiveIntegerField(
+        'bolsa de fotos al mes', null=True, blank=True,
+        help_text='Fotos de invitados al mes para todos los eventos de la agencia; en cada evento se aparta una parte. '
+                  'Vacío = sin límite.',
+    )
+
+    # Módulos: qué secciones y opciones incluye (lo básico —calendario, eventos, pagos y orden de servicio— siempre)
+    con_invitaciones = models.BooleanField(
+        'invitaciones digitales', default=True,
+        help_text='Diseño de la invitación, lista de invitados, confirmaciones, enlace de anfitriones y entrada con QR.',
+    )
+    con_en_vivo = models.BooleanField(
+        'experiencia en vivo', default=True,
+        help_text='Pantalla de invitados con QR, canciones y saludos, proyector y panel del DJ.',
+    )
+    con_fotos = models.BooleanField('fotos de invitados', default=True, help_text='Los invitados suben fotos al evento (requiere experiencia en vivo).')
+    con_album = models.BooleanField('álbum digital', default=True, help_text='Álbum en línea con las fotos y saludos del evento (requiere experiencia en vivo).')
+    con_banners = models.BooleanField(
+        'banners propios', default=True,
+        help_text='Subir sus propios fondos. Sin esto solo usan los de la biblioteca de EventPro.',
+    )
     descripcion = models.CharField('descripción', max_length=200, blank=True)
     activo = models.BooleanField(default=True, help_text='Los planes inactivos ya no se ofrecen a agencias nuevas.')
     orden = models.PositiveSmallIntegerField(default=0)

@@ -70,10 +70,10 @@
             <i class="ph ph-arrow-up-right"></i>
         </button>
         {% endif %}
-        {% if evento.permitir_fotos %}
-        <button class="accion accion--foto" data-abrir="hoja-foto">
+        {% if con_fotos %}
+        <button class="accion accion--foto {% if fotos_llenas %}is-lleno{% endif %}" {% if fotos_llenas %}disabled{% else %}data-abrir="hoja-foto"{% endif %}>
             <span class="accion__icono"><i class="ph-fill ph-camera"></i></span>
-            <span><strong>Comparte una foto</strong><small>Tómala ahora o elígela de tu galería</small></span>
+            <span><strong>Comparte una foto</strong><small>{% if fotos_llenas %}Ya se llenó el espacio de fotos del evento{% else %}Tómala ahora o elígela de tu galería{% endif %}</small></span>
             <i class="ph ph-arrow-up-right"></i>
         </button>
         {% endif %}
@@ -140,7 +140,7 @@
     </form>
 </div>
 
-{% if evento.permitir_fotos %}
+{% if con_fotos and not fotos_llenas %}
 <div class="hoja" id="hoja-foto" data-sin-foco role="dialog" aria-modal="true" aria-labelledby="t-foto" style="--grad:linear-gradient(120deg,#00c9a7,#00a6ff 60%,#845ef7);--sombra:rgba(0,166,255,.6)">
     <div class="hoja__asa"></div>
     <div class="hoja__titulo"><i class="ph-fill ph-camera"></i><div><h2 id="t-foto">Comparte una foto</h2><p>El DJ la revisa y puede salir en la pantalla.</p></div></div>

@@ -74,11 +74,12 @@ class Command(BaseCommand):
         aleatorio = random.Random(7)
 
         # --- Planes de EventPro y la agencia (cliente) a la que pertenece todo lo demás
-        for orden, (nombre, precio, eventos, usuarios, subagencias) in enumerate([
-                ('Básico', 499, 4, 2, 1), ('Pro', 999, 15, 6, 5), ('Agencia', 1999, None, None, None)]):
+        for orden, (nombre, precio, eventos, usuarios, subagencias, fotos, extras) in enumerate([
+                ('Básico', 499, 4, 2, 0, None, False), ('Pro', 999, 15, 6, 5, 1500, True), ('Agencia', 1999, None, None, None, None, True)]):
             Plan.objects.get_or_create(nombre=nombre, defaults={
                 'precio_mensual': precio, 'max_eventos_mes': eventos, 'max_usuarios': usuarios,
-                'max_colaboradores': subagencias, 'orden': orden})
+                'max_colaboradores': subagencias, 'max_fotos_mes': fotos, 'orden': orden,
+                'con_fotos': extras, 'con_album': extras, 'con_banners': extras})
         agencia, _ = Agencia.objects.get_or_create(slug='grupo-em', defaults={'nombre': 'Grupo EM'})
 
         # --- Equipo

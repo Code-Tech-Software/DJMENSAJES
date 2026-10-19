@@ -14,11 +14,13 @@
         <div class="dropdown__menu">
             <a class="menu-item" href="{{ e.get_absolute_url }}"><i class="ph ph-eye"></i>Ver detalle</a>
             <button class="menu-item" data-modal="{% url 'eventos:editar' e.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
-            <a class="menu-item" href="{% url 'invitaciones:panel' e.pk %}"><i class="ph ph-envelope-open"></i>Invitación e invitados</a>
+            {% if modulos.invitaciones %}<a class="menu-item" href="{% url 'invitaciones:panel' e.pk %}"><i class="ph ph-envelope-open"></i>Invitación e invitados</a>{% endif %}
+            {% if modulos.en_vivo %}
             <div class="menu-sep"></div>
             <a class="menu-item" href="{{ e.url_pantalla }}" target="_blank"><i class="ph ph-qr-code"></i>Pantalla QR</a>
             <a class="menu-item" href="{{ e.url_dj }}" target="_blank"><i class="ph ph-headphones"></i>Panel DJ</a>
             <button class="menu-item" data-copy="{{ e.url_invitados }}"><i class="ph ph-link"></i>Copiar enlace invitados</button>
+            {% endif %}
             <div class="menu-sep"></div>
             <button class="menu-item" data-post="{% url 'eventos:duplicar' e.pk %}" data-confirm="¿Duplicar este evento?" data-confirm-text="Se copiarán los datos y el itinerario como una nueva cotización."><i class="ph ph-copy"></i>Duplicar</button>
             {% if ve_todo or e.creado_por_id == user.pk %}

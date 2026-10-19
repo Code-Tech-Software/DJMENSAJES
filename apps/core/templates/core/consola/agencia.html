@@ -74,6 +74,7 @@
             <div class="card card--pad">
                 <div class="row between mb-2"><h3 style="font-size:15px"><i class="ph ph-gauge"></i> Uso de su plan</h3><span class="chip chip--muted">{{ agencia.plan|default:"Sin plan" }}</span></div>
                 {% include 'core/consola/_uso.html' with filas=uso %}
+                <div class="mt-3">{% include 'core/consola/_modulos.html' with modulos=modulos %}</div>
             </div>
             <div class="card card--pad">
                 <h3 style="font-size:15px"><i class="ph ph-storefront"></i> Su marca y contacto</h3>

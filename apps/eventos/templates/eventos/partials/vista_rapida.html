@@ -27,12 +27,14 @@
         <dl class="dl mt-3">
             <div><dt><i class="ph ph-storefront"></i>Agencia</dt><dd>{{ evento.colaborador|default:"Sin asignar" }}</dd></div>
             <div><dt><i class="ph ph-user-circle"></i>Cliente</dt><dd>{{ evento.cliente_nombre|default:"—" }}</dd></div>
-            <div><dt><i class="ph ph-broadcast"></i>Interacción</dt><dd>{% if evento.estado %}<span class="text-success">Activa</span>{% else %}<span class="muted">Pausada</span>{% endif %}</dd></div>
+            {% if modulos.en_vivo %}<div><dt><i class="ph ph-broadcast"></i>Interacción</dt><dd>{% if evento.estado %}<span class="text-success">Activa</span>{% else %}<span class="muted">Pausada</span>{% endif %}</dd></div>{% endif %}
         </dl>
     </div>
     <div class="modal__footer" style="flex-wrap:wrap">
+        {% if modulos.en_vivo %}
         <a class="btn btn--ghost" href="{{ evento.url_dj }}" target="_blank"><i class="ph ph-headphones"></i>Panel DJ</a>
         <a class="btn btn--ghost" href="{{ evento.url_pantalla }}" target="_blank"><i class="ph ph-qr-code"></i>Pantalla QR</a>
+        {% endif %}
         <button class="btn" data-modal="{% url 'eventos:editar' evento.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
         <a class="btn btn--primary" href="{{ evento.get_absolute_url }}"><i class="ph ph-arrow-up-right"></i>Abrir evento</a>
     </div>

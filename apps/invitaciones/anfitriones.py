@@ -3,6 +3,7 @@ Panel de los anfitriones (los novios, la quinceañera, la familia…). Entran co
 cuenta, y administran su lista de invitados: agregar, importar, editar, quitar y enviar por WhatsApp.
 No pueden cambiar el diseño de la invitación, publicarla ni registrar entradas.
 """
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -10,6 +11,7 @@ from django.views.decorators.http import require_POST
 from apps.core.mixins import es_ajax, respuesta_ok
 from apps.core.marca import Marca
 from apps.core.models import Ajustes
+from apps.core.modulos import tiene
 from apps.eventos.models import Evento
 
 from .models import Invitacion, Invitado
@@ -21,10 +23,13 @@ from .views import (
 
 def invitacion_de(token):
     """La invitación de ese enlace; un enlace desactivado, cambiado o de un evento cancelado da 404."""
-    return get_object_or_404(
-        Invitacion.objects.select_related('evento__colaborador').exclude(evento__etapa=Evento.Etapa.CANCELADO),
+    invitacion = get_object_or_404(
+        Invitacion.objects.select_related('evento__colaborador', 'evento__agencia__plan').exclude(evento__etapa=Evento.Etapa.CANCELADO),
         token_anfitriones=token,
     )
+    if not tiene(invitacion.evento.agencia, 'invitaciones'):
+        raise Http404  # el plan de la agencia ya no incluye invitaciones digitales
+    return invitacion
 
 
 def panel(request, token):

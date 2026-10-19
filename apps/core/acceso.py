@@ -49,11 +49,11 @@ def agencia_vigente(vista):
     return envoltura
 
 
-def decorar_urls(patrones, decorador, excepto=()):
-    """Aplica el decorador a todas las rutas (y sub-rutas) salvo las nombradas en `excepto`."""
+def decorar_urls(patrones, decorador, excepto=(), solo=None):
+    """Aplica el decorador a las rutas (y sub-rutas): todas salvo `excepto`, o solo las nombradas en `solo`."""
     for patron in patrones:
         if isinstance(patron, URLResolver):
-            decorar_urls(patron.url_patterns, decorador, excepto)
-        elif patron.name not in excepto:
+            decorar_urls(patron.url_patterns, decorador, excepto, solo)
+        elif patron.name not in excepto and (solo is None or patron.name in solo):
             patron.callback = decorador(patron.callback)
     return patrones
