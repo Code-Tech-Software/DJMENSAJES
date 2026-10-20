@@ -6,7 +6,7 @@ from django import forms
 from apps.colaboradores.models import Colaborador
 from apps.core.modulos import modulos_de
 
-from ..models import CategoriaServicio, Cotizacion, Paquete, PaqueteServicio, Servicio, TipoEvento, orden_servicio
+from ..models import CategoriaServicio, Cliente, Cotizacion, Paquete, PaqueteServicio, Servicio, TipoEvento, orden_servicio
 
 FORMATO_FECHA_HORA = '%Y-%m-%dT%H:%M'
 MAX_CONCEPTOS = 60
@@ -166,11 +166,13 @@ class CotizacionForm(forms.ModelForm):
 
     class Meta:
         model = Cotizacion
-        fields = ['cliente_nombre', 'cliente_telefono', 'cliente_email', 'tipo_evento', 'nombre_evento', 'fecha_evento',
+        fields = ['cliente', 'cliente_nombre', 'cliente_telefono', 'cliente_email', 'tipo_evento', 'nombre_evento', 'fecha_evento',
                   'duracion_horas', 'lugar', 'num_invitados', 'colaborador', 'descuento', 'anticipo_porcentaje', 'vigencia',
                   'condiciones', 'notas_internas']
         widgets = {
-            'cliente_nombre': forms.TextInput(attrs={'placeholder': 'Quién contrata', 'autocomplete': 'off', 'data-sugerencias': 'clientes'}),
+            'cliente': forms.HiddenInput(attrs={'data-cliente-id': ''}),
+            'cliente_nombre': forms.TextInput(attrs={'placeholder': 'Busca en tu directorio o escribe uno nuevo', 'autocomplete': 'off',
+                                                     'data-sugerencias': 'clientes'}),
             'cliente_telefono': forms.TextInput(attrs={'placeholder': '10 dígitos', 'inputmode': 'tel'}),
             'cliente_email': forms.EmailInput(attrs={'placeholder': 'cliente@correo.com'}),
             'nombre_evento': forms.TextInput(attrs={'placeholder': 'Ej. Boda Ana & Luis'}),
@@ -189,6 +191,7 @@ class CotizacionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.usuario = usuario
         agencia_id = usuario.agencia_id if usuario else None
+        self.fields['cliente'].queryset = Cliente.objects.visibles_para(usuario) if usuario else Cliente.objects.none()
         self.fields['tipo_evento'].choices = list(TipoEvento.choices)
         self.fields['fecha_evento'].input_formats = [FORMATO_FECHA_HORA, '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M:%S']
         # Sub-agencia: solo de su agencia; quien pertenece a una sub-agencia cotiza a nombre de ella

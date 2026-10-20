@@ -190,6 +190,7 @@
             <div class="grid grid-2" style="gap:10px">
                 <a class="btn btn--soft" href="{% url 'eventos:crear' %}"><i class="ph ph-plus-circle"></i>Evento</a>
                 {% if modulos.cotizaciones %}<a class="btn btn--soft" href="{% url 'cotizaciones:nueva' %}"><i class="ph ph-file-text"></i>Cotización</a>{% endif %}
+                <button class="btn btn--soft" data-modal="{% url 'clientes:crear' %}"><i class="ph ph-user-plus"></i>Cliente</button>
                 {% if modulos.invitaciones %}<a class="btn btn--soft" href="{% url 'invitaciones:indice' %}"><i class="ph ph-paper-plane-right"></i>Invitaciones</a>{% endif %}
                 {% if ve_todo %}
                 {% if modulos.subagencias %}<button class="btn btn--soft" data-modal="{% url 'colaboradores:crear' %}"><i class="ph ph-users-three"></i>Colaborador</button>{% endif %}

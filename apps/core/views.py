@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from urllib.parse import urlencode
 
@@ -18,7 +19,7 @@ from apps.core.modulos import lista_modulos
 from apps.core.models import Ajustes
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
-from apps.eventos.models import ICONOS_TIPO, Evento, Pago, TipoEvento
+from apps.eventos.models import ICONOS_TIPO, Cliente, Evento, Pago, TipoEvento
 from apps.invitaciones.models import Invitado
 
 MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
@@ -134,6 +135,16 @@ def buscar(request):
             'icono': ICONOS_TIPO.get(e.tipo_evento, 'ph ph-calendar-dots'),
             'color': f'var(--t-{e.tipo_evento})',
         } for e in eventos]})
+
+        digitos = re.sub(r'\D', '', q)
+        filtro = Q(nombre__icontains=q) | Q(email__icontains=q)
+        if len(digitos) >= 3:
+            filtro |= Q(telefono_normalizado__contains=digitos)
+        clientes = Cliente.objects.visibles_para(request.user).filter(filtro).order_by('-actualizado')[:5]
+        grupos.append({'grupo': 'Clientes', 'items': [{
+            'titulo': c.nombre, 'sub': ' · '.join(x for x in (c.telefono, c.email) if x) or 'Cliente',
+            'url': c.get_absolute_url(), 'icono': 'ph ph-address-book',
+        } for c in clientes]})
 
         invitados = (Invitado.objects.filter(evento__in=Evento.objects.visibles_para(request.user), nombre__icontains=q)
                      .select_related('evento')[:6])

@@ -12,7 +12,7 @@ from apps.core.acceso import agencia_vigente, decorar_urls
 from apps.core.modulos import requiere_modulo
 from apps.cuentas import urls as urls_cuentas
 from apps.eventos import urls as urls_eventos
-from apps.eventos import urls_cotizaciones
+from apps.eventos import urls_clientes, urls_cotizaciones
 from apps.invitaciones import urls as urls_invitaciones
 
 admin.site.site_header = 'EventPro · Administración'
@@ -20,7 +20,7 @@ admin.site.site_title = 'EventPro'
 admin.site.index_title = 'Panel técnico'
 
 # El panel de una agencia suspendida o vencida queda bloqueado (las páginas públicas no). Ver apps/core/acceso.py
-for modulo in (urls_core, urls_eventos, urls_cotizaciones, urls_colaboradores, urls_banners, urls_invitaciones):
+for modulo in (urls_core, urls_eventos, urls_clientes, urls_cotizaciones, urls_colaboradores, urls_banners, urls_invitaciones):
     decorar_urls(modulo.urlpatterns, agencia_vigente)
 decorar_urls(urls_cuentas.urlpatterns, agencia_vigente, excepto={'login', 'logout'})
 
@@ -41,6 +41,7 @@ urlpatterns = [
     path('', include(urls_core)),
     path('', include(urls_cuentas)),
     path('eventos/', include(urls_eventos)),
+    path('clientes/', include(urls_clientes)),
     path('cotizaciones/', include(urls_cotizaciones)),
     path('colaboradores/', include(urls_colaboradores)),
     path('banners/', include(urls_banners)),

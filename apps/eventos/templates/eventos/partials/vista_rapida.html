@@ -26,7 +26,7 @@
         </div>
         <dl class="dl mt-3">
             <div><dt><i class="ph ph-storefront"></i>Agencia</dt><dd>{{ evento.colaborador|default:"Sin asignar" }}</dd></div>
-            <div><dt><i class="ph ph-user-circle"></i>Cliente</dt><dd>{{ evento.cliente_nombre|default:"—" }}</dd></div>
+            <div><dt><i class="ph ph-user-circle"></i>Cliente</dt><dd>{% if evento.cliente_id %}<a class="text-brand" href="{% url 'clientes:detalle' evento.cliente_id %}">{{ evento.cliente_nombre|default:"Ver ficha" }}</a>{% else %}{{ evento.cliente_nombre|default:"—" }}{% endif %}</dd></div>
             {% if modulos.en_vivo %}<div><dt><i class="ph ph-broadcast"></i>En vivo</dt><dd>{% if not evento.con_en_vivo %}<span class="muted">No incluida</span>{% elif evento.estado %}<span class="text-success">Activa</span>{% else %}<span class="muted">En pausa</span>{% endif %}</dd></div>{% endif %}
         </dl>
     </div>

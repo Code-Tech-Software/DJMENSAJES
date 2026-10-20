@@ -66,6 +66,16 @@
             {% endif %}
         </section>
 
+        {# ---------------- Cliente ---------------- #}
+        {% if cliente %}
+        <a class="card card--pad cliente-mini" href="{{ cliente.get_absolute_url }}">
+            <span class="avatar">{{ cliente.iniciales }}</span>
+            <span class="cliente-mini__texto"><strong>{{ cliente.nombre }}</strong>
+                <small>{% if cliente.n_eventos %}{{ cliente.n_eventos }} evento{{ cliente.n_eventos|pluralize }}{% else %}Aún sin eventos{% endif %} · {{ cliente.n_cotizaciones }} cotizaci{{ cliente.n_cotizaciones|pluralize:"ón,ones" }}{% if cliente.n_confirmados >= 2 %} · frecuente{% endif %}</small></span>
+            <span class="chip chip--muted">Ver ficha<i class="ph ph-arrow-right"></i></span>
+        </a>
+        {% endif %}
+
         {# ---------------- Seguimiento ---------------- #}
         <section class="card card--pad">
             <div class="card-title mb-2"><span class="ico"><i class="ph ph-clock-counter-clockwise"></i></span><h3>Seguimiento</h3></div>

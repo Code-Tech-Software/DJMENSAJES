@@ -27,6 +27,9 @@
                 <i class="ph ph-sparkle"></i><span>Eventos</span>
                 {% if total_proximos %}<span class="nav-count">{{ total_proximos }}</span>{% endif %}
             </a>
+            <a href="{% url 'clientes:lista' %}" class="nav-link {% activo 'clientes:*' %}">
+                <i class="ph ph-address-book"></i><span>Clientes</span>
+            </a>
             {% if modulos.cotizaciones %}
             <a href="{% url 'cotizaciones:lista' %}" class="nav-link {% activo 'cotizaciones:lista' 'cotizaciones:nueva' 'cotizaciones:detalle' 'cotizaciones:editar' %}">
                 <i class="ph ph-file-text"></i><span>Cotizaciones</span>

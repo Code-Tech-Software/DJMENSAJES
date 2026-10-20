@@ -1,12 +1,13 @@
 """
 Asistente del formulario de eventos: textos según el tipo de evento, sugerencias tomadas de los eventos
-anteriores de la agencia (lugares y clientes), itinerarios base y disponibilidad del día.
+anteriores de la agencia (lugares), su directorio de clientes, itinerarios base y disponibilidad del día.
 """
 from datetime import datetime, time, timedelta
 
 from django.db.models import Q
 from django.utils import timezone
 
+from .clientes.servicios import para_formulario
 from .models import ActividadItinerario, Evento
 
 # tipo: (etiqueta del nombre, ejemplo, ayuda)
@@ -70,20 +71,15 @@ def crear_itinerario(evento):
 
 
 def sugerencias(usuario, limite=40):
-    """Lugares y clientes de los eventos anteriores que el usuario puede ver (lo más reciente primero)."""
-    eventos = (Evento.objects.visibles_para(usuario).order_by('-creado')
-               .values('lugar', 'direccion', 'url_mapa', 'cliente_nombre', 'cliente_telefono', 'cliente_email')[:200])
-    lugares, clientes, vistos_l, vistos_c = [], [], set(), set()
+    """Lugares de los eventos anteriores que el usuario puede ver (lo más reciente primero) y su directorio de clientes."""
+    eventos = Evento.objects.visibles_para(usuario).order_by('-creado').values('lugar', 'direccion', 'url_mapa')[:200]
+    lugares, vistos = [], set()
     for e in eventos:
         clave = e['lugar'].strip().lower()
-        if clave and clave not in vistos_l and len(lugares) < limite:
-            vistos_l.add(clave)
+        if clave and clave not in vistos and len(lugares) < limite:
+            vistos.add(clave)
             lugares.append({'lugar': e['lugar'].strip(), 'direccion': e['direccion'], 'url_mapa': e['url_mapa']})
-        clave = e['cliente_nombre'].strip().lower()
-        if clave and clave not in vistos_c and len(clientes) < limite:
-            vistos_c.add(clave)
-            clientes.append({'nombre': e['cliente_nombre'].strip(), 'telefono': e['cliente_telefono'], 'email': e['cliente_email']})
-    return {'lugares': lugares, 'clientes': clientes}
+    return {'lugares': lugares, 'clientes': para_formulario(usuario)}
 
 
 def eventos_cercanos(usuario, inicio, fin, excepto=None):

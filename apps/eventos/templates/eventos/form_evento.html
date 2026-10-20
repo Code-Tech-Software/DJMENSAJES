@@ -94,9 +94,10 @@
 
             {# ---------------- 3. Cliente ---------------- #}
             <section class="card seccion-ev" id="sec-cliente">
-                <header class="seccion-ev__cabeza"><span class="seccion-ev__num">3</span><div><h2>Cliente</h2><p>Quién contrata; si ya te contrató antes, elígelo de la lista.</p></div></header>
+                <header class="seccion-ev__cabeza"><span class="seccion-ev__num">3</span><div><h2>Cliente</h2><p>Quién contrata. Búscalo en tu directorio o escribe uno nuevo: se agrega solo al guardar.</p></div></header>
                 <div class="form-grid">
                     {% campo form.cliente_nombre icono="ph ph-user" clase="span-2" %}
+                    <div class="cliente-ficha span-2" data-cliente-ficha hidden></div>
                     {% campo form.cliente_telefono icono="ph ph-whatsapp-logo" %}
                     {% campo form.cliente_email icono="ph ph-envelope-simple" %}
                 </div>

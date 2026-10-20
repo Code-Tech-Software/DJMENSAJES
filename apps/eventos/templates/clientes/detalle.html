@@ -1,0 +1,126 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}{{ cliente.nombre }} · Clientes{% endblock %}
+{% block content %}
+<div class="breadcrumb" style="margin-top:14px"><a href="{% url 'clientes:lista' %}">Clientes</a><i class="ph ph-caret-right"></i>{{ cliente.nombre }}</div>
+
+<section class="card cliente-cabeza mt-1">
+    <span class="avatar avatar--xl">{{ cliente.iniciales }}</span>
+    <div class="cliente-cabeza__texto">
+        <h1>{{ cliente.nombre }}</h1>
+        <div class="row row-wrap mt-1">
+            {% if cliente.n_confirmados >= 2 %}<span class="chip chip--success"><i class="ph-fill ph-star"></i>Cliente frecuente</span>{% endif %}
+            {% if cliente.proximo %}<span class="chip chip--info chip--dot">Evento el {{ cliente.proximo|date:"j \d\e F"|lower }}</span>{% elif not cliente.n_confirmados %}<span class="chip chip--muted">Prospecto</span>{% endif %}
+            {% if cliente.origen %}<span class="chip chip--muted"><i class="{{ cliente.icono_origen }}"></i>{{ cliente.get_origen_display }}</span>{% endif %}
+            <span class="chip chip--muted"><i class="ph ph-clock-counter-clockwise"></i>Cliente desde {{ cliente.creado|date:"F Y"|lower }}</span>
+        </div>
+        <div class="cliente-cabeza__contacto">
+            {% if cliente.telefono %}<a href="tel:{{ cliente.telefono }}"><i class="ph ph-phone"></i>{{ cliente.telefono }}</a>{% endif %}
+            {% if cliente.email %}<a href="mailto:{{ cliente.email }}"><i class="ph ph-envelope-simple"></i>{{ cliente.email }}</a>{% endif %}
+            {% if not cliente.telefono and not cliente.email %}<button type="button" class="text-brand" data-modal="{% url 'clientes:editar' cliente.pk %}"><i class="ph ph-plus-circle"></i>Agregar teléfono o correo</button>{% endif %}
+        </div>
+    </div>
+    <div class="cliente-cabeza__acciones">
+        {% if url_whatsapp %}<a class="btn btn--whatsapp" href="{{ url_whatsapp }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>WhatsApp</a>{% endif %}
+        <a class="btn btn--primary" href="{% url 'eventos:crear' %}?cliente={{ cliente.pk }}"><i class="ph ph-calendar-plus"></i>Nuevo evento</a>
+        {% if modulos.cotizaciones %}<a class="btn" href="{% url 'cotizaciones:nueva' %}?cliente={{ cliente.pk }}"><i class="ph ph-file-text"></i>Cotizar</a>{% endif %}
+        <div class="dropdown">
+            <button class="btn" data-dropdown aria-label="Más acciones"><i class="ph ph-dots-three"></i></button>
+            <div class="dropdown__menu">
+                <button class="menu-item" data-modal="{% url 'clientes:editar' cliente.pk %}"><i class="ph ph-pencil-simple"></i>Editar datos</button>
+                {% if gestiona %}
+                <button class="menu-item" data-modal="{% url 'clientes:fusionar' cliente.pk %}"><i class="ph ph-git-merge"></i>Juntar con una ficha duplicada</button>
+                <div class="menu-sep"></div>
+                <button class="menu-item menu-item--danger" data-post="{% url 'clientes:eliminar' cliente.pk %}" data-danger data-confirm="¿Quitar a {{ cliente.nombre }} del directorio?" data-confirm-text="Sus eventos y cotizaciones no se borran: conservan los datos del cliente tal como se guardaron." data-confirm-button="Quitar del directorio"><i class="ph ph-trash"></i>Quitar del directorio</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="grid grid-4 mt-3 reveal">
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Eventos</span><span class="stat__icon"><i class="ph ph-calendar-dots"></i></span></div>
+        <div class="stat__value">{{ cliente.n_eventos }}</div>
+        <div class="stat__meta">{{ cliente.n_confirmados }} confirmado{{ cliente.n_confirmados|pluralize }}{% if modulos.cotizaciones and cliente.n_cotizaciones %} · {{ cliente.n_cotizaciones }} cotizaci{{ cliente.n_cotizaciones|pluralize:"ón,ones" }}{% endif %}</div>
+    </div>
+    <div class="card stat tone-live">
+        <div class="stat__top"><span class="stat__label">Ha contratado</span><span class="stat__icon"><i class="ph ph-handshake"></i></span></div>
+        <div class="stat__value">{{ cliente.contratado|moneda }}</div>
+        <div class="stat__meta">En eventos confirmados</div>
+    </div>
+    <div class="card stat tone-success">
+        <div class="stat__top"><span class="stat__label">Pagado</span><span class="stat__icon"><i class="ph ph-check-circle"></i></span></div>
+        <div class="stat__value">{{ cliente.pagado|moneda }}</div>
+        <div class="progress progress--sm progress--success mt-1"><span data-width="{{ pagado_pct }}"></span></div>
+    </div>
+    <div class="card stat tone-warning">
+        <div class="stat__top"><span class="stat__label">Por cobrar</span><span class="stat__icon"><i class="ph ph-wallet"></i></span></div>
+        <div class="stat__value">{% if cliente.saldo > 0 %}{{ cliente.saldo|moneda }}{% else %}$0{% endif %}</div>
+        <div class="stat__meta">{% if cliente.saldo > 0 %}Saldo de sus eventos{% elif cliente.contratado %}Al corriente{% else %}Sin eventos confirmados{% endif %}</div>
+    </div>
+</div>
+
+<div class="grid grid-sidebar mt-3">
+    <div class="stack">
+        {% if proximos %}
+        <div class="card">
+            <div class="card__head"><div><h3>Próximos eventos</h3><p>Lo que tiene agendado contigo</p></div></div>
+            <div class="list mt-2">
+                {% for e in proximos %}{% include 'clientes/_evento.html' with proximo=True %}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card__head"><div><h3>{% if proximos %}Historial{% else %}Eventos{% endif %}</h3><p>{% if historial %}Sus eventos anteriores{% else %}Aún no hay eventos {% if proximos %}anteriores{% else %}con este cliente{% endif %}{% endif %}</p></div>
+                {% if not proximos and not historial %}<a class="btn btn--soft" href="{% url 'eventos:crear' %}?cliente={{ cliente.pk }}"><i class="ph ph-plus"></i>Nuevo evento</a>{% endif %}
+            </div>
+            {% if historial %}
+            <div class="list mt-2">
+                {% for e in historial %}{% include 'clientes/_evento.html' %}{% endfor %}
+            </div>
+            {% else %}<div style="height:12px"></div>{% endif %}
+        </div>
+
+        {% if modulos.cotizaciones %}
+        <div class="card">
+            <div class="card__head"><div><h3>Cotizaciones</h3><p>{% if cotizaciones %}Lo que le has cotizado{% else %}Aún no le has cotizado nada{% endif %}</p></div>
+                <a class="btn btn--soft" href="{% url 'cotizaciones:nueva' %}?cliente={{ cliente.pk }}"><i class="ph ph-plus"></i>Cotizar</a></div>
+            {% if cotizaciones %}
+            <div class="list mt-2">
+                {% for c in cotizaciones %}
+                <a href="{{ c.get_absolute_url }}" class="list-item">
+                    <span class="ico-square"><i class="ph ph-file-text"></i></span>
+                    <div class="list-item__body">
+                        <div class="list-item__title">{{ c.titulo_evento }} <span class="muted mono small">{{ c.folio }}</span></div>
+                        <div class="list-item__sub">{{ c.get_tipo_evento_display }} · {{ c.fecha_evento|date:"j M Y" }}{% if c.lugar %} · {{ c.lugar }}{% endif %}</div>
+                    </div>
+                    <div class="cliente-monto"><strong>{{ c.total|moneda }}</strong><span class="chip chip--{{ c.tono }} chip--dot">{{ c.estado_visible }}</span></div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}<div style="height:12px"></div>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <aside class="stack">
+        <div class="card card--pad">
+            <div class="card-title mb-3"><span class="ico"><i class="ph ph-identification-card"></i></span><h3>Datos del cliente</h3>
+                <button class="icon-btn" style="margin-left:auto" data-modal="{% url 'clientes:editar' cliente.pk %}" aria-label="Editar datos" title="Editar"><i class="ph ph-pencil-simple"></i></button></div>
+            <dl class="dl dl--1">
+                <div><dt><i class="ph ph-phone"></i>Teléfono</dt><dd>{% if cliente.telefono %}<a class="text-brand" href="tel:{{ cliente.telefono }}">{{ cliente.telefono }}</a>{% else %}—{% endif %}</dd></div>
+                <div><dt><i class="ph ph-envelope-simple"></i>Correo</dt><dd>{% if cliente.email %}<a class="text-brand" href="mailto:{{ cliente.email }}">{{ cliente.email }}</a>{% else %}—{% endif %}</dd></div>
+                <div><dt><i class="ph ph-signpost"></i>Cómo te conoció</dt><dd>{{ cliente.get_origen_display|default:"—" }}</dd></div>
+                <div><dt><i class="ph ph-calendar-blank"></i>En tu directorio desde</dt><dd>{{ cliente.creado|date:"j \d\e F \d\e Y"|lower }}</dd></div>
+            </dl>
+        </div>
+        <div class="card card--pad">
+            <div class="card-title mb-2"><span class="ico"><i class="ph ph-note"></i></span><h3>Notas</h3></div>
+            {% if cliente.notas %}<p class="small" style="white-space:pre-line;margin:0">{{ cliente.notas }}</p>
+            {% else %}<p class="muted small" style="margin:0">Anota sus gustos, datos para facturar o lo que convenga recordar. <button type="button" class="text-brand strong" data-modal="{% url 'clientes:editar' cliente.pk %}">Agregar nota</button></p>{% endif %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

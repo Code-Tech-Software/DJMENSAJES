@@ -160,8 +160,11 @@
                 <div class="card card--pad">
                     <div class="card-title mb-3"><span class="ico"><i class="ph ph-info"></i></span><h3>Información general</h3></div>
                     <dl class="dl">
-                        <div><dt><i class="ph ph-user-circle"></i>Cliente</dt><dd>{{ evento.cliente_nombre|default:"—" }}</dd></div>
-                        <div><dt><i class="ph ph-phone"></i>Teléfono</dt><dd>{% if evento.cliente_telefono %}<a class="text-brand" href="tel:{{ evento.cliente_telefono }}">{{ evento.cliente_telefono }}</a>{% else %}—{% endif %}</dd></div>
+                        <div><dt><i class="ph ph-user-circle"></i>Cliente</dt><dd>{% if cliente %}<a class="text-brand" href="{{ cliente.get_absolute_url }}" title="Ver su ficha">{{ evento.cliente_nombre|default:cliente.nombre }}</a>
+                            {% if cliente.n_confirmados >= 2 %}<span class="chip chip--success chip--sm" title="Te ha contratado {{ cliente.n_confirmados }} veces"><i class="ph-fill ph-star"></i>Frecuente</span>{% endif %}
+                            <small class="block muted">{{ cliente.n_eventos }} evento{{ cliente.n_eventos|pluralize }} contigo{% if cliente.saldo > 0 %} · debe {{ cliente.saldo|moneda }} en total{% endif %}</small>
+                            {% else %}{{ evento.cliente_nombre|default:"—" }}{% endif %}</dd></div>
+                        <div><dt><i class="ph ph-phone"></i>Teléfono</dt><dd>{% if evento.cliente_telefono %}<a class="text-brand" href="tel:{{ evento.cliente_telefono }}">{{ evento.cliente_telefono }}</a>{% if cliente.whatsapp %} · <a class="text-brand" href="https://wa.me/{{ cliente.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>{% endif %}{% else %}—{% endif %}</dd></div>
                         <div><dt><i class="ph ph-envelope-simple"></i>Correo</dt><dd>{{ evento.cliente_email|default:"—" }}</dd></div>
                         <div><dt><i class="ph ph-building"></i>Lugar</dt><dd>{{ evento.lugar|default:"—" }}</dd></div>
                         <div><dt><i class="ph ph-map-pin"></i>Dirección</dt><dd>{{ evento.direccion|default:"—" }}{% if evento.url_mapa %} · <a class="text-brand" href="{{ evento.url_mapa }}" target="_blank">Ver mapa</a>{% endif %}</dd></div>

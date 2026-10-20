@@ -10,8 +10,9 @@ from apps.core.limites import puede_crear
 from apps.core.models import Ajustes
 
 from ..models import CategoriaServicio as C
+from ..clientes.servicios import vincular
 from ..extras import activar, extras_de_conceptos, valores_en_vivo
-from ..models import ConceptoCotizacion, ConceptoEvento, Cotizacion, Evento, Paquete, PaqueteServicio, Servicio
+from ..models import ConceptoCotizacion, ConceptoEvento, Cotizacion, Evento, Paquete, PaqueteServicio, Servicio, numero_whatsapp
 
 DIAS_VIGENCIA = 15
 
@@ -109,7 +110,7 @@ def convertir_en_evento(cotizacion, usuario=None):
     ajustes = Ajustes.de(cotizacion.agencia_id)
     with transaction.atomic():
         evento = Evento.objects.create(
-            agencia_id=cotizacion.agencia_id, colaborador=cotizacion.colaborador,
+            agencia_id=cotizacion.agencia_id, colaborador=cotizacion.colaborador, cliente=cotizacion.cliente,
             creado_por=usuario or cotizacion.creado_por,
             nombre_evento=cotizacion.titulo_evento[:200], tipo_evento=cotizacion.tipo_evento, etapa=Evento.Etapa.CONFIRMADO,
             fecha_inicio_evento=cotizacion.fecha_evento, fecha_fin_evento=cotizacion.fecha_fin,
@@ -128,8 +129,9 @@ def convertir_en_evento(cotizacion, usuario=None):
         if cotizacion.descuento:  # el descuento de la cotización queda como renglón para que cuadre el precio
             ConceptoEvento.objects.create(evento=evento, descripcion='Descuento', cantidad=Decimal('1'),
                                           precio_unitario=-cotizacion.descuento, orden=999)
-        cotizacion.evento = evento
-        cotizacion.save(update_fields=['evento', 'actualizado'])
+        vincular(evento, cotizacion.cliente, usuario)  # el mismo cliente del directorio (o se agrega)
+        cotizacion.evento, cotizacion.cliente = evento, evento.cliente
+        cotizacion.save(update_fields=['evento', 'cliente', 'actualizado'])
         # Lo que se vendió en la cotización y activa un extra (experiencia en vivo, invitación) queda activo
         evento.extras_activados = activar(evento, extras_de_conceptos(cotizacion.conceptos.all()))
     return evento, ''
@@ -144,11 +146,6 @@ def aceptar(cotizacion, usuario=None, nombre=''):
     return convertir_en_evento(cotizacion, usuario)
 
 
-def numero_whatsapp(telefono):
-    numero = ''.join(c for c in telefono or '' if c.isdigit())
-    return '52' + numero if len(numero) == 10 else numero  # número mexicano sin lada internacional
-
-
 def url_whatsapp(cotizacion, url_publica, nombre_negocio):
     texto = (f'Hola {cotizacion.cliente_nombre.split(" ")[0]}, te comparto la cotización {cotizacion.folio} de '
              f'{nombre_negocio} para {cotizacion.titulo_evento}: {url_publica}\n'
@@ -159,7 +156,7 @@ def url_whatsapp(cotizacion, url_publica, nombre_negocio):
 
 def duplicar(cotizacion, usuario):
     copia = Cotizacion.objects.create(
-        agencia_id=cotizacion.agencia_id, colaborador=cotizacion.colaborador, creado_por=usuario,
+        agencia_id=cotizacion.agencia_id, colaborador=cotizacion.colaborador, creado_por=usuario, cliente=cotizacion.cliente,
         cliente_nombre=cotizacion.cliente_nombre, cliente_telefono=cotizacion.cliente_telefono,
         cliente_email=cotizacion.cliente_email, nombre_evento=cotizacion.nombre_evento, tipo_evento=cotizacion.tipo_evento,
         fecha_evento=cotizacion.fecha_evento, duracion_horas=cotizacion.duracion_horas, lugar=cotizacion.lugar,

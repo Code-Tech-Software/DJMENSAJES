@@ -1,0 +1,17 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+{% if form.fields.duplicado.queryset.exists %}
+<p class="small mt-0 mb-3">Si registraste a la misma persona dos veces (p. ej. con otro teléfono), elige la otra ficha: sus eventos y cotizaciones pasan a la de <strong>{{ cliente.nombre }}</strong>, se completan los datos que le falten y la duplicada se elimina.</p>
+{% if form.sugerido %}<div class="alert alert--live mb-3"><i class="ph ph-lightbulb"></i><div>Te proponemos a <strong>{{ form.sugerido.nombre }}</strong> porque se parece; revísalo antes de juntar.</div></div>{% endif %}
+<div class="form-grid">
+    {% campo form.duplicado icono="ph ph-user-switch" clase="span-2" %}
+</div>
+{% else %}
+<div class="empty" style="padding:12px 0"><div class="empty__art"><i class="ph ph-users"></i></div><h3>No hay otras fichas</h3><p>Tu directorio no tiene otro cliente con quien juntar esta ficha.</p></div>
+{% endif %}
+{% endblock %}
+{% block pie %}
+<button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+{% if form.fields.duplicado.queryset.exists %}<button type="submit" class="btn btn--primary"><i class="ph ph-git-merge"></i>{{ texto_boton }}</button>{% endif %}
+{% endblock %}

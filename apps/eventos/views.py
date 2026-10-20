@@ -30,7 +30,8 @@ from apps.invitaciones.models import Invitado
 from .asistente import crear_itinerario, eventos_cercanos
 from .extras import activar, extras_de_conceptos, tiene_invitacion, valores_en_vivo
 from .forms import ActividadForm, EnVivoForm, EventoForm, PagoForm, ProyectorForm
-from .models import ActividadItinerario, ConceptoEvento, Evento, Pago, TipoEvento
+from .clientes.servicios import resumen_de
+from .models import ActividadItinerario, Cliente, ConceptoEvento, Evento, Pago, TipoEvento
 
 
 # --- Utilidades de acceso -------------------------------------------------------------------
@@ -200,6 +201,7 @@ def detalle(request, pk):
         'resumen_en_vivo': _resumen_en_vivo(evento),
         'qr': qr_svg(url_invitados) if evento.con_en_vivo else '',
         'puede_eliminar': puede_eliminar(request.user, evento),
+        'cliente': resumen_de(evento.cliente_id, request.user),
     })
 
 
@@ -294,6 +296,9 @@ class EventoFormMixin(LoginRequiredMixin, FormularioModalMixin):
         kwargs = super().get_form_kwargs()
         kwargs['usuario'] = self.request.user
         kwargs['fecha'] = self.request.GET.get('fecha')
+        cliente = self.request.GET.get('cliente', '')
+        if cliente.isdigit():
+            kwargs['cliente'] = Cliente.objects.visibles_para(self.request.user).filter(pk=cliente).first()
         return kwargs
 
 

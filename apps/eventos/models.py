@@ -8,7 +8,7 @@ from django.db.models import Q, Sum
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.core.utils import generar_codigo, generar_token
+from apps.core.utils import generar_codigo, generar_token, iniciales
 
 
 class TipoEvento(models.TextChoices):
@@ -115,7 +115,11 @@ class Evento(models.Model):
     url_mapa = models.URLField('enlace de Google Maps', blank=True)
     num_invitados = models.PositiveIntegerField('invitados estimados', null=True, blank=True)
 
-    # --- Cliente y contrato
+    # --- Cliente y contrato (los datos del cliente se guardan también aquí, tal como se acordaron)
+    cliente = models.ForeignKey(
+        'Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='eventos',
+        help_text='Su ficha en el directorio de clientes.',
+    )
     cliente_nombre = models.CharField('nombre del cliente', max_length=150, blank=True)
     cliente_telefono = models.CharField('teléfono del cliente', max_length=30, blank=True)
     cliente_email = models.EmailField('correo del cliente', blank=True)
@@ -521,6 +525,7 @@ class Cotizacion(models.Model):
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     # Cliente
+    cliente = models.ForeignKey('Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='cotizaciones')
     cliente_nombre = models.CharField('cliente', max_length=150)
     cliente_telefono = models.CharField('teléfono', max_length=30, blank=True)
     cliente_email = models.EmailField('correo', blank=True)
@@ -671,3 +676,100 @@ class ConceptoEvento(ConceptoBase):
     class Meta(ConceptoBase.Meta):
         verbose_name = 'servicio contratado'
         verbose_name_plural = 'servicios contratados'
+
+
+# --- Clientes -------------------------------------------------------------------------------------
+# El directorio de la agencia: cada evento y cotización queda ligado a su cliente (se agrega solo al
+# registrarlos), con su historial, lo que ha contratado y lo que tiene por pagar.
+
+def normalizar_telefono(telefono):
+    """Solo los dígitos y, si trae lada internacional (52 / 521), los últimos 10: así se reconoce el mismo número."""
+    digitos = ''.join(c for c in telefono or '' if c.isdigit())
+    return digitos[-10:] if len(digitos) > 10 else digitos
+
+
+def numero_whatsapp(telefono):
+    numero = ''.join(c for c in telefono or '' if c.isdigit())
+    return '52' + numero if len(numero) == 10 else numero  # número mexicano sin lada internacional
+
+
+class ClienteQuerySet(models.QuerySet):
+    def visibles_para(self, usuario):
+        """
+        Los de su agencia. Quien solo ve sus propios eventos (o los de su sub-agencia) ve los clientes que
+        registró y los de esos eventos y cotizaciones.
+        """
+        if not usuario.is_authenticated or not usuario.agencia_id:
+            return self.none()
+        de_su_agencia = self.filter(agencia_id=usuario.agencia_id)
+        if usuario.ve_todo:
+            return de_su_agencia
+        return de_su_agencia.filter(
+            Q(creado_por=usuario)
+            | Q(pk__in=Evento.objects.visibles_para(usuario).filter(cliente__isnull=False).values('cliente_id'))
+            | Q(pk__in=Cotizacion.objects.visibles_para(usuario).filter(cliente__isnull=False).values('cliente_id'))
+        )
+
+
+class Cliente(models.Model):
+    class Origen(models.TextChoices):
+        RECOMENDACION = 'recomendacion', 'Recomendación'
+        REDES = 'redes', 'Redes sociales'
+        GOOGLE = 'google', 'Google o internet'
+        EVENTO = 'evento', 'Nos vio en un evento'
+        PROVEEDOR = 'proveedor', 'Salón o proveedor'
+        OTRO = 'otro', 'Otro'
+
+    ICONOS_ORIGEN = {
+        'recomendacion': 'ph ph-handshake',
+        'redes': 'ph ph-instagram-logo',
+        'google': 'ph ph-google-logo',
+        'evento': 'ph ph-confetti',
+        'proveedor': 'ph ph-storefront',
+        'otro': 'ph ph-dots-three-circle',
+    }
+
+    agencia = models.ForeignKey('core.Agencia', on_delete=models.PROTECT, related_name='clientes', editable=False)
+    nombre = models.CharField('nombre', max_length=150)
+    telefono = models.CharField('teléfono', max_length=30, blank=True)
+    email = models.EmailField('correo', blank=True)
+    origen = models.CharField('¿cómo te conoció?', max_length=20, choices=Origen.choices, blank=True)
+    notas = models.TextField('notas', blank=True, help_text='Gustos, datos para facturar, lo que convenga recordar. Solo las ve tu equipo.')
+    telefono_normalizado = models.CharField(max_length=15, blank=True, editable=False)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    creado = models.DateTimeField(default=timezone.now, editable=False)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    objects = ClienteQuerySet.as_manager()
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name = 'cliente'
+        verbose_name_plural = 'clientes'
+        indexes = [models.Index(fields=['agencia', 'telefono_normalizado'])]
+
+    def __str__(self):
+        return self.nombre
+
+    def save(self, *args, **kwargs):
+        self.nombre = ' '.join(self.nombre.split())
+        self.email = self.email.strip().lower()
+        self.telefono_normalizado = normalizar_telefono(self.telefono)
+        if kwargs.get('update_fields') is not None:
+            kwargs['update_fields'] = {*kwargs['update_fields'], 'telefono_normalizado'}
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('clientes:detalle', args=[self.pk])
+
+    @property
+    def iniciales(self):
+        return iniciales(self.nombre)
+
+    @property
+    def whatsapp(self):
+        return numero_whatsapp(self.telefono)
+
+    @property
+    def icono_origen(self):
+        return self.ICONOS_ORIGEN.get(self.origen, '')

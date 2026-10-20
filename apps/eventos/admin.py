@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ActividadItinerario, Evento, Pago
+from .models import ActividadItinerario, Cliente, Evento, Pago
 
 
 class ActividadInline(admin.TabularInline):
@@ -26,3 +26,11 @@ class EventoAdmin(admin.ModelAdmin):
         if not obj.agencia_id:
             obj.agencia_id = request.user.agencia_id
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Cliente)
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'agencia', 'telefono', 'email', 'origen', 'creado')
+    list_filter = ('agencia', 'origen')
+    search_fields = ('nombre', 'telefono', 'email')
+    readonly_fields = ('creado', 'actualizado')

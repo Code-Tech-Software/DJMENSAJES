@@ -571,7 +571,7 @@
   // Panel de sugerencias bajo un campo (lugares y clientes anteriores): filtra al escribir, se elige con
   // clic o con las flechas y Enter, y avisa con un evento input para que se completen los demás campos
   const sinAcentos = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  function sugerirEnCampo(input, items, { titulo, icono, texto, detalle }) {
+  function sugerirEnCampo(input, items, { titulo, icono, texto, detalle, alElegir }) {
     if (!input || !items.length) return;
     const caja = input.closest('.field__control') || input.parentElement;
     const panel = document.createElement('div');
@@ -589,6 +589,7 @@
     };
     const elegir = item => {
       input.value = texto(item);
+      if (alElegir) alElegir(item);
       input.dispatchEvent(new Event('input', { bubbles: true }));
       cerrar();
     };
@@ -623,6 +624,100 @@
         cerrar();
       }
     });
+  }
+
+  // Cliente en los formularios de evento y cotización: se elige del directorio (queda ligado a su ficha y se
+  // completan sus datos) o se escribe uno nuevo; la ficha de abajo dice qué pasará al guardar, con las mismas
+  // reglas que el servidor: mismo teléfono, mismo correo o el mismo nombre sin datos que choquen.
+  const telefonoNormal = v => { const d = (v || '').replace(/\D/g, ''); return d.length > 10 ? d.slice(-10) : d; };
+  const nombreNormal = v => (v || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const inicialesDe = t => (t || '').replace(/&/g, ' ').split(/\s+/).filter(p => /^[\p{L}\p{N}]/u.test(p)).slice(0, 2)
+    .map(p => p[0]).join('').toUpperCase() || '?';
+  function selectorCliente(form, clientes) {
+    const campo = n => form.querySelector(`[name="${n}"]`);
+    const nombre = campo('cliente_nombre'), telefono = campo('cliente_telefono'), correo = campo('cliente_email');
+    const oculto = campo('cliente');
+    const ficha = $('[data-cliente-ficha]', form);
+    if (!nombre) return;
+    const porId = id => clientes.find(c => String(c.id) === String(id));
+    let ligado = oculto && oculto.value ? (porId(oculto.value) || { id: oculto.value, nombre: nombre.value }) : null;
+    const cuenta = c => [c.eventos ? `${c.eventos} evento${c.eventos === 1 ? '' : 's'}` : '',
+      c.cotizaciones ? `${c.cotizaciones} cotizaci${c.cotizaciones === 1 ? 'ón' : 'ones'}` : ''].filter(Boolean).join(' · ') || 'Sin eventos todavía';
+    const reconocer = () => {
+      const t = telefonoNormal(telefono && telefono.value), e = nombreNormal(correo && correo.value), n = nombreNormal(nombre.value);
+      if (t.length >= 7) { const c = clientes.find(x => x.tel === t); if (c) return [c, 'mismo teléfono']; }
+      if (e) { const c = clientes.find(x => nombreNormal(x.email) === e); if (c) return [c, 'mismo correo']; }
+      const mismos = n ? clientes.filter(x => nombreNormal(x.nombre) === n) : [];
+      if (mismos.length === 1) {
+        const c = mismos[0];
+        if (!(t && c.tel && c.tel !== t) && !(e && c.email && nombreNormal(c.email) !== e)) return [c, 'mismo nombre'];
+      }
+      return [null, ''];
+    };
+    const pintar = () => {
+      if (!ficha) return;
+      let html = '', estado = '';
+      if (ligado) {
+        estado = 'is-vinculado';
+        const c = porId(ligado.id);
+        html = `<span class="avatar">${escapeHtml(inicialesDe(ligado.nombre))}</span>
+          <span class="cliente-ficha__texto"><strong>Cliente de tu directorio</strong><small>${c ? cuenta(c) : 'Ya está en tu directorio'}</small></span>
+          <span class="cliente-ficha__acciones">${c && c.url ? `<a href="${c.url}" target="_blank" rel="noopener">Ver ficha</a>` : ''}<button type="button" data-cliente-cambiar>Cambiar</button></span>`;
+      } else if (nombre.value.trim()) {
+        const [c, motivo] = reconocer();
+        if (c) {
+          estado = 'is-reconocido';
+          html = `<i class="ph ph-user-circle-check"></i>
+            <span class="cliente-ficha__texto">Se guardará en la ficha de <strong>${escapeHtml(c.nombre)}</strong><small>Ya está en tu directorio (${motivo}) · ${cuenta(c)}</small></span>
+            <span class="cliente-ficha__acciones"><button type="button" data-cliente-usar="${c.id}">Usar sus datos</button></span>`;
+        } else {
+          html = '<i class="ph ph-user-plus"></i><span class="cliente-ficha__texto">Cliente nuevo: se agregará a tu directorio al guardar.</span>';
+        }
+      }
+      ficha.classList.toggle('is-vinculado', estado === 'is-vinculado');
+      ficha.classList.toggle('is-reconocido', estado === 'is-reconocido');
+      ficha.innerHTML = html;
+      ficha.hidden = !html;
+    };
+    const poner = (el, valor) => {
+      if (!el || !valor || el.value === valor) return;
+      el.value = valor;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      const caja = el.closest('.field');
+      if (caja) { caja.classList.remove('is-autollenado'); void caja.offsetWidth; caja.classList.add('is-autollenado'); }
+    };
+    const usar = c => {
+      ligado = c;
+      if (oculto) oculto.value = c.id;
+      if (nombre.value !== c.nombre) { nombre.value = c.nombre; nombre.dispatchEvent(new Event('input', { bubbles: true })); }
+      poner(telefono, c.telefono);
+      poner(correo, c.email);
+      pintar();
+    };
+    sugerirEnCampo(nombre, clientes, {
+      titulo: 'Tu directorio de clientes', icono: 'ph ph-user', texto: c => c.nombre,
+      detalle: c => [c.telefono, c.email, c.eventos ? `${c.eventos} evento${c.eventos === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · '),
+      alElegir: usar,
+    });
+    nombre.addEventListener('input', () => {
+      if (ligado && nombreNormal(nombre.value) !== nombreNormal(ligado.nombre)) {  // escribió a otra persona
+        ligado = null;
+        if (oculto) oculto.value = '';
+      }
+      pintar();
+    });
+    [telefono, correo].forEach(el => el && el.addEventListener('input', pintar));
+    if (ficha) ficha.addEventListener('click', e => {
+      const usarBoton = e.target.closest('[data-cliente-usar]');
+      if (usarBoton) { const c = porId(usarBoton.dataset.clienteUsar); if (c) usar(c); return; }
+      if (e.target.closest('[data-cliente-cambiar]')) {
+        ligado = null;
+        if (oculto) oculto.value = '';
+        [nombre, telefono, correo].forEach(el => { if (el) { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); } });
+        nombre.focus();
+      }
+    });
+    pintar();
   }
 
   /* ------------------------------------------------------------------ Conceptos con precio (cotizaciones y eventos) */
@@ -828,18 +923,10 @@
       if (libre) libre.addEventListener('click', editor.agregarLibre);
       ['descuento', 'anticipo_porcentaje'].forEach(n => { const el = campo(n); if (el) el.addEventListener('input', () => pintarTotales(editor.total())); });
 
-      // Clientes y lugares anteriores (al elegir un cliente se completan su teléfono y correo)
-      sugerirEnCampo(campo('cliente_nombre'), S.clientes || [], {
-        titulo: 'Clientes anteriores', icono: 'ph ph-user', texto: c => c.nombre, detalle: c => [c.telefono, c.email].filter(Boolean).join(' · '),
-      });
+      // El cliente del directorio y los lugares que ya usaste
+      selectorCliente(form, S.clientes || []);
       sugerirEnCampo(campo('lugar'), S.lugares || [], {
         titulo: 'Lugares que ya usaste', icono: 'ph ph-building', texto: l => l.lugar, detalle: l => l.direccion || '',
-      });
-      const cliente = campo('cliente_nombre');
-      if (cliente) cliente.addEventListener('input', () => {
-        const c = (S.clientes || []).find(x => x.nombre.toLowerCase() === cliente.value.trim().toLowerCase());
-        if (!c) return;
-        [['cliente_telefono', c.telefono], ['cliente_email', c.email]].forEach(([n, v]) => { const el = campo(n); if (el && !el.value && v) el.value = v; });
       });
 
       form.addEventListener('submit', e => {
@@ -965,14 +1052,11 @@
         fin.addEventListener(ev, () => { pintarDuracion(); revisarAgenda(); });
       });
 
-      // --- Lugares y clientes anteriores: al elegir uno se completa lo que falte
+      // --- Lugares que ya usaste (al elegir uno se completa lo que falte) y el cliente del directorio
       sugerirEnCampo(campo('lugar'), A.lugares, {
         titulo: 'Lugares que ya usaste', icono: 'ph ph-building', texto: l => l.lugar, detalle: l => l.direccion || '',
       });
-      sugerirEnCampo(campo('cliente_nombre'), A.clientes, {
-        titulo: 'Clientes anteriores', icono: 'ph ph-user', texto: c => c.nombre,
-        detalle: c => [c.telefono, c.email].filter(Boolean).join(' · '),
-      });
+      selectorCliente(form, A.clientes || []);
       const completar = (n, v) => {
         const el = campo(n);
         if (!el || el.value || !v) return;
@@ -986,11 +1070,6 @@
       if (lugar) lugar.addEventListener('input', () => {
         const l = buscar(A.lugares, 'lugar', lugar.value);
         if (l) { completar('direccion', l.direccion); completar('url_mapa', l.url_mapa); }
-      });
-      const cliente = campo('cliente_nombre');
-      if (cliente) cliente.addEventListener('input', () => {
-        const c = buscar(A.clientes, 'nombre', cliente.value);
-        if (c) { completar('cliente_telefono', c.telefono); completar('cliente_email', c.email); }
       });
 
       // --- Enlace de Maps a partir del lugar y la dirección

@@ -22,7 +22,8 @@ from apps.core.marca import Marca
 from apps.core.mixins import AsignarAgenciaMixin, DeLaAgenciaMixin, FormularioModalMixin, respuesta_error, respuesta_ok
 
 from ..asistente import sugerencias
-from ..models import CategoriaServicio, Cotizacion, Paquete, Servicio, orden_servicio
+from ..clientes.servicios import resumen_de, vincular
+from ..models import CategoriaServicio, Cliente, Cotizacion, Paquete, Servicio, orden_servicio
 from .forms import CotizacionForm, PaqueteForm, ServicioForm, datos_catalogo
 from .pdf import generar_pdf, nombre_archivo
 from .servicios import (aceptar, cargar_catalogo_ejemplo, convertir_en_evento, duplicar, guardar_conceptos, nueva_para,
@@ -227,8 +228,15 @@ def editar(request, pk=None):
         messages.info(request, 'Esta cotización ya fue aceptada: los cambios se hacen en su evento.')
         return redirect(cotizacion.get_absolute_url())
     instancia = cotizacion or Cotizacion(agencia_id=request.user.agencia_id, creado_por=request.user)
-    form = CotizacionForm(request.POST or None, instance=instancia, usuario=request.user,
-                          initial=None if cotizacion else nueva_para(request.user))
+    inicial = None
+    if not cotizacion:
+        inicial = nueva_para(request.user)
+        cliente = request.GET.get('cliente', '')  # "Nueva cotización" desde la ficha del cliente
+        cliente = Cliente.objects.visibles_para(request.user).filter(pk=cliente).first() if cliente.isdigit() else None
+        if cliente:
+            inicial.update(cliente=cliente.pk, cliente_nombre=cliente.nombre, cliente_telefono=cliente.telefono,
+                           cliente_email=cliente.email)
+    form = CotizacionForm(request.POST or None, instance=instancia, usuario=request.user, initial=inicial)
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
             obj = form.save(commit=False)
@@ -236,6 +244,7 @@ def editar(request, pk=None):
                 obj.colaborador_id = request.user.colaborador_id
             obj.save()
             guardar_conceptos(obj, form.cleaned_data['conceptos'])
+            vincular(obj, form.cleaned_data.get('cliente'), request.user)
         messages.success(request, f'Cotización {obj.folio} guardada.' if cotizacion else f'¡Lista! Cotización {obj.folio} creada.')
         destino = obj.get_absolute_url()
         if request.POST.get('despues') == 'pdf':
@@ -256,7 +265,7 @@ def detalle(request, pk):
     cotizacion = obtener(request, pk)
     return render(request, 'cotizaciones/detalle.html', {
         'cotizacion': cotizacion, 'marca': Marca(cotizacion), 'url_publica': _url_publica(request, cotizacion),
-        'abrir_pdf': request.GET.get('pdf') == '1',
+        'abrir_pdf': request.GET.get('pdf') == '1', 'cliente': resumen_de(cotizacion.cliente_id, request.user),
     })
 
 

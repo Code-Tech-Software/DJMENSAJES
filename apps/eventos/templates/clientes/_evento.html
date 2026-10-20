@@ -1,0 +1,18 @@
+{% load ui %}
+{# Un evento en la ficha del cliente: fecha, qué y dónde, y cómo va su pago. Recibe e (y proximo) #}
+<a href="{{ e.get_absolute_url }}" class="list-item tipo-{{ e.tipo_evento }} {% if e.etapa == 'cancelado' %}is-cancelado{% endif %}">
+    {% if proximo %}<div class="date-block"><small>{{ e.fecha_inicio_evento|date:"M" }}</small><strong>{{ e.fecha_inicio_evento|date:"d" }}</strong></div>
+    {% else %}<span class="ico-square"><i class="{{ e.icono }}"></i></span>{% endif %}
+    <div class="list-item__body">
+        <div class="list-item__title">{{ e.nombre_evento }}</div>
+        <div class="list-item__sub">{{ e.tipo_corto }} · {% if proximo %}{{ e.fecha_inicio_evento|date:"l j \d\e F"|lower|capfirst }}, {{ e.fecha_inicio_evento|date:"H:i" }} h{% else %}{{ e.fecha_inicio_evento|date:"j M Y" }}{% endif %}{% if e.lugar %} · {{ e.lugar }}{% endif %}</div>
+    </div>
+    <div class="cliente-monto">
+        {% if e.precio_total %}<strong>{{ e.precio_total|moneda }}</strong>{% endif %}
+        {% if e.etapa == 'cancelado' %}<span class="chip chip--muted">Cancelado</span>
+        {% elif e.etapa == 'cotizacion' %}<span class="chip chip--info">Sin confirmar</span>
+        {% elif e.saldo > 0 %}<span class="chip chip--warning">Debe {{ e.saldo|moneda }}</span>
+        {% elif e.precio_total %}<span class="chip chip--success"><i class="ph ph-check"></i>Pagado</span>
+        {% elif proximo %}<span class="chip chip--info">{{ e.dias_restantes|dias_texto }}</span>{% endif %}
+    </div>
+</a>

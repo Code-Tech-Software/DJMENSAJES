@@ -1,0 +1,105 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ph ph-caret-right"></i>Clientes</div>
+        <h1>Clientes</h1>
+        <p>Tu directorio: cada evento{% if modulos.cotizaciones %} y cotización{% endif %} queda en la ficha de su cliente, con lo que ha contratado y lo que tiene pendiente.</p>
+    </div>
+    <div class="page-head__actions">
+        {% if gestiona and stats.total %}<a class="btn" href="{% url 'clientes:exportar' %}"><i class="ph ph-download-simple"></i>Exportar</a>{% endif %}
+        <button class="btn btn--primary" data-modal="{% url 'clientes:crear' %}"><i class="ph ph-user-plus"></i>Nuevo cliente</button>
+    </div>
+</div>
+
+{% if stats.total %}
+<div class="grid grid-4 reveal mb-3">
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Clientes</span><span class="stat__icon"><i class="ph ph-address-book"></i></span></div>
+        <div class="stat__value">{{ stats.total }}</div>
+        <div class="stat__meta">{% if stats.nuevos_mes %}{{ stats.nuevos_mes }} nuevo{{ stats.nuevos_mes|pluralize }} este mes{% else %}Sin nuevos este mes{% endif %}</div>
+    </div>
+    <div class="card stat tone-live">
+        <div class="stat__top"><span class="stat__label">Con evento próximo</span><span class="stat__icon"><i class="ph ph-calendar-check"></i></span></div>
+        <div class="stat__value">{{ stats.con_proximo }}</div>
+        <div class="stat__meta">Clientes con fecha en tu agenda</div>
+    </div>
+    <div class="card stat tone-warning">
+        <div class="stat__top"><span class="stat__label">Por cobrar</span><span class="stat__icon"><i class="ph ph-wallet"></i></span></div>
+        <div class="stat__value">{{ stats.por_cobrar|moneda }}</div>
+        <div class="stat__meta">{% if stats.con_saldo %}De {{ stats.con_saldo }} cliente{{ stats.con_saldo|pluralize }} · eventos confirmados{% else %}Todo al corriente{% endif %}</div>
+    </div>
+    <div class="card stat tone-success">
+        <div class="stat__top"><span class="stat__label">Vuelven a contratar</span><span class="stat__icon"><i class="ph ph-arrows-clockwise"></i></span></div>
+        <div class="stat__value">{% if stats.recompra is not None %}{{ stats.recompra }}%{% else %}—{% endif %}</div>
+        <div class="stat__meta">{{ stats.frecuentes }} cliente{{ stats.frecuentes|pluralize }} con 2 o más eventos</div>
+    </div>
+</div>
+
+<form data-autosubmit data-target="#resultados, #tabs-clientes" id="filtros">
+    <div class="tabs" style="margin-bottom:16px" id="tabs-clientes">
+        {% for valor, nombre, icono, n in filtros %}
+        <label class="tab {% if filtro == valor %}is-active{% endif %}" style="cursor:pointer">
+            <input type="radio" name="filtro" value="{{ valor }}" {% if filtro == valor %}checked{% endif %} hidden>
+            <i class="{{ icono }}"></i>{{ nombre }}<span class="count">{{ n }}</span>
+        </label>
+        {% endfor %}
+    </div>
+    <div class="toolbar">
+        <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, teléfono o correo"></div>
+        <select class="input" name="orden" aria-label="Ordenar">
+            {% for v, n in ordenes %}<option value="{{ v }}" {% if orden == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select>
+    </div>
+</form>
+{% endif %}
+
+<div id="resultados">
+    {% if clientes %}
+    <div class="card">
+        <div class="table-wrap">
+            <table class="table tabla-clientes">
+                <thead><tr><th>Cliente</th><th>Eventos</th><th class="hide-mobile">{% if modulos.cotizaciones %}Cotizaciones{% endif %}</th><th class="num hide-mobile">Contratado</th><th class="num">Saldo</th><th></th></tr></thead>
+                <tbody>
+                {% for c in clientes %}
+                <tr>
+                    <td>
+                        <a class="cliente-celda" href="{{ c.get_absolute_url }}">
+                            <span class="avatar">{{ c.iniciales }}</span>
+                            <span class="cliente-celda__texto"><span class="t-title">{{ c.nombre }}</span>
+                                <span class="t-sub">{% if c.telefono %}{{ c.telefono }}{% endif %}{% if c.telefono and c.email %} · {% endif %}{% if c.email %}{{ c.email }}{% endif %}{% if not c.telefono and not c.email %}Sin datos de contacto{% endif %}</span></span>
+                        </a>
+                    </td>
+                    <td>
+                        {% if c.n_eventos %}<strong>{{ c.n_eventos }}</strong>{% if c.n_confirmados >= 2 %} <span class="chip chip--success chip--sm" title="Ha contratado {{ c.n_confirmados }} veces"><i class="ph-fill ph-star"></i>Frecuente</span>{% endif %}
+                        <div class="t-sub">{% if c.proximo %}<i class="ph ph-calendar-check"></i> {{ c.proximo|date:"j M Y" }}{% elif c.ultimo %}Último: {{ c.ultimo|date:"M Y" }}{% endif %}</div>
+                        {% else %}<span class="muted">—</span>{% if c.n_abiertas %}<div class="t-sub">Prospecto</div>{% endif %}{% endif %}
+                    </td>
+                    <td class="hide-mobile">{% if modulos.cotizaciones %}{% if c.n_cotizaciones %}{{ c.n_cotizaciones }}{% if c.n_abiertas %}<div class="t-sub">{{ c.n_abiertas }} abierta{{ c.n_abiertas|pluralize }}</div>{% endif %}{% else %}<span class="muted">—</span>{% endif %}{% endif %}</td>
+                    <td class="num hide-mobile">{% if c.contratado %}{{ c.contratado|moneda }}{% else %}<span class="muted">—</span>{% endif %}</td>
+                    <td class="num">{% if c.saldo > 0 %}<strong class="text-warning">{{ c.saldo|moneda }}</strong>{% elif c.contratado %}<span class="chip chip--success chip--sm"><i class="ph ph-check"></i>Pagado</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+                    <td class="actions">
+                        {% if c.whatsapp %}<a class="icon-btn" href="https://wa.me/{{ c.whatsapp }}" target="_blank" rel="noopener" aria-label="WhatsApp a {{ c.nombre }}" title="WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>{% endif %}
+                        <a class="icon-btn" href="{% url 'eventos:crear' %}?cliente={{ c.pk }}" aria-label="Nuevo evento para {{ c.nombre }}" title="Nuevo evento"><i class="ph ph-calendar-plus"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% include 'components/paginacion.html' with page_obj=pagina query=query %}
+    {% else %}
+    <div class="card">
+        {% if q or filtro %}
+        {% include 'components/vacio.html' with icono='ph ph-magnifying-glass' titulo='Sin resultados' texto='No hay clientes con ese filtro.' %}
+        {% else %}
+        {% url 'clientes:crear' as url_nuevo %}
+        {% include 'components/vacio.html' with icono='ph ph-address-book' titulo='Tu directorio está vacío' texto='Cada vez que registras un evento o una cotización, su cliente se agrega aquí solo. También puedes agregarlo a mano.' boton_url=url_nuevo boton_modal=True boton_texto='Nuevo cliente' boton_icono='ph ph-user-plus' %}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.nombre icono="ph ph-user" clase="span-2" %}
+    {% campo form.telefono icono="ph ph-whatsapp-logo" %}
+    {% campo form.email icono="ph ph-envelope-simple" %}
+    {% campo form.origen icono="ph ph-signpost" clase="span-2" %}
+    {% campo form.notas clase="span-2" %}
+</div>
+{% endblock %}

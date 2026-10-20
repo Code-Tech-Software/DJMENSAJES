@@ -24,8 +24,9 @@ from apps.colaboradores.models import Colaborador
 from apps.core.models import Agencia, Plan
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
+from apps.eventos.clientes.servicios import vincular
 from apps.eventos.cotizacion.servicios import CONDICIONES_BASE, aceptar, cargar_catalogo_ejemplo, guardar_conceptos
-from apps.eventos.models import ActividadItinerario, Cotizacion, Evento, Paquete, Pago, Servicio
+from apps.eventos.models import ActividadItinerario, Cliente, Cotizacion, Evento, Paquete, Pago, Servicio
 from apps.invitaciones.models import FotoInvitacion, Invitacion, Invitado, Mencion, Ubicacion
 
 USUARIO_DEMO = 'demo'
@@ -160,12 +161,15 @@ class Command(BaseCommand):
             ('Boda Karla & Iván', 'boda', -40, 18, banners[0], 'confirmado', Decimal('52000')),
             ('Neón Party', 'fiesta', -70, 22, banners[1], 'confirmado', Decimal('15000')),
         ]
+        frecuentes = {'Laura Pérez': '2224440101', 'Carlos Díaz': '2224440202', 'Mariana López': '2224440303'}
         for nombre, tipo, dias, hora, banner, etapa, precio in otros:
+            colaborador = aleatorio.choice([espectaculares, palmas, None])
+            cliente = aleatorio.choice(list(frecuentes))
             Evento.objects.create(agencia=agencia, 
-                nombre_evento=nombre, tipo_evento=tipo, colaborador=aleatorio.choice([espectaculares, palmas, None]),
+                nombre_evento=nombre, tipo_evento=tipo, colaborador=colaborador,
                 banner=banner, creado_por=admin, etapa=etapa, fecha_inicio_evento=fecha(dias, hora),
                 fecha_fin_evento=fecha(dias, hora) + timedelta(hours=6), lugar=aleatorio.choice(['Salón Cristal', 'Hacienda San Juan', 'Terraza Sky']),
-                precio_total=precio, cliente_nombre=aleatorio.choice(['Laura Pérez', 'Carlos Díaz', 'Mariana López']),
+                precio_total=precio, cliente_nombre=cliente, cliente_telefono=frecuentes[cliente],
             )
 
         # --- Itinerario y pagos de la boda
@@ -310,6 +314,18 @@ class Command(BaseCommand):
                             [concepto_servicio('DJ profesional'), concepto_servicio('Audio profesional'), concepto_servicio('Iluminación de ambiente')], hace=9)
         Cotizacion.objects.filter(pk=rechazada.pk).update(estado=Cotizacion.Estado.RECHAZADA, enviada_el=ahora - timedelta(days=9),
                                                           respondida_el=ahora - timedelta(days=4))
+
+        # --- Directorio de clientes: cada evento y cotización con su cliente (los que repiten quedan en una sola ficha)
+        for obj in [*Evento.objects.filter(agencia=agencia).order_by('creado', 'pk'),
+                    *Cotizacion.objects.filter(agencia=agencia).order_by('creado', 'pk')]:
+            vincular(obj)
+        for nombre, origen, notas in [
+            ('Ana García', Cliente.Origen.RECOMENDACION, 'La recomendó el Jardín Las Palmas. Prefiere que la contacten por WhatsApp.'),
+            ('Laura Pérez', Cliente.Origen.REDES, 'Siempre pide factura.'),
+            ('Corporativo Andrade', Cliente.Origen.GOOGLE, 'Facturar a Constructora Andrade S.A. de C.V.'),
+            ('Paola Méndez', Cliente.Origen.EVENTO, ''),
+        ]:
+            Cliente.objects.filter(agencia=agencia, nombre=nombre).update(origen=origen, notas=notas)
 
         self.stdout.write(self.style.SUCCESS(
             f'Datos de demostración listos. Inicia sesión con usuario "{USUARIO_DEMO}" y contraseña "{CLAVE_DEMO}".'))

@@ -14,8 +14,9 @@ from apps.core.modulos import bolsa_de, bolsa_del_mes, fotos_subidas, modulos_de
 
 from .asistente import DURACIONES, ETAPAS, ITINERARIOS, TEXTOS_TIPO, sugerencias
 from .cotizacion.forms import conceptos_json, datos_catalogo, leer_conceptos
+from .clientes.servicios import vincular
 from .extras import tiene_invitacion
-from .models import ActividadItinerario, ConceptoEvento, Evento, Paquete, Pago, Servicio, TipoEvento
+from .models import ActividadItinerario, Cliente, ConceptoEvento, Evento, Paquete, Pago, Servicio, TipoEvento
 
 FORMATO_FECHA_HORA = '%Y-%m-%dT%H:%M'
 
@@ -41,7 +42,7 @@ class EventoForm(forms.ModelForm):
         fields = [
             'nombre_evento', 'tipo_evento', 'etapa', 'colaborador',
             'fecha_inicio_evento', 'fecha_fin_evento', 'lugar', 'direccion', 'url_mapa', 'num_invitados',
-            'cliente_nombre', 'cliente_telefono', 'cliente_email', 'precio_total', 'servicios', 'notas',
+            'cliente', 'cliente_nombre', 'cliente_telefono', 'cliente_email', 'precio_total', 'servicios', 'notas',
         ]
         widgets = {
             'nombre_evento': forms.TextInput(attrs={'placeholder': 'Ej. Ana & Luis', 'maxlength': 200}),
@@ -53,7 +54,8 @@ class EventoForm(forms.ModelForm):
             'direccion': forms.TextInput(attrs={'placeholder': 'Calle, número, colonia, ciudad'}),
             'url_mapa': forms.URLInput(attrs={'placeholder': 'https://maps.app.goo.gl/…'}),
             'num_invitados': forms.NumberInput(attrs={'min': 0, 'placeholder': 'Ej. 250'}),
-            'cliente_nombre': forms.TextInput(attrs={'placeholder': 'Quién contrata'}),
+            'cliente': forms.HiddenInput(attrs={'data-cliente-id': ''}),
+            'cliente_nombre': forms.TextInput(attrs={'placeholder': 'Busca en tu directorio o escribe uno nuevo'}),
             'cliente_telefono': forms.TextInput(attrs={'placeholder': '10 dígitos', 'inputmode': 'tel'}),
             'cliente_email': forms.EmailInput(attrs={'placeholder': 'cliente@correo.com'}),
             'precio_total': forms.NumberInput(attrs={'min': 0, 'step': '0.01', 'placeholder': '0.00'}),
@@ -61,12 +63,17 @@ class EventoForm(forms.ModelForm):
             'notas': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Solo visible para el equipo'}),
         }
 
-    def __init__(self, *args, usuario=None, fecha=None, **kwargs):
+    def __init__(self, *args, usuario=None, fecha=None, cliente=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.usuario = usuario
         agencia = usuario.agencia if usuario and usuario.agencia_id else None
         self.agencia = agencia
         self.modulos = modulos_de(agencia)
+        # El cliente se elige del directorio (o se agrega solo al guardar); nunca uno que el usuario no pueda ver
+        self.fields['cliente'].queryset = Cliente.objects.visibles_para(usuario) if usuario else Cliente.objects.none()
+        if cliente is not None and not self.instance.pk and not self.is_bound:  # "Nuevo evento" desde la ficha del cliente
+            self.initial.update(cliente=cliente.pk, cliente_nombre=cliente.nombre, cliente_telefono=cliente.telefono,
+                                cliente_email=cliente.email)
 
         # Solo sub-agencias de su agencia; quien pertenece a una sub-agencia registra a nombre de ella
         colaboradores = Colaborador.objects.filter(estado=True, agencia_id=agencia.pk if agencia else None)
@@ -189,9 +196,11 @@ class EventoForm(forms.ModelForm):
 
     def save(self, commit=True):
         evento = super().save(commit=commit)
-        if commit and self.lineas is not None:
-            evento.conceptos.all().delete()
-            ConceptoEvento.objects.bulk_create([ConceptoEvento(evento=evento, orden=i, **c) for i, c in enumerate(self.lineas)])
+        if commit:
+            if self.lineas is not None:
+                evento.conceptos.all().delete()
+                ConceptoEvento.objects.bulk_create([ConceptoEvento(evento=evento, orden=i, **c) for i, c in enumerate(self.lineas)])
+            vincular(evento, self.cleaned_data.get('cliente'), self.usuario)
         return evento
 
 
