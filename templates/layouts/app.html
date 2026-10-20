@@ -27,6 +27,14 @@
                 <i class="ph ph-sparkle"></i><span>Eventos</span>
                 {% if total_proximos %}<span class="nav-count">{{ total_proximos }}</span>{% endif %}
             </a>
+            {% if modulos.cotizaciones %}
+            <a href="{% url 'cotizaciones:lista' %}" class="nav-link {% activo 'cotizaciones:lista' 'cotizaciones:nueva' 'cotizaciones:detalle' 'cotizaciones:editar' %}">
+                <i class="ph ph-file-text"></i><span>Cotizaciones</span>
+            </a>
+            <a href="{% url 'cotizaciones:catalogo' %}" class="nav-link {% activo 'cotizaciones:catalogo' 'cotizaciones:servicio_crear' 'cotizaciones:servicio_editar' 'cotizaciones:paquete_crear' 'cotizaciones:paquete_editar' %}">
+                <i class="ph ph-package"></i><span>Catálogo</span>
+            </a>
+            {% endif %}
             {% if modulos.invitaciones %}
             <a href="{% url 'invitaciones:indice' %}" class="nav-link {% activo 'invitaciones:*' %}">
                 <i class="ph ph-envelope-open"></i><span>Invitaciones</span>
@@ -100,9 +108,9 @@
 
             <div class="topbar__actions">
                 {% block accion_principal %}
-                <button class="btn btn--primary btn--sm only-desktop" data-modal="{% url 'eventos:crear' %}">
+                <a class="btn btn--primary btn--sm only-desktop" href="{% url 'eventos:crear' %}">
                     <i class="ph ph-plus"></i>Nuevo evento
-                </button>
+                </a>
                 {% endblock %}
 
                 {% block notificaciones %}

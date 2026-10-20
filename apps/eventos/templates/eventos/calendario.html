@@ -19,7 +19,7 @@
             <button data-vista="timeGridWeek" aria-pressed="false">Semana</button>
             <button data-vista="listMonth" aria-pressed="false">Agenda</button>
         </div>
-        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo</button>
+        <a class="btn btn--primary" href="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo</a>
     </div>
 </div>
 
@@ -53,7 +53,7 @@
             events: { url: "{% url 'eventos:api_calendario' %}", failure: () => EM.toast('No se pudieron cargar los eventos', 'error') },
             eventDidMount: info => { if (ocultos.has(info.event.extendedProps.tipo)) info.el.style.display = 'none'; },
             eventClick: info => { info.jsEvent.preventDefault(); EM.modal.open(info.event.extendedProps.url); },
-            dateClick: info => EM.modal.open(`{% url 'eventos:crear' %}?fecha=${info.dateStr}`),
+            dateClick: info => { window.location.href = `{% url 'eventos:crear' %}?fecha=${info.dateStr}`; },
             datesSet: () => {
                 titulo.textContent = cal.view.title.charAt(0).toUpperCase() + cal.view.title.slice(1);
                 document.querySelectorAll('[data-vista]').forEach(b => b.setAttribute('aria-pressed', b.dataset.vista === cal.view.type));

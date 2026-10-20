@@ -1,0 +1,83 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}{{ cotizacion.folio }} · Cotizaciones{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'cotizaciones:lista' %}">Cotizaciones</a><i class="ph ph-caret-right"></i>{{ cotizacion.folio }}</div>
+        <h1>{{ cotizacion.cliente_nombre }} <span class="chip chip--{{ cotizacion.tono }} chip--dot chip--lg" style="vertical-align:middle">{{ cotizacion.estado_visible }}</span></h1>
+        <p>{{ cotizacion.folio }} · {{ cotizacion.get_tipo_evento_display }} · {{ cotizacion.fecha_evento|date:"l j \d\e F"|lower|capfirst }} · <strong>{{ cotizacion.total|moneda }}</strong></p>
+    </div>
+    <div class="page-head__actions">
+        {% if cotizacion.estado != 'aceptada' %}<a class="btn" href="{% url 'cotizaciones:editar' cotizacion.pk %}"><i class="ph ph-pencil-simple"></i>Editar</a>{% endif %}
+        <a class="btn" href="{% url 'cotizaciones:pdf' cotizacion.pk %}" target="_blank"><i class="ph ph-file-pdf"></i>PDF</a>
+        <div class="dropdown">
+            <button class="btn" data-dropdown aria-label="Más acciones"><i class="ph ph-dots-three"></i></button>
+            <div class="dropdown__menu">
+                <button class="menu-item" data-post="{% url 'cotizaciones:duplicar' cotizacion.pk %}"><i class="ph ph-copy"></i>Duplicar</button>
+                {% if cotizacion.estado == 'borrador' %}<button class="menu-item" data-post="{% url 'cotizaciones:enviada' cotizacion.pk %}"><i class="ph ph-paper-plane-tilt"></i>Marcar como enviada</button>{% endif %}
+                {% if cotizacion.estado != 'aceptada' and cotizacion.estado != 'rechazada' %}<button class="menu-item" data-post="{% url 'cotizaciones:rechazar' cotizacion.pk %}" data-confirm="¿El cliente la rechazó?" data-confirm-button="Sí, rechazada"><i class="ph ph-x-circle"></i>Marcar como rechazada</button>{% endif %}
+                <div class="menu-sep"></div>
+                <button class="menu-item menu-item--danger" data-post="{% url 'cotizaciones:eliminar' cotizacion.pk %}" data-danger data-confirm="¿Eliminar {{ cotizacion.folio }}?" data-confirm-text="{% if cotizacion.evento %}Su evento no se borra. {% endif %}No se puede deshacer."><i class="ph ph-trash"></i>Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-sidebar">
+    <div class="card cotizacion-vista">{% include 'cotizaciones/_documento.html' %}</div>
+
+    <aside class="stack" style="gap:16px">
+        {# ---------------- Compartir ---------------- #}
+        <section class="card card--pad {% if abrir_pdf %}compartir--destacado{% endif %}" id="compartir">
+            <div class="card-title mb-2"><span class="ico"><i class="ph ph-share-network"></i></span><div><h3>{% if abrir_pdf %}¡Lista para enviar!{% else %}Compartir{% endif %}</h3><p>El cliente la ve, descarga el PDF y la acepta en línea.</p></div></div>
+            <div class="stack" style="gap:8px">
+                <a class="btn btn--whatsapp btn--block" href="{% url 'cotizaciones:whatsapp' cotizacion.pk %}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Enviar por WhatsApp</a>
+                <a class="btn btn--block" href="{% url 'cotizaciones:pdf' cotizacion.pk %}?descargar=1"><i class="ph ph-download-simple"></i>Descargar PDF</a>
+                <div class="enlace-copiar">
+                    <input class="input" value="{{ url_publica }}" readonly aria-label="Enlace para el cliente" onclick="this.select()">
+                    <button class="icon-btn" data-copy="{{ url_publica }}" aria-label="Copiar enlace" title="Copiar enlace"><i class="ph ph-copy"></i></button>
+                    <a class="icon-btn" href="{{ url_publica }}" target="_blank" rel="noopener" aria-label="Ver como cliente" title="Ver como cliente"><i class="ph ph-arrow-square-out"></i></a>
+                </div>
+            </div>
+        </section>
+
+        {# ---------------- Respuesta del cliente ---------------- #}
+        <section class="card card--pad">
+            <div class="card-title mb-2"><span class="ico"><i class="ph ph-handshake"></i></span><h3>Respuesta del cliente</h3></div>
+            {% if cotizacion.estado == 'aceptada' %}
+                <div class="alert alert--success"><i class="ph ph-seal-check"></i><div><strong>Aceptada</strong>{{ cotizacion.respondida_el|date:"j \d\e F, H:i"|lower }}{% if cotizacion.aceptada_por %} · {{ cotizacion.aceptada_por }}{% endif %}</div></div>
+                {% if cotizacion.evento %}
+                <a class="btn btn--primary btn--block mt-2" href="{{ cotizacion.evento.get_absolute_url }}"><i class="ph ph-calendar-check"></i>Ver el evento</a>
+                {% else %}
+                <p class="small muted mt-2">Aún no tiene evento (el plan no permitía más eventos este mes).</p>
+                <button class="btn btn--primary btn--block mt-2" data-post="{% url 'cotizaciones:crear_evento' cotizacion.pk %}"><i class="ph ph-calendar-plus"></i>Crear el evento</button>
+                {% endif %}
+            {% elif cotizacion.estado == 'rechazada' %}
+                <div class="alert alert--danger"><i class="ph ph-x-circle"></i><div><strong>Rechazada</strong>{{ cotizacion.respondida_el|date:"j \d\e F, H:i"|lower }}</div></div>
+                <button class="btn btn--block mt-2" data-post="{% url 'cotizaciones:aceptar' cotizacion.pk %}" data-confirm="¿El cliente cambió de opinión y la acepta?" data-confirm-text="Se creará el evento confirmado con estos datos." data-confirm-button="Aceptar y crear evento"><i class="ph ph-arrow-counter-clockwise"></i>Al final sí la aceptó</button>
+            {% else %}
+                {% if cotizacion.vencida %}<div class="alert alert--warning mb-2"><i class="ph ph-hourglass-low"></i><div>Venció el {{ cotizacion.vigencia|date:"j \d\e F"|lower }}: el cliente ya no puede aceptarla en línea. Duplícala o edita la vigencia.</div></div>{% endif %}
+                <p class="small muted">¿Te confirmó por teléfono o en persona? Márcala tú.</p>
+                <div class="stack mt-2" style="gap:8px">
+                    <button class="btn btn--primary btn--block" data-post="{% url 'cotizaciones:aceptar' cotizacion.pk %}" data-confirm="¿El cliente aceptó la cotización?" data-confirm-text="Se creará el evento confirmado con el cliente, la fecha, el precio y los servicios. Luego podrás completarlo." data-confirm-button="Aceptar y crear evento"><i class="ph ph-seal-check"></i>Aceptada: crear evento</button>
+                    <button class="btn btn--block" data-post="{% url 'cotizaciones:rechazar' cotizacion.pk %}" data-confirm="¿El cliente la rechazó?" data-confirm-button="Sí, rechazada"><i class="ph ph-x-circle"></i>Rechazada</button>
+                </div>
+            {% endif %}
+        </section>
+
+        {# ---------------- Seguimiento ---------------- #}
+        <section class="card card--pad">
+            <div class="card-title mb-2"><span class="ico"><i class="ph ph-clock-counter-clockwise"></i></span><h3>Seguimiento</h3></div>
+            <ol class="linea-tiempo">
+                <li class="is-hecho"><strong>Creada</strong><span>{{ cotizacion.creado|date:"j M, H:i" }}{% if cotizacion.creado_por %} · {{ cotizacion.creado_por }}{% endif %}</span></li>
+                <li class="{% if cotizacion.enviada_el %}is-hecho{% endif %}"><strong>Enviada</strong><span>{% if cotizacion.enviada_el %}{{ cotizacion.enviada_el|date:"j M, H:i" }}{% else %}Pendiente{% endif %}</span></li>
+                <li class="{% if cotizacion.vista_el %}is-hecho{% endif %}"><strong>Vista por el cliente</strong><span>{% if cotizacion.vista_el %}{{ cotizacion.vista_el|date:"j M, H:i" }}{% else %}Aún no la abre{% endif %}</span></li>
+                <li class="{% if cotizacion.respondida_el %}is-hecho{% endif %} {% if cotizacion.estado == 'rechazada' %}is-no{% endif %}"><strong>{% if cotizacion.estado == 'rechazada' %}Rechazada{% else %}Aceptada{% endif %}</strong><span>{% if cotizacion.respondida_el %}{{ cotizacion.respondida_el|date:"j M, H:i" }}{% else %}Esperando respuesta{% endif %}</span></li>
+                {% if cotizacion.evento %}<li class="is-hecho"><strong>Evento creado</strong><span><a class="text-brand" href="{{ cotizacion.evento.get_absolute_url }}">{{ cotizacion.evento.nombre_evento }}</a></span></li>{% endif %}
+            </ol>
+            {% if cotizacion.notas_internas %}<div class="small mt-2" style="white-space:pre-line"><strong>Notas internas</strong><br>{{ cotizacion.notas_internas }}</div>{% endif %}
+        </section>
+    </aside>
+</div>
+{% endblock %}

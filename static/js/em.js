@@ -529,7 +529,7 @@
       const texto = $('[data-bolsa-texto]', el);
       const fmt = n => Number(n).toLocaleString('es-MX');
       const pintar = () => {
-        const valor = (fecha && fecha.value) || '';
+        const valor = (fecha && fecha.value) || (datos.fecha ? `${datos.fecha}-01` : '');
         const mes = MESES[parseInt(valor.slice(5, 7), 10) - 1];
         const libres = valor.slice(0, 7) in datos.libres ? datos.libres[valor.slice(0, 7)] : datos.total;
         const apartar = input ? Math.max(0, parseInt(input.value, 10) || 0) : 0;
@@ -568,9 +568,301 @@
     });
   }
 
-  /* ------------------------------------------------------------------ Formulario de eventos */
+  // Panel de sugerencias bajo un campo (lugares y clientes anteriores): filtra al escribir, se elige con
+  // clic o con las flechas y Enter, y avisa con un evento input para que se completen los demás campos
+  const sinAcentos = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  function sugerirEnCampo(input, items, { titulo, icono, texto, detalle }) {
+    if (!input || !items.length) return;
+    const caja = input.closest('.field__control') || input.parentElement;
+    const panel = document.createElement('div');
+    panel.className = 'sugerencias';
+    panel.hidden = true;
+    panel.setAttribute('role', 'listbox');
+    caja.appendChild(panel);
+    let visibles = [], marcado = -1;
+    const cerrar = () => { panel.hidden = true; marcado = -1; };
+    const marcar = i => {
+      marcado = i;
+      $$('.sugerencia', panel).forEach((b, j) => b.classList.toggle('is-marcada', j === i));
+      const b = $$('.sugerencia', panel)[i];
+      if (b) b.scrollIntoView({ block: 'nearest' });
+    };
+    const elegir = item => {
+      input.value = texto(item);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      cerrar();
+    };
+    const pintar = () => {
+      const q = sinAcentos(input.value);
+      visibles = items.filter(x => !q || sinAcentos(texto(x)).includes(q) || sinAcentos(detalle(x)).includes(q)).slice(0, 6);
+      if (!visibles.length || (visibles.length === 1 && sinAcentos(texto(visibles[0])) === q)) { cerrar(); return; }
+      panel.innerHTML = `<div class="sugerencias__titulo">${titulo}</div>${visibles.map((x, i) =>
+        `<button type="button" class="sugerencia" role="option" data-i="${i}"><i class="${icono}"></i><span><strong>${escapeHtml(texto(x))}</strong>${detalle(x) ? `<small>${escapeHtml(detalle(x))}</small>` : ''}</span></button>`).join('')}`;
+      panel.hidden = false;
+      marcado = -1;
+    };
+    input.addEventListener('focus', pintar);
+    input.addEventListener('input', e => { if (e.isTrusted) pintar(); });
+    input.addEventListener('blur', () => setTimeout(cerrar, 120));
+    panel.addEventListener('mousedown', e => e.preventDefault()); // no perder el foco al hacer clic
+    panel.addEventListener('click', e => {
+      const b = e.target.closest('.sugerencia');
+      if (b) elegir(visibles[Number(b.dataset.i)]);
+    });
+    input.addEventListener('keydown', e => {
+      if (panel.hidden) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        marcar((marcado + (e.key === 'ArrowDown' ? 1 : -1) + visibles.length) % visibles.length);
+      } else if (e.key === 'Enter' && marcado >= 0) {
+        e.preventDefault();
+        e.stopPropagation(); // que el asistente no avance de paso
+        elegir(visibles[marcado]);
+      } else if (e.key === 'Escape') {
+        e.stopPropagation(); // cierra las sugerencias, no el formulario
+        cerrar();
+      }
+    });
+  }
+
+  /* ------------------------------------------------------------------ Conceptos con precio (cotizaciones y eventos) */
+  const pesos = n => `${Number(n) < 0 ? '-' : ''}$${Math.abs(Number(n || 0)).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  const numero = v => { const n = parseFloat(String(v).replace(',', '.')); return Number.isFinite(n) ? n : 0; };
+  const sinAcento = x => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+  // El catálogo como botones para agregar: paquetes primero y luego servicios por categoría
+  const EXTRAS = { en_vivo: 'Activa la experiencia en vivo', invitacion: 'Activa la invitación digital' };
+  const etiquetaExtras = x => (x.activa || []).map(a => `<em class="cat-item__extra"><i class="ph ph-lightning"></i>${EXTRAS[a] || ''}</em>`).join('');
+
+  function htmlCatalogo(C, q) {
+    if (!C.paquetes.length && !C.servicios.length) {
+      return '<div class="cotizador__nada"><i class="ph ph-package"></i>Tu catálogo está vacío. Arma tus servicios y paquetes en <strong>Catálogo</strong>, o agrega conceptos libres.</div>';
+    }
+    const busca = sinAcento(q);
+    const coincide = x => !busca || sinAcento(`${x.nombre} ${x.detalle} ${x.categoria || ''}`).includes(busca);
+    let html = '';
+    const paquetes = C.paquetes.filter(coincide);
+    if (paquetes.length) {
+      html += '<div class="cotizador__grupo">Paquetes</div>' + paquetes.map(p => `
+        <button type="button" class="cat-item cat-item--paquete" data-agregar="paquete" data-id="${p.id}">
+          <span class="cat-item__icono"><i class="ph ph-package"></i></span>
+          <span class="cat-item__texto"><strong>${escapeHtml(p.nombre)}</strong><small>${escapeHtml(p.detalle)}</small>${etiquetaExtras(p)}</span>
+          <span class="cat-item__precio">${pesos(p.precio)}${numero(p.ahorro) > 0 ? `<small>ahorra ${pesos(p.ahorro)}</small>` : ''}</span>
+          <i class="ph ph-plus-circle cat-item__mas"></i>
+        </button>`).join('');
+    }
+    let categoria = null;
+    C.servicios.filter(coincide).forEach(x => {
+      if (x.categoria !== categoria) { categoria = x.categoria; html += `<div class="cotizador__grupo">${escapeHtml(categoria)}</div>`; }
+      html += `
+        <button type="button" class="cat-item" data-agregar="servicio" data-id="${x.id}">
+          <span class="cat-item__icono"><i class="${x.icono}"></i></span>
+          <span class="cat-item__texto"><strong>${escapeHtml(x.nombre)}</strong>${x.detalle ? `<small>${escapeHtml(x.detalle)}</small>` : ''}${etiquetaExtras(x)}</span>
+          <span class="cat-item__precio">${pesos(x.precio)}<small>${escapeHtml(x.unidad_txt)}</small></span>
+          <i class="ph ph-plus-circle cat-item__mas"></i>
+        </button>`;
+    });
+    return html || '<div class="cotizador__nada">Nada coincide con la búsqueda.</div>';
+  }
+
+  // Lista editable de conceptos (nombre, detalle, cantidad y precio); se guarda como JSON en un campo oculto.
+  // alCambiar(total) se llama cada vez que cambia algo.
+  function editorConceptos({ lista, vacio, oculto, negativos = false, alCambiar = () => {} }) {
+    let conceptos = [];
+    try { conceptos = JSON.parse(oculto.value || '[]'); } catch (e) { conceptos = []; }
+    const importe = c => numero(c.cantidad) * numero(c.precio);
+    const total = () => conceptos.reduce((t, c) => t + importe(c), 0);
+    const guardar = () => { oculto.value = JSON.stringify(conceptos); alCambiar(total()); };
+    const pintar = () => {
+      if (vacio) vacio.hidden = conceptos.length > 0;
+      lista.innerHTML = conceptos.map((c, i) => `
+        <div class="concepto" data-i="${i}">
+          <span class="concepto__icono"><i class="ph ${c.paquete ? 'ph-package' : c.servicio ? 'ph-tag' : 'ph-pencil-simple-line'}"></i></span>
+          <div class="concepto__texto">
+            <input class="input concepto__nombre" data-campo="descripcion" value="${escapeHtml(c.descripcion)}" maxlength="160" placeholder="Concepto" aria-label="Concepto">
+            <input class="input concepto__detalle" data-campo="detalle" value="${escapeHtml(c.detalle || '')}" maxlength="400" placeholder="Detalle (opcional)" aria-label="Detalle">
+          </div>
+          <label class="concepto__num"><small>Cant.${c.unidad === 'hora' ? ' (h)' : ''}</small><input class="input" type="number" data-campo="cantidad" value="${escapeHtml(String(c.cantidad))}" min="0.5" step="0.5"></label>
+          <label class="concepto__num concepto__num--precio"><small>Precio</small><input class="input" type="number" data-campo="precio" value="${escapeHtml(String(c.precio))}" ${negativos ? '' : 'min="0"'} step="0.01" placeholder="0"></label>
+          <div class="concepto__importe" data-importe>${pesos(importe(c))}</div>
+          <button type="button" class="icon-btn concepto__quitar" data-quitar aria-label="Quitar ${escapeHtml(c.descripcion)}"><i class="ph ph-x"></i></button>
+        </div>`).join('');
+      guardar();
+    };
+    const resaltar = i => {
+      const fila = $(`.concepto[data-i="${i}"]`, lista);
+      if (!fila) return;
+      fila.classList.add('is-nuevo');
+      fila.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      setTimeout(() => fila.classList.remove('is-nuevo'), 1200);
+    };
+    const agregar = (nuevo, mismo) => {
+      const ya = conceptos.find(mismo);
+      if (ya) ya.cantidad = numero(ya.cantidad) + 1;
+      else conceptos.push(nuevo);
+      pintar();
+      resaltar(conceptos.indexOf(ya || nuevo));
+    };
+    const agregarDelCatalogo = (C, tipo, id) => {
+      if (tipo === 'paquete') {
+        const p = C.paquetes.find(x => x.id === id);
+        if (p) agregar({ paquete: p.id, servicio: null, descripcion: `Paquete ${p.nombre}`, detalle: p.detalle, cantidad: 1, unidad: '', precio: p.precio }, c => c.paquete === p.id);
+      } else {
+        const x = C.servicios.find(y => y.id === id);
+        if (x) agregar({ servicio: x.id, paquete: null, descripcion: x.nombre, detalle: x.detalle, cantidad: 1, unidad: x.unidad, precio: x.precio }, c => c.servicio === x.id && !c.paquete);
+      }
+    };
+    const agregarLibre = () => {
+      conceptos.push({ servicio: null, paquete: null, descripcion: '', detalle: '', cantidad: 1, unidad: '', precio: '' });
+      pintar();
+      const ultimo = $$('.concepto__nombre', lista).pop();
+      if (ultimo) ultimo.focus();
+    };
+    lista.addEventListener('input', e => {
+      const fila = e.target.closest('.concepto');
+      if (!fila || !e.target.dataset.campo) return;
+      const c = conceptos[Number(fila.dataset.i)];
+      c[e.target.dataset.campo] = e.target.value;
+      $('[data-importe]', fila).textContent = pesos(importe(c));
+      guardar();
+    });
+    lista.addEventListener('click', e => {
+      const quitar = e.target.closest('[data-quitar]');
+      if (!quitar) return;
+      conceptos.splice(Number(quitar.closest('.concepto').dataset.i), 1);
+      pintar();
+    });
+    // Al guardar: fuera los renglones vacíos; devuelve el que no tiene nombre (si hay)
+    const preparar = () => {
+      conceptos = conceptos.filter(c => String(c.descripcion).trim() || numero(c.precio));
+      oculto.value = JSON.stringify(conceptos);
+      const i = conceptos.findIndex(c => !String(c.descripcion).trim());
+      return i < 0 ? null : $$('.concepto__nombre', lista)[i] || null;
+    };
+    pintar();
+    return { agregarDelCatalogo, agregarLibre, total, conceptos: () => conceptos, preparar, pintar };
+  }
+
+  // Paquete: muestra cuánto costarían sus servicios por separado y cuánto ahorra el cliente
+  function initPaqueteForm(root) {
+    $$('[data-paquete-form]', root).forEach(lista => {
+      if (lista.dataset.ready) return;
+      lista.dataset.ready = '1';
+      const form = lista.closest('form');
+      const precio = form && form.querySelector('[name="precio"]');
+      const resumen = form && $('[data-paquete-resumen]', form);
+      const separado = () => $$('.paquete-servicio', lista).reduce((t, fila) => {
+        const chk = $('input[type=checkbox]', fila);
+        return chk.checked ? t + numero(chk.dataset.precio) * numero($('input[type=number]', fila).value || 1) : t;
+      }, 0);
+      const pintar = () => {
+        let n = 0;
+        $$('.paquete-servicio', lista).forEach(fila => {
+          const chk = $('input[type=checkbox]', fila);
+          fila.classList.toggle('is-on', chk.checked);
+          if (chk.checked) n += 1;
+        });
+        if (!resumen) return;
+        const suma = separado();
+        const ahorro = suma - numero(precio && precio.value);
+        resumen.innerHTML = n
+          ? `<span>${n} servicio${n === 1 ? '' : 's'} · por separado <strong>${pesos(suma)}</strong></span>${precio && precio.value
+            ? (ahorro > 0 ? `<span class="paquete-resumen__ahorro">El cliente ahorra ${pesos(ahorro)}</span>` : '<span class="muted">Sin ahorro frente a los servicios por separado</span>')
+            : `<button type="button" class="btn btn--sm" data-usar-separado>Usar ${pesos(suma)} como precio</button>`}`
+          : '<span class="muted">Marca los servicios que incluye.</span>';
+      };
+      lista.addEventListener('change', pintar);
+      lista.addEventListener('input', pintar);
+      if (precio) precio.addEventListener('input', pintar);
+      if (resumen) resumen.addEventListener('click', e => {
+        if (!e.target.closest('[data-usar-separado]') || !precio) return;
+        precio.value = separado().toFixed(2);
+        pintar();
+      });
+      pintar();
+    });
+  }
+
+  // Cotizador: el catálogo a la derecha (un clic agrega), los conceptos editables y el total en vivo
+  function initCotizador(root) {
+    $$('[data-cotizador]', root).forEach(form => {
+      if (form.dataset.ready) return;
+      form.dataset.ready = '1';
+      const C = JSON.parse(form.dataset.cotizador);
+      const S = JSON.parse(form.dataset.sugerenciasDatos || '{"clientes": [], "lugares": []}');
+      const catalogo = $('[data-catalogo-lista]', form);
+      const buscar = $('[data-catalogo-buscar]', form);
+      const campo = n => form.querySelector(`[name="${n}"]`);
+      const pon = (k, v) => { const el = $(`[data-t="${k}"]`, form); if (el) el.textContent = v; };
+      const pintarTotales = subtotal => {
+        const descuento = Math.min(numero(campo('descuento') && campo('descuento').value), subtotal);
+        const total = Math.max(subtotal - descuento, 0);
+        const pct = numero(campo('anticipo_porcentaje') && campo('anticipo_porcentaje').value);
+        pon('subtotal', pesos(subtotal));
+        pon('descuento', `-${pesos(descuento)}`);
+        pon('total', pesos(total));
+        pon('anticipo', pesos(Math.round(total * pct) / 100));
+        pon('anticipo-texto', `Anticipo para apartar (${pct}%)`);
+        const filaDescuento = $('[data-fila-descuento]', form);
+        if (filaDescuento) filaDescuento.hidden = !descuento;
+      };
+      const editor = editorConceptos({
+        lista: $('[data-conceptos]', form), vacio: $('[data-conceptos-vacio]', form), oculto: $('[data-conceptos-json]', form),
+        alCambiar: pintarTotales,
+      });
+      const pintarCatalogo = () => { catalogo.innerHTML = htmlCatalogo(C, buscar ? buscar.value : ''); };
+      catalogo.addEventListener('click', e => {
+        const b = e.target.closest('[data-agregar]');
+        if (b) editor.agregarDelCatalogo(C, b.dataset.agregar, Number(b.dataset.id));
+      });
+      if (buscar) {
+        buscar.addEventListener('input', pintarCatalogo);
+        buscar.addEventListener('keydown', e => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault(); // Enter agrega el primer resultado
+          const primero = $('[data-agregar]', catalogo);
+          if (primero) primero.click();
+        });
+      }
+      const libre = $('[data-concepto-libre]', form);
+      if (libre) libre.addEventListener('click', editor.agregarLibre);
+      ['descuento', 'anticipo_porcentaje'].forEach(n => { const el = campo(n); if (el) el.addEventListener('input', () => pintarTotales(editor.total())); });
+
+      // Clientes y lugares anteriores (al elegir un cliente se completan su teléfono y correo)
+      sugerirEnCampo(campo('cliente_nombre'), S.clientes || [], {
+        titulo: 'Clientes anteriores', icono: 'ph ph-user', texto: c => c.nombre, detalle: c => [c.telefono, c.email].filter(Boolean).join(' · '),
+      });
+      sugerirEnCampo(campo('lugar'), S.lugares || [], {
+        titulo: 'Lugares que ya usaste', icono: 'ph ph-building', texto: l => l.lugar, detalle: l => l.direccion || '',
+      });
+      const cliente = campo('cliente_nombre');
+      if (cliente) cliente.addEventListener('input', () => {
+        const c = (S.clientes || []).find(x => x.nombre.toLowerCase() === cliente.value.trim().toLowerCase());
+        if (!c) return;
+        [['cliente_telefono', c.telefono], ['cliente_email', c.email]].forEach(([n, v]) => { const el = campo(n); if (el && !el.value && v) el.value = v; });
+      });
+
+      form.addEventListener('submit', e => {
+        const sinNombre = editor.preparar();
+        if (!editor.conceptos().length) {
+          e.preventDefault();
+          editor.pintar();
+          toast('Agrega al menos un servicio o paquete.', 'error');
+        } else if (sinNombre) {
+          e.preventDefault();
+          toast('Ponle nombre a cada concepto.', 'error');
+          sinNombre.focus();
+        }
+      });
+
+      pintarCatalogo();
+    });
+  }
+
+  /* ------------------------------------------------------------------ Registro de eventos (página completa) */
   // Se adapta mientras se llena: textos según el tipo, fin por duración, choques de agenda, lugares y
-  // clientes anteriores, servicios con un toque, saldo, itinerario sugerido y resumen final.
+  // clientes anteriores, servicios del catálogo con el precio calculado, saldo, itinerario sugerido, el
+  // resumen de al lado y el índice de secciones con lo que ya está completo.
   function initAsistenteEvento(root) {
     $$('[data-asistente-evento]', root).forEach(caja => {
       if (caja.dataset.ready) return;
@@ -582,11 +874,11 @@
         const el = form.querySelector(`[name="${n}"]:checked`) || campo(n);
         return !el || (el.type === 'radio' && !el.checked) ? '' : el.value.trim();
       };
-      const dinero = n => `$${Number(n || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`;
       const fecha = s => (s ? new Date(s) : null); // "2026-10-24T19:00" se toma como hora local
       const aCampo = d => { const p = x => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
       const hora = d => d.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
       const dia = d => d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+      const diaCorto = d => d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
       const horas = h => `${Math.round(h * 10) / 10} h`;
       const enLista = xs => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}` : xs[0] || '');
       const avisar = el => el && el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -629,21 +921,23 @@
 
       // --- Agenda: avisa si ese día ya hay eventos o si se cruzan los horarios
       const agenda = $('[data-disponibilidad]', form);
-      let espera, pedido = 0;
+      let espera, pedido = 0, choques = 0;
       const pintarAgenda = eventos => {
-        const choques = eventos.filter(e => e.cruza);
+        const cruzan = eventos.filter(e => e.cruza);
+        choques = cruzan.length;
         agenda.hidden = false;
-        agenda.className = `span-2 disponibilidad ${choques.length ? 'is-choque' : eventos.length ? 'is-aviso' : 'is-libre'}`;
+        agenda.className = `span-2 disponibilidad ${cruzan.length ? 'is-choque' : eventos.length ? 'is-aviso' : 'is-libre'}`;
         if (!eventos.length) {
           agenda.innerHTML = '<i class="ph ph-check-circle"></i><div><strong>Día libre</strong><small>No tienes otros eventos ese día.</small></div>';
-          return;
+        } else {
+          const titulo = cruzan.length
+            ? `Se cruza con ${cruzan.length === 1 ? 'otro evento' : `${cruzan.length} eventos`}`
+            : `Ese día ya tienes ${eventos.length === 1 ? 'un evento' : `${eventos.length} eventos`}`;
+          agenda.innerHTML = `<i class="ph ${cruzan.length ? 'ph-warning' : 'ph-info'}"></i><div><strong>${titulo}</strong>${eventos.map(e =>
+            `<small class="${e.cruza ? 'is-cruza' : ''}"><i class="${e.icono}"></i>${escapeHtml(e.nombre)} · ${e.horario}${e.lugar ? ` · ${escapeHtml(e.lugar)}` : ''}${e.colaborador ? ` · ${escapeHtml(e.colaborador)}` : ''}</small>`).join('')
+          }<small class="disponibilidad__nota">Puedes guardarlo de todos modos.</small></div>`;
         }
-        const titulo = choques.length
-          ? `Se cruza con ${choques.length === 1 ? 'otro evento' : `${choques.length} eventos`}`
-          : `Ese día ya tienes ${eventos.length === 1 ? 'un evento' : `${eventos.length} eventos`}`;
-        agenda.innerHTML = `<i class="ph ${choques.length ? 'ph-warning' : 'ph-info'}"></i><div><strong>${titulo}</strong>${eventos.map(e =>
-          `<small class="${e.cruza ? 'is-cruza' : ''}"><i class="${e.icono}"></i>${escapeHtml(e.nombre)} · ${e.horario}${e.lugar ? ` · ${escapeHtml(e.lugar)}` : ''}${e.colaborador ? ` · ${escapeHtml(e.colaborador)}` : ''}</small>`).join('')
-        }<small class="disponibilidad__nota">Puedes guardarlo de todos modos.</small></div>`;
+        pintarResumen();
       };
       const revisarAgenda = () => {
         if (!agenda || !inicio.value) return;
@@ -671,65 +965,11 @@
         fin.addEventListener(ev, () => { pintarDuracion(); revisarAgenda(); });
       });
 
-      // --- Lugares y clientes anteriores: panel de sugerencias bajo el campo; al elegir uno se completa lo que falte
-      const sinAcentos = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-      const sugerir = (input, items, { titulo, icono, texto, detalle }) => {
-        if (!input || !items.length) return;
-        const caja = input.closest('.field__control') || input.parentElement;
-        const panel = document.createElement('div');
-        panel.className = 'sugerencias';
-        panel.hidden = true;
-        panel.setAttribute('role', 'listbox');
-        caja.appendChild(panel);
-        let visibles = [], marcado = -1;
-        const cerrar = () => { panel.hidden = true; marcado = -1; };
-        const marcar = i => {
-          marcado = i;
-          $$('.sugerencia', panel).forEach((b, j) => b.classList.toggle('is-marcada', j === i));
-          const b = $$('.sugerencia', panel)[i];
-          if (b) b.scrollIntoView({ block: 'nearest' });
-        };
-        const elegir = item => {
-          input.value = texto(item);
-          avisar(input);
-          cerrar();
-        };
-        const pintar = () => {
-          const q = sinAcentos(input.value);
-          visibles = items.filter(x => !q || sinAcentos(texto(x)).includes(q) || sinAcentos(detalle(x)).includes(q)).slice(0, 6);
-          if (!visibles.length || (visibles.length === 1 && sinAcentos(texto(visibles[0])) === q)) { cerrar(); return; }
-          panel.innerHTML = `<div class="sugerencias__titulo">${titulo}</div>${visibles.map((x, i) =>
-            `<button type="button" class="sugerencia" role="option" data-i="${i}"><i class="${icono}"></i><span><strong>${escapeHtml(texto(x))}</strong>${detalle(x) ? `<small>${escapeHtml(detalle(x))}</small>` : ''}</span></button>`).join('')}`;
-          panel.hidden = false;
-          marcado = -1;
-        };
-        input.addEventListener('focus', pintar);
-        input.addEventListener('input', e => { if (e.isTrusted) pintar(); });
-        input.addEventListener('blur', () => setTimeout(cerrar, 120));
-        panel.addEventListener('mousedown', e => e.preventDefault()); // no perder el foco al hacer clic
-        panel.addEventListener('click', e => {
-          const b = e.target.closest('.sugerencia');
-          if (b) elegir(visibles[Number(b.dataset.i)]);
-        });
-        input.addEventListener('keydown', e => {
-          if (panel.hidden) return;
-          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            marcar((marcado + (e.key === 'ArrowDown' ? 1 : -1) + visibles.length) % visibles.length);
-          } else if (e.key === 'Enter' && marcado >= 0) {
-            e.preventDefault();
-            e.stopPropagation(); // que el asistente no avance de paso
-            elegir(visibles[marcado]);
-          } else if (e.key === 'Escape') {
-            e.stopPropagation(); // cierra las sugerencias, no el formulario
-            cerrar();
-          }
-        });
-      };
-      sugerir(campo('lugar'), A.lugares, {
+      // --- Lugares y clientes anteriores: al elegir uno se completa lo que falte
+      sugerirEnCampo(campo('lugar'), A.lugares, {
         titulo: 'Lugares que ya usaste', icono: 'ph ph-building', texto: l => l.lugar, detalle: l => l.direccion || '',
       });
-      sugerir(campo('cliente_nombre'), A.clientes, {
+      sugerirEnCampo(campo('cliente_nombre'), A.clientes, {
         titulo: 'Clientes anteriores', icono: 'ph ph-user', texto: c => c.nombre,
         detalle: c => [c.telefono, c.email].filter(Boolean).join(' · '),
       });
@@ -767,63 +1007,117 @@
       });
       if (mapa) mapa.addEventListener('input', pintarMapa);
 
+      // --- Servicios: del catálogo o libres; el precio del evento los sigue mientras no se escriba a mano
+      const cajaCatalogo = $('[data-catalogo-buscador]', form);
+      const catalogo = cajaCatalogo ? JSON.parse(cajaCatalogo.dataset.catalogo) : { paquetes: [], servicios: [] };
+      const precio = campo('precio_total');
+      const nota = $('[data-precio-nota]', form);
+      let automatico = !!(nota && nota.dataset.automatico === '1');
+      let editor = null;
+      const pintarNota = total => {
+        if (!nota || !editor) return;
+        const hay = editor.conceptos().length > 0;
+        const coincide = Math.abs(numero(precio && precio.value) - total) < 0.005;
+        if (!hay) nota.innerHTML = 'Escribe el precio, o agrega servicios y se calcula solo.';
+        else if (automatico) nota.innerHTML = '<i class="ph ph-link-simple"></i> Se calcula con los servicios.';
+        else if (coincide || !total) nota.innerHTML = 'Escrito a mano.';
+        else nota.innerHTML = `Ajustado a mano · <button type="button" class="enlace" data-usar-total>Usar el total de servicios (${pesos(total)})</button>`;
+      };
+      const totalServicios = $('[data-total-servicios]', form);
+      const alCambiarServicios = total => {
+        if (totalServicios) totalServicios.textContent = pesos(total);
+        if (precio && automatico && editor && editor.conceptos().length) {
+          precio.value = total.toFixed(2);
+          avisar(precio);
+        }
+        pintarNota(total);
+        if (editor) actualizar();
+      };
+      const listaConceptos = $('[data-conceptos]', form);
+      if (listaConceptos) {
+        editor = editorConceptos({
+          lista: listaConceptos, vacio: $('[data-conceptos-vacio]', form), oculto: $('[data-conceptos-json]', form),
+          negativos: listaConceptos.hasAttribute('data-negativos'), alCambiar: alCambiarServicios,
+        });
+        pintarNota(editor.total());
+        if (totalServicios) totalServicios.textContent = pesos(editor.total());
+      }
+      if (precio) precio.addEventListener('input', e => {
+        if (!e.isTrusted || !editor) return;
+        automatico = false;
+        pintarNota(editor.total());
+      });
+      if (nota) nota.addEventListener('click', e => {
+        if (!e.target.closest('[data-usar-total]')) return;
+        automatico = true;
+        alCambiarServicios(editor.total());
+      });
+      const libre = $('[data-concepto-libre]', form);
+      if (libre && editor) libre.addEventListener('click', editor.agregarLibre);
+
+      // Buscador del catálogo: al enfocarlo muestra todo; al escribir filtra; un clic (o Enter) agrega
+      const buscador = $('[data-catalogo-buscador]', form);
+      if (buscador && editor) {
+        const C = catalogo;
+        const entrada = $('[data-catalogo-buscar]', buscador);
+        const panel = $('[data-catalogo-lista]', buscador);
+        const abrir = () => { panel.innerHTML = htmlCatalogo(C, entrada.value); panel.hidden = false; };
+        const cerrar = () => { panel.hidden = true; };
+        entrada.addEventListener('focus', abrir);
+        entrada.addEventListener('input', abrir);
+        entrada.addEventListener('blur', () => setTimeout(cerrar, 150));
+        panel.addEventListener('mousedown', e => e.preventDefault()); // no perder el foco: se pueden agregar varios
+        panel.addEventListener('click', e => {
+          const b = e.target.closest('[data-agregar]');
+          if (!b) return;
+          editor.agregarDelCatalogo(C, b.dataset.agregar, Number(b.dataset.id));
+          b.classList.remove('is-agregado'); void b.offsetWidth; b.classList.add('is-agregado');
+        });
+        entrada.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            const primero = $('[data-agregar]', panel);
+            if (primero) primero.click();
+          } else if (e.key === 'Escape') {
+            e.stopPropagation();
+            cerrar();
+            entrada.blur();
+          }
+        });
+      }
+
       // --- Anticipo y saldo (solo al crear)
       const saldo = $('[data-saldo]', form);
       const pintarSaldo = () => {
-        const precio = parseFloat(valor('precio_total')) || 0;
-        const anticipo = parseFloat(valor('anticipo')) || 0;
+        const p = numero(valor('precio_total'));
+        const anticipo = numero(valor('anticipo'));
         $$('[data-solo-con-anticipo]', form).forEach(el => { el.hidden = !(anticipo > 0); });
+        const barra = $('[data-barra-precio]', form);
+        if (barra) barra.textContent = pesos(p);
         if (!saldo) return;
-        saldo.hidden = !precio;
-        if (!precio) return;
-        const pct = Math.min(100, Math.round(anticipo * 100 / precio));
-        saldo.classList.toggle('is-excede', anticipo > precio);
-        saldo.innerHTML = anticipo > precio
-          ? '<i class="ph ph-warning-circle"></i><span>El anticipo es mayor al precio total.</span>'
-          : `<div class="saldo__barra"><span style="width:${pct}%"></span></div><span>Por cobrar: <strong>${dinero(precio - anticipo)}</strong>${anticipo ? ` · ${pct}% pagado` : ''}</span>`;
+        saldo.hidden = !p;
+        if (!p) return;
+        const pct = Math.min(100, Math.round(anticipo * 100 / p));
+        saldo.classList.toggle('is-excede', anticipo > p);
+        saldo.innerHTML = anticipo > p
+          ? '<i class="ph ph-warning-circle"></i><span>El anticipo es mayor al precio.</span>'
+          : `<div class="saldo__barra"><span style="width:${pct}%"></span></div><span>Por cobrar: <strong>${pesos(p - anticipo)}</strong>${anticipo ? ` · ${pct}% pagado` : ''}</span>`;
       };
-
-      // --- Servicios con un toque (los más usados por la agencia primero)
-      const servicios = campo('servicios');
-      const chips = $('[data-servicios-chips]', form);
-      const limpio = x => x.replace(/^[\s\-•]+/, '').trim();
-      const lineas = () => (servicios ? servicios.value.split('\n').map(limpio).filter(Boolean) : []);
-      const pintarChips = () => {
-        if (!chips) return;
-        const actuales = lineas().map(x => x.toLowerCase());
-        $$('[data-servicio]', chips).forEach(b => b.classList.toggle('is-on', actuales.includes(b.dataset.servicio.toLowerCase())));
-      };
-      if (chips && servicios) {
-        chips.innerHTML = A.servicios.map(x => `<button type="button" class="chip-opcion" data-servicio="${escapeHtml(x)}"><i class="ph ph-plus"></i><i class="ph ph-check"></i>${escapeHtml(x)}</button>`).join('');
-        chips.addEventListener('click', e => {
-          const b = e.target.closest('[data-servicio]');
-          if (!b) return;
-          const actuales = lineas();
-          const i = actuales.findIndex(x => x.toLowerCase() === b.dataset.servicio.toLowerCase());
-          if (i >= 0) actuales.splice(i, 1); else actuales.push(b.dataset.servicio);
-          servicios.value = actuales.join('\n');
-          avisar(servicios);
-        });
-        servicios.addEventListener('input', pintarChips);
-      }
 
       // --- Itinerario sugerido (solo al crear): con las horas reales del evento
       const vistaItinerario = $('[data-itinerario-preview]', form);
-      const actividades = () => {
-        if (!A.itinerarios) return [];
+      const pintarItinerario = () => {
+        if (!vistaItinerario || !A.itinerarios) return;
         const a = fecha(inicio.value), b = fecha(fin.value);
         const minutos = a && b ? (b - a) / 6e4 : Infinity;
-        return (A.itinerarios[valor('tipo_evento')] || A.itinerarios.otro)
-          .filter(([m]) => m < minutos).map(([m, titulo, icono]) => ({ hora: a ? hora(new Date(a.getTime() + m * 6e4)) : '', titulo, icono }));
-      };
-      const pintarItinerario = () => {
-        if (!vistaItinerario) return;
-        vistaItinerario.innerHTML = actividades().map(x => `<li><span>${x.hora}</span><i class="${x.icono}"></i>${escapeHtml(x.titulo)}</li>`).join('');
+        vistaItinerario.innerHTML = (A.itinerarios[valor('tipo_evento')] || A.itinerarios.otro)
+          .filter(([m]) => m < minutos)
+          .map(([m, titulo, icono]) => `<li><span>${a ? hora(new Date(a.getTime() + m * 6e4)) : ''}</span><i class="${icono}"></i>${escapeHtml(titulo)}</li>`).join('');
       };
 
-      // --- Resumen final con accesos para cambiar cada parte
+      // --- Resumen de al lado
       const resumen = $('[data-resumen-evento]', form);
-      const pasos = $$('[data-step]', form);
       const pintarResumen = () => {
         if (!resumen) return;
         const tipo = valor('tipo_evento');
@@ -831,49 +1125,91 @@
         const icono = marcado ? $('i', marcado.closest('.tile')).className : 'ph ph-sparkle';
         const etapa = form.querySelector('[name="etapa"]:checked');
         const a = fecha(inicio.value), b = fecha(fin.value);
-        const precio = parseFloat(valor('precio_total')) || 0;
-        const anticipo = parseFloat(valor('anticipo')) || 0;
-        const fila = (ico, titulo, contenido, paso) => `<div class="resumen-evento__fila"><i class="${ico}"></i><div><small>${titulo}</small><span>${contenido || '<em>Pendiente</em>'}</span></div><button type="button" class="btn btn--ghost btn--sm" data-ir-paso="${paso}">Cambiar</button></div>`;
-        const lugarTxt = [valor('lugar'), valor('direccion')].filter(Boolean).map(escapeHtml).join(' · ');
-        const clienteTxt = [valor('cliente_nombre'), valor('cliente_telefono'), valor('cliente_email')].filter(Boolean).map(escapeHtml).join(' · ');
-        const lista = lineas();
-        let vivo = '';
-        if (campo('cooldown')) {
-          const envia = [['permitir_canciones', 'canciones'], ['permitir_saludos', 'saludos'], ['permitir_fotos', 'fotos']]
-            .filter(([n]) => campo(n) && campo(n).checked).map(([, txt]) => txt);
-          const limite = envia.includes('fotos') && valor('limite_fotos') ? ` (hasta ${valor('limite_fotos')} fotos)` : '';
-          vivo = campo('estado') && !campo('estado').checked ? 'Interacción apagada por ahora'
-            : envia.length ? `Reciben ${enLista(envia)}${limite}` : 'Sin envíos de los invitados';
-        }
-        const fondo = form.querySelector('[name="banner"]:checked');
-        const fondoTxt = fondo ? $('.thumb__name', fondo.closest('.thumb')).textContent.trim() : 'Sin fondo';
-        const invitados = valor('num_invitados');
+        const p = numero(valor('precio_total'));
+        const anticipo = numero(valor('anticipo'));
+        const n = editor ? editor.conceptos().length : 0;
+        const dato = (ico, texto, pendiente) => `<li class="${texto ? '' : 'is-pendiente'}"><i class="${ico}"></i><span>${texto || pendiente}</span></li>`;
+        // Extras: los que ya tiene (o con los que nace por Ajustes) y los que activa un servicio vendido
+        const vendidos = {};
+        (editor ? editor.conceptos() : []).forEach(c => {
+          const item = c.paquete ? catalogo.paquetes.find(p => p.id === c.paquete) : c.servicio ? catalogo.servicios.find(s => s.id === c.servicio) : null;
+          (item && item.activa || []).forEach(a => { vendidos[a] = vendidos[a] || item.nombre; });
+        });
+        const extras = Object.entries(A.extras || {}).map(([clave, x]) => {
+          const estado = x.activo ? (A.excepto ? 'activa' : 'se activa por tus Ajustes')
+            : vendidos[clave] ? (vendidos[clave] === x.nombre ? 'incluida en los servicios' : `incluida en «${escapeHtml(vendidos[clave])}»`)
+            : 'no incluida · la activas desde el evento';
+          return `<li class="${x.activo || vendidos[clave] ? 'is-extra' : 'is-pendiente'}"><i class="ph ${clave === 'en_vivo' ? 'ph-broadcast' : 'ph-envelope-open'}"></i><span><strong>${x.nombre}</strong> · ${estado}</span></li>`;
+        }).join('');
         resumen.innerHTML = `
-          <div class="resumen-evento__head" style="--tipo: var(--t-${tipo || 'otro'})">
-            <span class="resumen-evento__icono"><i class="${icono}"></i></span>
+          <div class="resumen-lateral__cabeza" style="--tipo: var(--t-${tipo || 'otro'})">
+            <span class="resumen-lateral__icono"><i class="${icono}"></i></span>
             <div><strong>${escapeHtml(valor('nombre_evento')) || '<em>Sin nombre</em>'}</strong>
-              <small>${tipo ? A.tipos[tipo].nombre : 'Sin tipo'}${etapa ? ` · ${escapeHtml(etapa.closest('label').textContent.trim())}` : ''}</small></div>
-            <button type="button" class="btn btn--ghost btn--sm" data-ir-paso="0">Cambiar</button>
+              <small>${tipo ? A.tipos[tipo].nombre : 'Elige qué se celebra'}${etapa ? ` · ${escapeHtml(etapa.closest('label').textContent.trim())}` : ''}</small></div>
           </div>
-          ${fila('ph ph-calendar-dots', 'Cuándo', a && b ? `${dia(a)} · ${hora(a)} a ${hora(b)} (${horas((b - a) / 36e5)})` : '', 1)}
-          ${fila('ph ph-map-pin', 'Dónde', lugarTxt + (invitados ? ` · ${escapeHtml(invitados)} invitados` : ''), 1)}
-          ${fila('ph ph-user', 'Cliente', clienteTxt, 2)}
-          ${fila('ph ph-hand-coins', 'Precio', precio ? `${dinero(precio)}${anticipo ? ` · anticipo ${dinero(anticipo)} · por cobrar ${dinero(Math.max(precio - anticipo, 0))}` : ''}` : '', 2)}
-          ${fila('ph ph-list-checks', 'Servicios', lista.length ? `${lista.length} · ${escapeHtml(enLista(lista.slice(0, 4)))}${lista.length > 4 ? '…' : ''}` : '', 2)}
-          ${fila(campo('cooldown') ? 'ph ph-broadcast' : 'ph ph-image', campo('cooldown') ? 'En vivo' : 'Fondo', campo('cooldown') ? `${vivo} · fondo: ${escapeHtml(fondoTxt)}` : escapeHtml(fondoTxt), 3)}`;
+          <ul class="resumen-lateral__datos">
+            ${dato('ph ph-calendar-dots', a && b && b > a ? `${diaCorto(a)} · ${hora(a)} a ${hora(b)}` : '', 'Sin fecha')}
+            ${choques ? `<li class="is-choque"><i class="ph ph-warning"></i><span>Se cruza con otro evento</span></li>` : ''}
+            ${dato('ph ph-map-pin', escapeHtml(valor('lugar')), 'Sin lugar')}
+            ${dato('ph ph-user', escapeHtml(valor('cliente_nombre')), 'Sin cliente')}
+            ${dato('ph ph-list-checks', n ? `${n} servicio${n === 1 ? '' : 's'}` : '', 'Sin servicios')}
+          </ul>
+          ${extras ? `<ul class="resumen-lateral__datos resumen-lateral__extras">${extras}</ul>` : ''}
+          <div class="resumen-lateral__dinero">
+            <div class="resumen-lateral__precio"><span>Precio</span><strong>${pesos(p)}</strong></div>
+            ${anticipo ? `<div><span>Anticipo</span><span>${pesos(anticipo)}</span></div><div><span>Por cobrar</span><span>${pesos(Math.max(p - anticipo, 0))}</span></div>` : ''}
+          </div>`;
       };
-      if (resumen) resumen.addEventListener('click', e => {
-        const b = e.target.closest('[data-ir-paso]');
-        if (b && pasos[b.dataset.irPaso]) pasos[b.dataset.irPaso].click();
+
+      // --- Índice: qué secciones ya están completas y en cuál vas
+      const completas = {
+        evento: () => valor('tipo_evento') && valor('nombre_evento'),
+        fecha: () => { const a = fecha(inicio.value), b = fecha(fin.value); return a && b && b > a; },
+        cliente: () => valor('cliente_nombre'),
+        servicios: () => (editor && editor.conceptos().length) || numero(valor('precio_total')) > 0,
+        notas: () => valor('notas') || (campo('itinerario_base') && campo('itinerario_base').checked),
+      };
+      const pintarIndice = () => $$('[data-indice]', form).forEach(a => {
+        const ok = completas[a.dataset.indice];
+        a.classList.toggle('is-hecho', !!(ok && ok()));
+      });
+      $$('[data-indice]', form).forEach(a => a.addEventListener('click', e => {
+        const seccion = document.querySelector(a.getAttribute('href'));
+        if (!seccion) return;
+        e.preventDefault();
+        seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }));
+      if ('IntersectionObserver' in window) {
+        const observador = new IntersectionObserver(entradas => entradas.forEach(en => {
+          if (!en.isIntersecting) return;
+          $$('[data-indice]', form).forEach(a => a.classList.toggle('is-actual', a.getAttribute('href') === `#${en.target.id}`));
+        }), { rootMargin: '-35% 0px -55% 0px' });
+        $$('.seccion-ev', form).forEach(s => observador.observe(s));
+      }
+
+      // Enter en un campo no manda el formulario a medias (sin asistente por pasos ya no "avanza")
+      form.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !['submit', 'button', 'checkbox', 'radio'].includes(e.target.type)) e.preventDefault();
+      });
+      form.addEventListener('submit', e => {
+        const sinNombre = editor ? editor.preparar() : null;
+        if (sinNombre) {
+          e.preventDefault();
+          toast('Ponle nombre a cada servicio.', 'error');
+          sinNombre.focus();
+        }
       });
 
-      const actualizar = () => { textosTipo(); pintarSaldo(); pintarChips(); pintarItinerario(); pintarResumen(); };
+      const actualizar = () => { textosTipo(); pintarSaldo(); pintarItinerario(); pintarResumen(); pintarIndice(); };
       form.addEventListener('input', actualizar);
       form.addEventListener('change', actualizar);
       pintarDuracion();
       pintarMapa();
       actualizar();
       revisarAgenda();
+      // Si el servidor regresó errores, se lleva la vista al primero
+      const error = $('.field--error', form);
+      if (error) setTimeout(() => error.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
     });
   }
 
@@ -890,6 +1226,8 @@
     initBolsaFotos(root);
     initMostrarSi(root);
     initAsistenteEvento(root);
+    initPaqueteForm(root);
+    initCotizador(root);
   }
 
   /* ------------------------------------------------------------------ Acciones POST */

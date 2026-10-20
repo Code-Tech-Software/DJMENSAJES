@@ -90,7 +90,7 @@ class PlanForm(forms.ModelForm):
     class Meta:
         model = Plan
         fields = ['nombre', 'precio_mensual', 'descripcion', 'max_eventos_mes', 'max_usuarios',
-                  'con_invitaciones', 'con_en_vivo', 'con_fotos', 'max_fotos_mes', 'con_album', 'con_banners',
+                  'con_invitaciones', 'con_en_vivo', 'con_fotos', 'max_fotos_mes', 'con_album', 'con_cotizaciones', 'con_banners',
                   'max_colaboradores', 'activo', 'orden']
         labels = {
             'max_eventos_mes': 'Eventos al mes', 'max_usuarios': 'Usuarios activos', 'max_fotos_mes': 'Bolsa de fotos al mes',

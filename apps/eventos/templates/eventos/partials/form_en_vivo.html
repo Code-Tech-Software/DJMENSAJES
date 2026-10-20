@@ -1,0 +1,69 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block icono_clase %}modal__icon--live{% endblock %}
+{% block cuerpo %}
+<section class="form-section">
+    <div class="form-section__title"><i class="ph ph-image"></i>Fondo de las pantallas <small>· opcional</small></div>
+    <div class="thumbs">
+        {% for radio in form.banner %}
+        <label class="thumb">
+            {{ radio.tag }}
+            <span class="thumb__img">
+                {% with b=radio.data.value.instance %}
+                {% if b and b.miniatura %}<img src="{{ b.miniatura.url }}" alt="" loading="lazy">{% elif b %}<i class="ph ph-image"></i>{% else %}<i class="ph ph-prohibit"></i>{% endif %}
+                {% endwith %}
+            </span>
+            <div class="thumb__name">{{ radio.choice_label }}</div>
+        </label>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="form-section">
+    <div class="form-section__title"><i class="ph ph-broadcast"></i>Interacción con los invitados</div>
+    {% campo form.estado clase="interaccion-switch" %}
+    <div class="alert mt-2 interaccion-apagada" data-mostrar-si="!{{ form.estado.id_for_label }}"><i class="ph ph-pause-circle"></i>
+        <div>La pantalla de invitados aparecerá <b>En pausa</b> y no recibirás canciones, saludos ni fotos.
+            La puedes reanudar aquí o desde el panel del DJ.</div></div>
+</section>
+
+<div class="interaccion-opciones" data-mostrar-si="{{ form.estado.id_for_label }}">
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-device-mobile"></i>Pantalla de invitados</div>
+        <div class="form-grid">
+            {% campo form.mensaje_bienvenida icono="ph ph-hand-waving" clase="span-2" %}
+            {% campo form.password_vip icono="ph ph-crown-simple" %}
+            {% campo form.cooldown icono="ph ph-timer" %}
+        </div>
+    </section>
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-paper-plane-tilt"></i>Qué pueden enviar los invitados</div>
+        <div class="form-grid">
+            {% campo form.permitir_canciones %}
+            {% campo form.permitir_saludos %}
+            {% if form.permitir_fotos %}{% campo form.permitir_fotos clase="span-2" %}{% endif %}
+            {% if form.limite_fotos %}
+            <div class="span-2 stack" style="gap:8px" data-mostrar-si="{{ form.permitir_fotos.id_for_label }}">
+                {% campo form.limite_fotos icono="ph ph-images" %}
+                {% if form.bolsa %}{# Bolsa de fotos al mes del plan: cuántas quedan en el mes del evento #}
+                <div class="bolsa-fotos" data-bolsa-fotos="{{ form.bolsa.json }}">
+                    <div class="bolsa-fotos__barra" aria-hidden="true">
+                        <span class="bolsa-fotos__ocupadas" style="width:{% widthratio form.bolsa.ocupadas form.bolsa.total 100 %}%"></span><span class="bolsa-fotos__este"></span>
+                    </div>
+                    <small class="bolsa-fotos__texto" data-bolsa-texto>Bolsa de {{ form.bolsa.mes }}: quedan <strong>{{ form.bolsa.libres }}</strong> de {{ form.bolsa.total }} fotos. Vacío = usa lo que quede libre del mes.</small>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    <section class="form-section">
+        <div class="form-section__title"><i class="ph ph-projector-screen"></i>Proyector</div>
+        <div class="form-grid">
+            {% campo form.moderar_pantalla clase="span-2" %}
+            {% campo form.pantalla_contenido icono="ph ph-projector-screen" %}
+            {% campo form.pantalla_qr icono="ph ph-qr-code" %}
+        </div>
+    </section>
+</div>
+{% endblock %}

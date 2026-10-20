@@ -1,0 +1,31 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.nombre icono="ph ph-tag" clase="span-2" %}
+    {% campo form.categoria icono="ph ph-squares-four" %}
+    <div class="field {% if form.precio.errors %}field--error{% endif %}">
+        <label class="field__label" for="{{ form.precio.id_for_label }}">Precio<span class="req">*</span></label>
+        <div class="input-group"><span class="input-addon">MXN $</span>{{ form.precio }}</div>
+        {% for e in form.precio.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
+    </div>
+    <div class="field span-2">
+        <span class="field__label">Se cobra</span>
+        <div class="segmented" style="display:flex">
+            {% for radio in form.unidad %}<label class="grow">{{ radio.tag }}<span style="justify-content:center">{{ radio.choice_label|capfirst }}</span></label>{% endfor %}
+        </div>
+        <small class="field__help">“Por hora” sirve para la hora extra: en la cotización pones cuántas horas.</small>
+    </div>
+    {% if form.activa %}
+    <div class="field span-2">
+        <span class="field__label">Al venderlo activa</span>
+        <div class="segmented" style="display:flex">
+            {% for radio in form.activa %}<label class="grow">{{ radio.tag }}<span style="justify-content:center">{% if radio.data.value == 'en_vivo' %}<i class="ph ph-broadcast"></i>{% elif radio.data.value == 'invitacion' %}<i class="ph ph-envelope-open"></i>{% endif %}{{ radio.choice_label }}</span></label>{% endfor %}
+        </div>
+        <small class="field__help">Si un evento lo incluye, o el cliente acepta una cotización con él, ese extra se activa solo en el evento.</small>
+    </div>
+    {% endif %}
+    {% campo form.descripcion icono="ph ph-text-align-left" clase="span-2" %}
+    {% campo form.activo clase="span-2" %}
+</div>
+{% endblock %}

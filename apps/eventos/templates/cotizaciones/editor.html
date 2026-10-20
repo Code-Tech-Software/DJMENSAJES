@@ -1,0 +1,97 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}{% if cotizacion %}Editar {{ cotizacion.folio }}{% else %}Nueva cotización{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'cotizaciones:lista' %}">Cotizaciones</a><i class="ph ph-caret-right"></i>{% if cotizacion %}<a href="{{ cotizacion.get_absolute_url }}">{{ cotizacion.folio }}</a><i class="ph ph-caret-right"></i>Editar{% else %}Nueva{% endif %}</div>
+        <h1>{% if cotizacion %}Editar {{ cotizacion.folio }}{% else %}Nueva cotización{% endif %}</h1>
+        <p>Elige paquetes y servicios de tu catálogo; puedes ajustar cantidades y precios antes de guardar.</p>
+    </div>
+    <div class="page-head__actions">
+        <a class="btn btn--ghost" href="{% if cotizacion %}{{ cotizacion.get_absolute_url }}{% else %}{% url 'cotizaciones:lista' %}{% endif %}">Cancelar</a>
+    </div>
+</div>
+
+<form method="post" class="cotizador" novalidate data-cotizador="{{ catalogo }}" data-sugerencias-datos="{{ sugerencias }}">
+    {% csrf_token %}
+    <input type="hidden" name="conceptos" value="{{ form.conceptos_iniciales }}" data-conceptos-json>
+    {% if form.errors %}
+    <div class="alert alert--danger mb-3"><i class="ph ph-warning-circle"></i>
+        <div><strong>Revisa la cotización</strong>{% for e in form.non_field_errors %}{{ e }} {% endfor %}{% for e in form.conceptos.errors %}{{ e }} {% endfor %}{% if form.errors and not form.non_field_errors and not form.conceptos.errors %}Hay campos marcados en rojo.{% endif %}</div></div>
+    {% endif %}
+
+    <div class="cotizador__grid">
+        <div class="stack" style="gap:16px">
+            <section class="card card--pad">
+                <div class="card-title mb-3"><span class="ico"><i class="ph ph-user"></i></span><h3>Cliente</h3></div>
+                <div class="form-grid">
+                    {% campo form.cliente_nombre icono="ph ph-user" clase="span-2" %}
+                    {% campo form.cliente_telefono icono="ph ph-whatsapp-logo" %}
+                    {% campo form.cliente_email icono="ph ph-envelope-simple" %}
+                </div>
+            </section>
+
+            <section class="card card--pad">
+                <div class="card-title mb-3"><span class="ico"><i class="ph ph-calendar-dots"></i></span><h3>Evento</h3></div>
+                <div class="form-grid">
+                    {% campo form.tipo_evento icono="ph ph-sparkle" %}
+                    {% campo form.nombre_evento icono="ph ph-pen-nib" %}
+                    {% campo form.fecha_evento icono="ph ph-calendar-dots" %}
+                    {% campo form.duracion_horas icono="ph ph-hourglass" %}
+                    {% campo form.lugar icono="ph ph-building" %}
+                    {% campo form.num_invitados icono="ph ph-users" %}
+                    {% if form.colaborador %}{% campo form.colaborador icono="ph ph-storefront" clase="span-2" %}{% endif %}
+                </div>
+            </section>
+
+            <section class="card card--pad">
+                <div class="card-title mb-3"><span class="ico"><i class="ph ph-list-checks"></i></span><h3>Conceptos</h3>
+                    <button type="button" class="btn btn--sm btn--ghost" style="margin-left:auto" data-concepto-libre><i class="ph ph-plus"></i>Concepto libre</button></div>
+                <div class="conceptos" data-conceptos></div>
+                <div class="conceptos__vacio" data-conceptos-vacio>
+                    <i class="ph ph-hand-pointing"></i>
+                    <div><strong>Agrega paquetes o servicios</strong><span>Tócalos en el catálogo{% if not puede_editar_catalogo %} de tu agencia{% endif %}; luego ajusta cantidades y precios aquí.</span></div>
+                </div>
+            </section>
+
+            <section class="card card--pad">
+                <div class="card-title mb-3"><span class="ico"><i class="ph ph-handshake"></i></span><h3>Condiciones</h3></div>
+                <div class="form-grid form-grid--3">
+                    <div class="field {% if form.descuento.errors %}field--error{% endif %}">
+                        <label class="field__label" for="{{ form.descuento.id_for_label }}">Descuento</label>
+                        <div class="input-group"><span class="input-addon">MXN $</span>{{ form.descuento }}</div>
+                        {% for e in form.descuento.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
+                    </div>
+                    {% campo form.anticipo_porcentaje icono="ph ph-percent" %}
+                    {% campo form.vigencia icono="ph ph-calendar-x" %}
+                    {% campo form.condiciones clase="span-all" %}
+                    {% campo form.notas_internas clase="span-all" %}
+                </div>
+            </section>
+        </div>
+
+        <aside class="cotizador__lado">
+            <section class="card card--pad cotizador__total">
+                <div class="cotizador__fila"><span>Subtotal</span><strong data-t="subtotal">$0</strong></div>
+                <div class="cotizador__fila" data-fila-descuento hidden><span>Descuento</span><strong data-t="descuento">$0</strong></div>
+                <div class="cotizador__fila cotizador__fila--total"><span>Total</span><strong data-t="total">$0</strong></div>
+                <div class="cotizador__fila cotizador__fila--anticipo"><span data-t="anticipo-texto">Anticipo</span><strong data-t="anticipo">$0</strong></div>
+                <div class="stack mt-3" style="gap:8px">
+                    <button type="submit" class="btn btn--primary btn--block" name="despues" value="pdf"><i class="ph ph-file-pdf"></i>Guardar y compartir</button>
+                    <button type="submit" class="btn btn--block"><i class="ph ph-floppy-disk"></i>Solo guardar</button>
+                </div>
+            </section>
+
+            <section class="card cotizador__catalogo">
+                <div class="cotizador__catalogo-cabeza">
+                    <h3><i class="ph ph-package"></i>Catálogo</h3>
+                    <a class="small text-brand" href="{% url 'cotizaciones:catalogo' %}" target="_blank">Editar</a>
+                </div>
+                <div class="searchbox cotizador__buscar"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" placeholder="Buscar en el catálogo" data-catalogo-buscar aria-label="Buscar en el catálogo"></div>
+                <div class="cotizador__lista scroll-thin" data-catalogo-lista></div>
+            </section>
+        </aside>
+    </div>
+</form>
+{% endblock %}

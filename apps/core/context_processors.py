@@ -26,13 +26,19 @@ def interfaz(request):
     modulos = modulos_de(usuario.agencia if usuario.agencia_id else None)
 
     acciones = [
-        {'titulo': 'Nuevo evento', 'sub': 'Registrar un evento', 'url': reverse('eventos:crear'), 'icono': 'ph ph-plus-circle', 'modal': True},
+        {'titulo': 'Nuevo evento', 'sub': 'Registrar un evento', 'url': reverse('eventos:crear'), 'icono': 'ph ph-plus-circle'},
         {'titulo': 'Dashboard', 'sub': 'Resumen general', 'url': reverse('core:dashboard'), 'icono': 'ph ph-gauge'},
         {'titulo': 'Calendario', 'sub': 'Agenda de eventos', 'url': reverse('eventos:calendario'), 'icono': 'ph ph-calendar'},
         {'titulo': 'Eventos', 'sub': 'Lista completa', 'url': reverse('eventos:lista'), 'icono': 'ph ph-sparkle'},
         {'titulo': 'Mi perfil', 'sub': 'Datos y contraseña', 'url': reverse('cuentas:perfil'), 'icono': 'ph ph-user-circle'},
         {'titulo': 'Ajustes', 'sub': 'Apariencia, negocio y eventos nuevos', 'url': reverse('core:ajustes'), 'icono': 'ph ph-gear-six'},
     ]
+    if modulos['cotizaciones']:
+        acciones += [
+            {'titulo': 'Nueva cotización', 'sub': 'Cotizar con tu catálogo', 'url': reverse('cotizaciones:nueva'), 'icono': 'ph ph-file-plus'},
+            {'titulo': 'Cotizaciones', 'sub': 'Enviadas, aceptadas y por responder', 'url': reverse('cotizaciones:lista'), 'icono': 'ph ph-file-text'},
+            {'titulo': 'Catálogo', 'sub': 'Servicios y paquetes con precio', 'url': reverse('cotizaciones:catalogo'), 'icono': 'ph ph-package'},
+        ]
     if modulos['invitaciones']:
         acciones.append({'titulo': 'Invitaciones', 'sub': 'Invitaciones digitales', 'url': reverse('invitaciones:indice'), 'icono': 'ph ph-envelope-open'})
     if modulos['en_vivo']:

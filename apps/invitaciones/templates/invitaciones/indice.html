@@ -51,7 +51,7 @@
 {% else %}
 <div class="card">
     {% url 'eventos:crear' as url_crear %}
-    {% include 'components/vacio.html' with icono='ph ph-envelope-open' titulo='Sin eventos próximos' texto='Crea un evento y diseña su invitación digital en minutos.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
+    {% include 'components/vacio.html' with icono='ph ph-envelope-open' titulo='Sin eventos próximos' texto='Crea un evento y diseña su invitación digital en minutos.' boton_url=url_crear boton_texto='Crear evento' %}
 </div>
 {% endif %}
 {% endblock %}

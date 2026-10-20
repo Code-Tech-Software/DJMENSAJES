@@ -24,7 +24,8 @@ from apps.colaboradores.models import Colaborador
 from apps.core.models import Agencia, Plan
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
-from apps.eventos.models import ActividadItinerario, Evento, Pago
+from apps.eventos.cotizacion.servicios import CONDICIONES_BASE, aceptar, cargar_catalogo_ejemplo, guardar_conceptos
+from apps.eventos.models import ActividadItinerario, Cotizacion, Evento, Paquete, Pago, Servicio
 from apps.invitaciones.models import FotoInvitacion, Invitacion, Invitado, Mencion, Ubicacion
 
 USUARIO_DEMO = 'demo'
@@ -264,6 +265,51 @@ class Command(BaseCommand):
             m.miniatura.save(f'demo-foto-{i}.jpg', _fondo(ancho // 3, alto // 3, colores, 300 + i), save=False)
             m.save()
             Mensaje.objects.filter(pk=m.pk).update(fecha_creacion=ahora - timedelta(minutes=50 - i * 7))
+
+        Evento.objects.filter(agencia=agencia).update(con_en_vivo=True)
+
+        # --- Cotizaciones: catálogo de ejemplo y cotizaciones en cada etapa (una aceptada ya es evento)
+        cargar_catalogo_ejemplo(agencia)
+        servicio = {s.nombre: s for s in Servicio.objects.filter(agencia=agencia)}
+        paquete = {p.nombre: p for p in Paquete.objects.filter(agencia=agencia).prefetch_related('items__servicio')}
+
+        def concepto_paquete(nombre):
+            p = paquete[nombre]
+            return {'descripcion': f'Paquete {p.nombre}', 'detalle': p.detalle, 'cantidad': Decimal('1'), 'unidad': '',
+                    'precio_unitario': p.precio, 'paquete_id': p.pk, 'servicio_id': None}
+
+        def concepto_servicio(nombre, cantidad=1):
+            s = servicio[nombre]
+            return {'descripcion': s.nombre, 'detalle': s.descripcion, 'cantidad': Decimal(cantidad), 'unidad': s.unidad,
+                    'precio_unitario': s.precio, 'paquete_id': None, 'servicio_id': s.pk}
+
+        def cotizar(cliente, telefono, tipo, nombre, dias, lugar, invitados, conceptos, descuento=0, hace=0):
+            inicio = timezone.make_aware(datetime.combine(hoy + timedelta(days=dias), time(19, 0)))
+            c = Cotizacion.objects.create(
+                agencia=agencia, creado_por=admin, cliente_nombre=cliente, cliente_telefono=telefono, tipo_evento=tipo,
+                nombre_evento=nombre, fecha_evento=inicio, duracion_horas=Decimal('6'), lugar=lugar, num_invitados=invitados,
+                descuento=Decimal(descuento), vigencia=hoy + timedelta(days=15 - hace), condiciones=CONDICIONES_BASE)
+            guardar_conceptos(c, conceptos)
+            Cotizacion.objects.filter(pk=c.pk).update(creado=ahora - timedelta(days=hace))
+            c.refresh_from_db()
+            return c
+
+        cotizar('Paola Méndez', '2221234567', 'quinse', 'XV Paola', 75, 'Salón Cristal', 180,
+                [concepto_paquete('XV Oro'), concepto_servicio('Cabina de fotos'), concepto_servicio('Hora extra', 2)], descuento=1500)
+        enviada = cotizar('Corporativo Andrade', '2229876543', 'corporativo', 'Posada Andrade 2026', 50, 'Hacienda San Juan', 250,
+                          [concepto_paquete('Fiesta Esencial'), concepto_servicio('Pantalla LED'), concepto_servicio('Micrófono inalámbrico', 2)], hace=2)
+        Cotizacion.objects.filter(pk=enviada.pk).update(estado=Cotizacion.Estado.ENVIADA, enviada_el=ahora - timedelta(days=2),
+                                                        vista_el=ahora - timedelta(hours=20))
+        aceptada = cotizar('Daniela y Óscar', '2225551234', 'boda', 'Daniela & Óscar', 120, 'Jardín Las Palmas', 220,
+                           [concepto_paquete('Boda Plata'), concepto_servicio('Chisperos fríos'), concepto_servicio('Hora extra', 1)], hace=6)
+        Cotizacion.objects.filter(pk=aceptada.pk).update(estado=Cotizacion.Estado.ENVIADA, enviada_el=ahora - timedelta(days=6),
+                                                         vista_el=ahora - timedelta(days=5))
+        aceptada.refresh_from_db()
+        aceptar(aceptada, None, 'Daniela Ruiz')
+        rechazada = cotizar('Mario Treviño', '2223334444', 'cumple', 'Cumpleaños 40 de Mario', 30, 'Terraza Sol', 80,
+                            [concepto_servicio('DJ profesional'), concepto_servicio('Audio profesional'), concepto_servicio('Iluminación de ambiente')], hace=9)
+        Cotizacion.objects.filter(pk=rechazada.pk).update(estado=Cotizacion.Estado.RECHAZADA, enviada_el=ahora - timedelta(days=9),
+                                                          respondida_el=ahora - timedelta(days=4))
 
         self.stdout.write(self.style.SUCCESS(
             f'Datos de demostración listos. Inicia sesión con usuario "{USUARIO_DEMO}" y contraseña "{CLAVE_DEMO}".'))

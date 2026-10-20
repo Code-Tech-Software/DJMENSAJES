@@ -70,10 +70,10 @@ def moneda(valor):
         numero = Decimal(valor or 0)
     except (InvalidOperation, TypeError):
         return valor
-    entero = f'{numero:,.2f}'
+    entero = f'{abs(numero):,.2f}'
     if entero.endswith('.00'):
         entero = entero[:-3]
-    return f'${entero}'
+    return f'-${entero}' if numero < 0 else f'${entero}'
 
 
 @register.filter

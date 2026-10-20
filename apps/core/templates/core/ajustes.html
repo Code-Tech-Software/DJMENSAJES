@@ -126,8 +126,11 @@
         <section data-panel="eventos" hidden>
             <div class="card">
                 <div class="card__body">
+                    {% if modulos.en_vivo %}
                     <div class="form-section">
                         <div class="form-section__title"><i class="ph ph-broadcast"></i>Experiencia en vivo</div>
+                        <div class="mb-3">{% campo form.en_vivo_por_defecto %}</div>
+                        <p class="small muted mb-2">Con lo que nace la experiencia en vivo de cada evento cuando la activas:</p>
                         <div class="form-grid">
                             {% campo form.cooldown icono="ph ph-timer" %}
                             {% campo form.mensaje_bienvenida icono="ph ph-hand-waving" %}
@@ -139,6 +142,8 @@
                             {% campo form.moderar_pantalla %}
                         </div>
                     </div>
+                    {% endif %}
+                    {% if modulos.invitaciones %}
                     <div class="form-section">
                         <div class="form-section__title"><i class="ph ph-envelope-open"></i>Invitaciones</div>
                         <div class="form-grid">
@@ -146,6 +151,7 @@
                             {% campo form.dias_limite_rsvp icono="ph ph-calendar-x" %}
                         </div>
                     </div>
+                    {% endif %}
                     <div class="alert mt-3"><i class="ph ph-info"></i><div>Solo aplica a los eventos e invitaciones que se creen de aquí en adelante; los existentes conservan su configuración y se pueden ajustar uno por uno.</div></div>
                 </div>
             </div>

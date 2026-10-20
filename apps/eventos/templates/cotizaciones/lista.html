@@ -1,0 +1,101 @@
+{% extends 'layouts/app.html' %}
+{% load ui humanize %}
+{% block title %}Cotizaciones{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Inicio</a><i class="ph ph-caret-right"></i>Cotizaciones</div>
+        <h1>Cotizaciones</h1>
+        <p>Cotiza con tu catálogo en un minuto, compártela en PDF o por WhatsApp y, cuando el cliente acepta, se convierte en evento.</p>
+    </div>
+    <div class="page-head__actions">
+        <a class="btn" href="{% url 'cotizaciones:catalogo' %}"><i class="ph ph-package"></i>Catálogo</a>
+        <a class="btn btn--primary" href="{% url 'cotizaciones:nueva' %}"><i class="ph ph-plus"></i>Nueva cotización</a>
+    </div>
+</div>
+
+{% if catalogo_vacio %}
+<div class="alert alert--live mb-3"><i class="ph ph-lightbulb"></i>
+    <div><strong>Primero arma tu catálogo</strong>Agrega tus servicios con precio (audio, iluminación, pista, cabina, hora extra…) y tus paquetes; así cotizas con un clic.
+        <a class="text-brand strong" href="{% url 'cotizaciones:catalogo' %}">Ir al catálogo</a></div></div>
+{% endif %}
+
+<div class="grid grid-4 reveal mb-3">
+    <div class="card stat">
+        <div class="stat__top"><span class="stat__label">Cotizado este mes</span><span class="stat__icon"><i class="ph ph-file-text"></i></span></div>
+        <div class="stat__value">{{ stats.cotizado|moneda }}</div>
+        <div class="stat__meta">{{ stats.n_mes }} cotizaci{{ stats.n_mes|pluralize:"ón,ones" }}</div>
+    </div>
+    <div class="card stat tone-success">
+        <div class="stat__top"><span class="stat__label">Aceptado este mes</span><span class="stat__icon"><i class="ph ph-seal-check"></i></span></div>
+        <div class="stat__value">{{ stats.aceptado|moneda }}</div>
+        <div class="stat__meta">{{ stats.n_aceptadas }} convertida{{ stats.n_aceptadas|pluralize }} en evento</div>
+    </div>
+    <div class="card stat tone-live">
+        <div class="stat__top"><span class="stat__label">Por responder</span><span class="stat__icon"><i class="ph ph-hourglass-medium"></i></span></div>
+        <div class="stat__value">{{ stats.por_responder }}</div>
+        <div class="stat__meta">Enviadas y vigentes</div>
+    </div>
+    <div class="card stat tone-warning">
+        <div class="stat__top"><span class="stat__label">Tasa de cierre</span><span class="stat__icon"><i class="ph ph-chart-line-up"></i></span></div>
+        <div class="stat__value">{% if stats.tasa is not None %}{{ stats.tasa }}%{% else %}—{% endif %}</div>
+        <div class="stat__meta">Aceptadas de las respondidas · 90 días</div>
+    </div>
+</div>
+
+<form data-autosubmit data-target="#resultados, #tabs-estado" id="filtros">
+    <div class="tabs" style="margin-bottom:16px" id="tabs-estado">
+        {% for valor, nombre, icono, n in filtros %}
+        <label class="tab {% if estado == valor %}is-active{% endif %}" style="cursor:pointer">
+            <input type="radio" name="estado" value="{{ valor }}" {% if estado == valor %}checked{% endif %} hidden>
+            <i class="{{ icono }}"></i>{{ nombre }}<span class="count">{{ n }}</span>
+        </label>
+        {% endfor %}
+    </div>
+    <div class="toolbar">
+        <div class="searchbox"><i class="ph ph-magnifying-glass"></i><input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar por cliente, evento, lugar o folio"></div>
+    </div>
+</form>
+
+<div id="resultados">
+    {% if cotizaciones %}
+    <div class="card">
+        <div class="table-wrap">
+            <table class="table tabla-cotizaciones">
+                <thead><tr><th>Folio</th><th>Cliente y evento</th><th class="hide-mobile">Fecha del evento</th><th class="num">Total</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                {% for c in cotizaciones %}
+                <tr>
+                    <td><a class="strong mono" href="{{ c.get_absolute_url }}">{{ c.folio }}</a><div class="t-sub">{{ c.creado|date:"j M" }}</div></td>
+                    <td><a class="t-title" href="{{ c.get_absolute_url }}">{{ c.cliente_nombre }}</a>
+                        <div class="t-sub">{{ c.get_tipo_evento_display }}{% if c.nombre_evento %} · {{ c.nombre_evento }}{% endif %}{% if c.colaborador %} · {{ c.colaborador.nombre }}{% endif %}</div></td>
+                    <td class="hide-mobile">{{ c.fecha_evento|date:"D j M Y" }}<div class="t-sub">{{ c.lugar|default:"Sin lugar" }}</div></td>
+                    <td class="num strong">{{ c.total|moneda }}</td>
+                    <td>
+                        <span class="chip chip--{{ c.tono }} chip--dot">{{ c.estado_visible }}</span>
+                        {% if c.estado == 'enviada' and c.vista_el %}<div class="t-sub"><i class="ph ph-eye"></i> Vista {{ c.vista_el|hace }}</div>{% endif %}
+                        {% if c.evento %}<div class="t-sub"><a class="text-brand" href="{{ c.evento.get_absolute_url }}"><i class="ph ph-calendar-check"></i> Ver evento</a></div>{% endif %}
+                    </td>
+                    <td class="actions">
+                        <a class="icon-btn" href="{% url 'cotizaciones:pdf' c.pk %}" target="_blank" aria-label="Ver PDF" title="Ver PDF"><i class="ph ph-file-pdf"></i></a>
+                        <a class="icon-btn" href="{% url 'cotizaciones:whatsapp' c.pk %}" target="_blank" rel="noopener" aria-label="Enviar por WhatsApp" title="Enviar por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% include 'components/paginacion.html' with page_obj=pagina query=query %}
+    {% else %}
+    <div class="card">
+        {% if q or estado %}
+        {% include 'components/vacio.html' with icono='ph ph-magnifying-glass' titulo='Sin resultados' texto='No hay cotizaciones con ese filtro.' %}
+        {% else %}
+        {% url 'cotizaciones:nueva' as url_nueva %}
+        {% include 'components/vacio.html' with icono='ph ph-file-text' titulo='Aún no tienes cotizaciones' texto='Elige paquetes y servicios de tu catálogo, ajusta y comparte el PDF o el enlace para que el cliente la acepte.' boton_url=url_nueva boton_texto='Nueva cotización' %}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

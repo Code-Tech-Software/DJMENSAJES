@@ -1,0 +1,59 @@
+{% load ui %}
+{# La cotización tal como la ve el cliente (misma información que el PDF). Recibe cotizacion y marca #}
+<article class="doc-cot" style="--marca: {{ marca.color }}">
+    <header class="doc-cot__cabeza">
+        <div class="doc-cot__marca">
+            {% if marca.logo %}<img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}">
+            {% else %}<strong>{{ marca.nombre }}</strong>{% if marca.eslogan %}<small>{{ marca.eslogan }}</small>{% endif %}{% endif %}
+        </div>
+        <div class="doc-cot__folio"><strong>COTIZACIÓN</strong><span>{{ cotizacion.folio }} · {{ cotizacion.creado|date:"j \d\e F \d\e Y"|lower }}</span></div>
+    </header>
+    <div class="doc-cot__cuerpo">
+        <div class="doc-cot__partes">
+            <div>
+                <small>Para</small>
+                <strong>{{ cotizacion.cliente_nombre }}</strong>
+                {% if cotizacion.cliente_telefono %}<span>{{ cotizacion.cliente_telefono }}</span>{% endif %}
+                {% if cotizacion.cliente_email %}<span>{{ cotizacion.cliente_email }}</span>{% endif %}
+            </div>
+            <div>
+                <small>Evento</small>
+                <strong>{{ cotizacion.titulo_evento }}</strong>
+                <span>{{ cotizacion.get_tipo_evento_display }} · {{ cotizacion.fecha_evento|date:"l j \d\e F \d\e Y"|lower|capfirst }}</span>
+                <span>De {{ cotizacion.fecha_evento|date:"H:i" }} a {{ cotizacion.fecha_fin|date:"H:i" }} h ({{ cotizacion.duracion_horas|floatformat:"-1" }} h)</span>
+                {% if cotizacion.lugar or cotizacion.num_invitados %}<span>{{ cotizacion.lugar }}{% if cotizacion.lugar and cotizacion.num_invitados %} · {% endif %}{% if cotizacion.num_invitados %}{{ cotizacion.num_invitados }} invitados{% endif %}</span>{% endif %}
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="doc-cot__tabla">
+                <thead><tr><th>Concepto</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Importe</th></tr></thead>
+                <tbody>
+                {% for c in cotizacion.conceptos.all %}
+                <tr>
+                    <td><strong>{{ c.descripcion }}</strong>{% if c.detalle %}<small>{{ c.detalle }}</small>{% endif %}</td>
+                    <td class="num">{{ c.cantidad|floatformat:"-2" }}{% if c.unidad == 'hora' %} h{% endif %}</td>
+                    <td class="num">{{ c.precio_unitario|moneda }}</td>
+                    <td class="num strong">{{ c.importe|moneda }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="doc-cot__totales">
+            <div><span>Subtotal</span><span>{{ cotizacion.subtotal|moneda }}</span></div>
+            {% if cotizacion.descuento %}<div><span>Descuento</span><span>-{{ cotizacion.descuento|moneda }}</span></div>{% endif %}
+            <div class="doc-cot__total"><span>Total</span><strong>{{ cotizacion.total|moneda }}</strong></div>
+            {% if cotizacion.anticipo_porcentaje %}<div class="doc-cot__anticipo"><span>Anticipo para apartar la fecha ({{ cotizacion.anticipo_porcentaje }}%)</span><span>{{ cotizacion.anticipo|moneda }}</span></div>{% endif %}
+        </div>
+
+        {% if cotizacion.condiciones %}
+        <div class="doc-cot__condiciones">
+            <h4>Condiciones</h4>
+            <ul>{% for linea in cotizacion.condiciones.splitlines %}{% if linea.strip %}<li>{{ linea }}</li>{% endif %}{% endfor %}</ul>
+        </div>
+        {% endif %}
+        <p class="doc-cot__vigencia"><i class="ph ph-calendar-check"></i>{% if cotizacion.vencida %}Venció el{% else %}Válida hasta el{% endif %} <strong>{{ cotizacion.vigencia|date:"j \d\e F \d\e Y"|lower }}</strong></p>
+    </div>
+</article>

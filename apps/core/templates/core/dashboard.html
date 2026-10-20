@@ -10,7 +10,7 @@
     </div>
     <div class="page-head__actions">
         <a class="btn" href="{% url 'eventos:calendario' %}"><i class="ph ph-calendar"></i>Calendario</a>
-        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo evento</button>
+        <a class="btn btn--primary" href="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo evento</a>
     </div>
 </div>
 
@@ -93,7 +93,7 @@
             <div class="row row-wrap">
                 <a class="btn btn--primary" href="{{ destacado.get_absolute_url }}"><i class="ph ph-eye"></i>Ver evento</a>
                 {% if modulos.invitaciones %}<a class="btn" href="{% url 'invitaciones:panel' destacado.pk %}"><i class="ph ph-envelope-open"></i>Invitación</a>{% endif %}
-                {% if modulos.en_vivo %}
+                {% if modulos.en_vivo and destacado.con_en_vivo %}
                 <a class="btn" href="{{ destacado.url_pantalla }}" target="_blank"><i class="ph ph-qr-code"></i>Pantalla QR</a>
                 <a class="btn" href="{{ destacado.url_dj }}" target="_blank"><i class="ph ph-headphones"></i>Panel DJ</a>
                 {% endif %}
@@ -102,7 +102,7 @@
         {% else %}
         <div class="card">
             {% url 'eventos:crear' as url_crear %}
-            {% include 'components/vacio.html' with icono='ph ph-calendar-dots' titulo='Aún no hay eventos próximos' texto='Registra tu primer evento: genera su invitación digital, el QR para invitados y el panel del DJ automáticamente.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
+            {% include 'components/vacio.html' with icono='ph ph-calendar-dots' titulo='Aún no hay eventos próximos' texto='Registra tu primer evento: genera su invitación digital, el QR para invitados y el panel del DJ automáticamente.' boton_url=url_crear boton_texto='Crear evento' %}
         </div>
         {% endif %}
 
@@ -188,7 +188,8 @@
         <div class="card card--pad">
             <div class="card-title mb-2"><span class="ico"><i class="ph ph-lightning"></i></span><div><h3 style="font-size:15px">Accesos rápidos</h3></div></div>
             <div class="grid grid-2" style="gap:10px">
-                <button class="btn btn--soft" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus-circle"></i>Evento</button>
+                <a class="btn btn--soft" href="{% url 'eventos:crear' %}"><i class="ph ph-plus-circle"></i>Evento</a>
+                {% if modulos.cotizaciones %}<a class="btn btn--soft" href="{% url 'cotizaciones:nueva' %}"><i class="ph ph-file-text"></i>Cotización</a>{% endif %}
                 {% if modulos.invitaciones %}<a class="btn btn--soft" href="{% url 'invitaciones:indice' %}"><i class="ph ph-paper-plane-right"></i>Invitaciones</a>{% endif %}
                 {% if ve_todo %}
                 {% if modulos.subagencias %}<button class="btn btn--soft" data-modal="{% url 'colaboradores:crear' %}"><i class="ph ph-users-three"></i>Colaborador</button>{% endif %}

@@ -24,6 +24,8 @@ MODULOS = {
                 'Pantalla de invitados con QR, canciones y saludos, proyector y panel del DJ.'),
     'fotos': ('con_fotos', 'Fotos de invitados', 'ph ph-camera', 'Los invitados suben fotos que el DJ aprueba para la pantalla.'),
     'album': ('con_album', 'Álbum digital', 'ph ph-images', 'Álbum en línea con las fotos y saludos del evento.'),
+    'cotizaciones': ('con_cotizaciones', 'Cotizaciones', 'ph ph-file-text',
+                     'Catálogo de servicios y paquetes, cotización en PDF y aceptación en línea que crea el evento.'),
     'banners': ('con_banners', 'Banners propios', 'ph ph-image', 'Subir sus propios fondos además de los de EventPro.'),
 }
 # Sin experiencia en vivo no hay de dónde salgan fotos ni álbum
@@ -78,7 +80,7 @@ def _ocupadas_por_mes(agencia, excepto=None, **filtro):
     """{(año, mes): fotos} apartadas en eventos más las ya recibidas en eventos sin apartado."""
     from apps.envivo.models import Mensaje
     from apps.eventos.models import Evento
-    eventos = Evento.objects.filter(agencia=agencia, **filtro)
+    eventos = Evento.objects.filter(agencia=agencia, con_en_vivo=True, **filtro)
     if excepto is not None and excepto.pk:
         eventos = eventos.exclude(pk=excepto.pk)
     con_apartado = eventos.filter(limite_fotos__isnull=False).exclude(etapa=Evento.Etapa.CANCELADO)

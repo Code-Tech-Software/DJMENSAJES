@@ -13,7 +13,7 @@ class AjustesForm(forms.ModelForm):
         fields = [
             'nombre', 'eslogan', 'logo_principal', 'logo_secundario', 'color_marca',
             'whatsapp', 'telefono', 'email', 'sitio_web', 'instagram', 'facebook', 'tiktok',
-            'cooldown', 'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla', 'mensaje_bienvenida',
+            'en_vivo_por_defecto', 'cooldown', 'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla', 'mensaje_bienvenida',
             'plantilla', 'dias_limite_rsvp',
         ]
         widgets = {
@@ -35,6 +35,17 @@ class AjustesForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['color_marca'].required = False  # vacío = el azul de siempre
+        # Lo que no incluye el plan de la agencia no se pide (la sección ni se muestra)
+        from .modulos import modulos_de
+        modulos = modulos_de(self.instance.agencia if self.instance.agencia_id else None)
+        quitar = ()
+        if not modulos['en_vivo']:
+            quitar += ('en_vivo_por_defecto', 'cooldown', 'permitir_saludos', 'permitir_canciones', 'permitir_fotos',
+                       'moderar_pantalla', 'mensaje_bienvenida')
+        if not modulos['invitaciones']:
+            quitar += ('plantilla', 'dias_limite_rsvp')
+        for campo in quitar:
+            self.fields.pop(campo, None)
 
     def clean_color_marca(self):
         color = (self.cleaned_data.get('color_marca') or '').strip() or '#0098DA'

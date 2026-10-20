@@ -1,8 +1,7 @@
 """
 Asistente del formulario de eventos: textos según el tipo de evento, sugerencias tomadas de los eventos
-anteriores de la agencia (lugares, clientes y servicios), itinerarios base y disponibilidad del día.
+anteriores de la agencia (lugares y clientes), itinerarios base y disponibilidad del día.
 """
-from collections import Counter
 from datetime import datetime, time, timedelta
 
 from django.db.models import Q
@@ -30,11 +29,6 @@ ETAPAS = {
 }
 
 DURACIONES = (4, 5, 6, 7, 8)
-
-SERVICIOS_SUGERIDOS = (
-    'DJ', 'Audio profesional', 'Iluminación', 'Pista iluminada', 'Pantalla LED', 'Máquina de humo', 'Chisperos',
-    'Hora loca', 'Karaoke', 'Cabina de fotos', 'Maestro de ceremonias', 'Animación',
-)
 
 # Itinerario base por tipo: (minutos desde el inicio, actividad, icono)
 ITINERARIOS = {
@@ -76,10 +70,10 @@ def crear_itinerario(evento):
 
 
 def sugerencias(usuario, limite=40):
-    """Lugares, clientes y servicios de los eventos anteriores que el usuario puede ver (lo más reciente primero)."""
+    """Lugares y clientes de los eventos anteriores que el usuario puede ver (lo más reciente primero)."""
     eventos = (Evento.objects.visibles_para(usuario).order_by('-creado')
-               .values('lugar', 'direccion', 'url_mapa', 'cliente_nombre', 'cliente_telefono', 'cliente_email', 'servicios')[:200])
-    lugares, clientes, vistos_l, vistos_c, servicios = [], [], set(), set(), Counter()
+               .values('lugar', 'direccion', 'url_mapa', 'cliente_nombre', 'cliente_telefono', 'cliente_email')[:200])
+    lugares, clientes, vistos_l, vistos_c = [], [], set(), set()
     for e in eventos:
         clave = e['lugar'].strip().lower()
         if clave and clave not in vistos_l and len(lugares) < limite:
@@ -89,17 +83,7 @@ def sugerencias(usuario, limite=40):
         if clave and clave not in vistos_c and len(clientes) < limite:
             vistos_c.add(clave)
             clientes.append({'nombre': e['cliente_nombre'].strip(), 'telefono': e['cliente_telefono'], 'email': e['cliente_email']})
-        for linea in e['servicios'].splitlines():
-            linea = linea.strip(' -•\t')
-            if linea:
-                servicios[linea] += 1
-    frecuentes = [s for s, _ in servicios.most_common(8)]
-    vistos_s = {s.lower() for s in frecuentes}
-    return {
-        'lugares': lugares,
-        'clientes': clientes,
-        'servicios': (frecuentes + [s for s in SERVICIOS_SUGERIDOS if s.lower() not in vistos_s])[:14],
-    }
+    return {'lugares': lugares, 'clientes': clientes}
 
 
 def eventos_cercanos(usuario, inicio, fin, excepto=None):

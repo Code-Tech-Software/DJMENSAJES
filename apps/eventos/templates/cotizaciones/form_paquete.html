@@ -1,0 +1,36 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.nombre icono="ph ph-package" %}
+    <div class="field {% if form.precio.errors %}field--error{% endif %}">
+        <label class="field__label" for="{{ form.precio.id_for_label }}">Precio del paquete<span class="req">*</span></label>
+        <div class="input-group"><span class="input-addon">MXN $</span>{{ form.precio }}</div>
+        {% for e in form.precio.errors %}<small class="field__error"><i class="ph ph-warning-circle"></i>{{ e }}</small>{% endfor %}
+    </div>
+    {% campo form.descripcion icono="ph ph-text-align-left" clase="span-2" %}
+</div>
+
+<section class="form-section">
+    <div class="form-section__title"><i class="ph ph-list-checks"></i>Qué incluye <small>· marca los servicios y su cantidad</small></div>
+    {% if form.opciones %}
+    <div class="paquete-servicios" data-paquete-form>
+        {% for o in form.opciones %}
+        <label class="paquete-servicio {% if o.marcado %}is-on{% endif %}">
+            <input type="checkbox" name="s_{{ o.servicio.pk }}" {% if o.marcado %}checked{% endif %} data-precio="{{ o.servicio.precio|stringformat:'.2f' }}">
+            <span class="paquete-servicio__check"><i class="ph ph-check"></i></span>
+            <span class="grow"><strong>{{ o.servicio.nombre }}</strong><small>{{ o.servicio.precio|moneda }} {{ o.servicio.get_unidad_display }}</small></span>
+            <span class="paquete-servicio__cantidad">
+                <input type="number" name="c_{{ o.servicio.pk }}" value="{{ o.cantidad }}" min="0.5" step="0.5" aria-label="Cantidad de {{ o.servicio.nombre }}">
+                <small>{% if o.servicio.unidad == 'hora' %}h{% else %}×{% endif %}</small>
+            </span>
+        </label>
+        {% endfor %}
+    </div>
+    <div class="paquete-resumen" data-paquete-resumen></div>
+    {% else %}
+    <div class="alert"><i class="ph ph-info"></i><div>Primero agrega servicios al catálogo; luego podrás juntarlos en paquetes.</div></div>
+    {% endif %}
+</section>
+<div class="mt-3">{% campo form.activo %}</div>
+{% endblock %}

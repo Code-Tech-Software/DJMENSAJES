@@ -1,0 +1,67 @@
+{% load static ui %}<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0e1726">
+    <title>Cotización {{ cotizacion.folio }} · {{ marca.nombre }}</title>
+    <meta property="og:title" content="Cotización {{ cotizacion.folio }} · {{ marca.nombre }}">
+    <meta property="og:description" content="{{ cotizacion.titulo_evento }} · {{ cotizacion.fecha_evento|date:'j \d\e F \d\e Y'|lower }} · Total {{ cotizacion.total|moneda }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/em.css' %}">
+</head>
+<body class="cot-publica" style="--marca: {{ marca.color }}">
+<main class="cot-publica__contenido">
+    {% if es_del_equipo %}
+    <div class="alert mb-3"><i class="ph ph-eye"></i><div>Así la ve tu cliente. Tus visitas no cuentan como “vista por el cliente”.</div></div>
+    {% endif %}
+
+    {% if recien_aceptada %}
+    <section class="cot-publica__gracias">
+        <i class="ph-fill ph-seal-check"></i>
+        <h1>¡Gracias, {{ cotizacion.aceptada_por|default:cotizacion.cliente_nombre }}!</h1>
+        <p>Aceptaste la cotización {{ cotizacion.folio }}. {{ marca.nombre }} se pondrá en contacto contigo{% if cotizacion.anticipo_porcentaje %} para el anticipo de <strong>{{ cotizacion.anticipo|moneda }}</strong> con el que se aparta la fecha{% endif %}.</p>
+        {% if marca.whatsapp_url %}<a class="btn btn--whatsapp" href="{{ marca.whatsapp_url }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Escribir a {{ marca.nombre }}</a>{% endif %}
+    </section>
+    {% elif cotizacion.estado == 'aceptada' %}
+    <div class="alert alert--success mb-3"><i class="ph ph-seal-check"></i><div><strong>Cotización aceptada</strong>El {{ cotizacion.respondida_el|date:"j \d\e F \d\e Y"|lower }}. ¡Nos vemos en tu evento!</div></div>
+    {% elif cotizacion.estado == 'rechazada' %}
+    <div class="alert mb-3"><i class="ph ph-info"></i><div><strong>Esta cotización ya no está activa</strong>Si quieres retomarla, escríbele a {{ marca.nombre }}.</div></div>
+    {% elif cotizacion.vencida %}
+    <div class="alert alert--warning mb-3"><i class="ph ph-hourglass-low"></i><div><strong>Esta cotización venció</strong>Era válida hasta el {{ cotizacion.vigencia|date:"j \d\e F"|lower }}. Escríbele a {{ marca.nombre }} para actualizarla.</div></div>
+    {% endif %}
+
+    <div class="card cotizacion-vista">{% include 'cotizaciones/_documento.html' %}</div>
+
+    <section class="card card--pad cot-publica__acciones">
+        {% if cotizacion.abierta %}
+        <form method="post" action="{% url 'cotizacion_aceptar' cotizacion.token %}" class="cot-publica__aceptar">
+            {% csrf_token %}
+            <div class="grow">
+                <h2>¿Te gusta? Acéptala aquí</h2>
+                <p>{% if cotizacion.anticipo_porcentaje %}Tu fecha se aparta con un anticipo de <strong>{{ cotizacion.anticipo|moneda }}</strong> ({{ cotizacion.anticipo_porcentaje }}%).{% else %}{{ marca.nombre }} te confirmará los siguientes pasos.{% endif %}</p>
+                <div class="field mt-2">
+                    <label class="field__label" for="nombre-acepta">Tu nombre</label>
+                    <input class="input" id="nombre-acepta" name="nombre" value="{{ cotizacion.cliente_nombre }}" maxlength="150" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn--primary btn--lg cot-publica__boton"><i class="ph ph-seal-check"></i>Aceptar cotización</button>
+        </form>
+        <div class="menu-sep"></div>
+        {% endif %}
+        <div class="row row-wrap" style="gap:8px">
+            <a class="btn" href="{% url 'cotizacion_publica_pdf' cotizacion.token %}"><i class="ph ph-file-pdf"></i>Descargar PDF</a>
+            {% if whatsapp_dudas %}<a class="btn btn--whatsapp" href="{{ whatsapp_dudas }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Tengo dudas</a>{% endif %}
+        </div>
+    </section>
+
+    <p class="cot-publica__credito">Cotización de {{ marca.nombre }} · Con tecnología de <strong>EventPro</strong></p>
+</main>
+</body>
+</html>

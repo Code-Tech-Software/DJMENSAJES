@@ -141,8 +141,10 @@
                         <td class="hide-mobile">{{ e.n_invitados }}</td>
                         <td class="hide-mobile">{{ e.n_mensajes }}</td>
                         <td class="t-actions">
+                            {% if e.con_en_vivo %}
                             <a class="btn btn--sm btn--ghost" href="{{ e.url_invitados }}" target="_blank" data-tip="Pantalla de invitados"><i class="ph ph-device-mobile"></i></a>
                             <a class="btn btn--sm btn--ghost" href="{{ e.url_pantalla }}" target="_blank" data-tip="Proyector"><i class="ph ph-television-simple"></i></a>
+                            {% else %}<span class="t-sub">Sin en vivo</span>{% endif %}
                         </td>
                     </tr>
                     {% endfor %}

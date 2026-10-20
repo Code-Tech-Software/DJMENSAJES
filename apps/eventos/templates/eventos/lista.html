@@ -13,7 +13,7 @@
             <button type="button" data-vista="tarjetas" aria-pressed="true"><i class="ph ph-grid-four"></i><span class="hide-mobile">Tarjetas</span></button>
             <button type="button" data-vista="tabla" aria-pressed="false"><i class="ph ph-list-checks"></i><span class="hide-mobile">Tabla</span></button>
         </div>
-        <button class="btn btn--primary" data-modal="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo evento</button>
+        <a class="btn btn--primary" href="{% url 'eventos:crear' %}"><i class="ph ph-plus"></i>Nuevo evento</a>
     </div>
 </div>
 
@@ -66,7 +66,7 @@
                     <td><span class="chip estado-{{ e.estado_temporal }} chip--dot">{% if e.estado_temporal == 'proximo' %}{{ e.dias_restantes|dias_texto }}{% else %}{{ e.estado_temporal_display }}{% endif %}</span></td>
                     <td class="t-actions">
                         {% if modulos.invitaciones %}<a class="icon-btn icon-btn--sm" href="{% url 'invitaciones:panel' e.pk %}" data-tip="Invitación"><i class="ph ph-envelope-open"></i></a>{% endif %}
-                        <button class="icon-btn icon-btn--sm" data-modal="{% url 'eventos:editar' e.pk %}" data-tip="Editar"><i class="ph ph-pencil-simple"></i></button>
+                        <a class="icon-btn icon-btn--sm" href="{% url 'eventos:editar' e.pk %}" data-tip="Editar"><i class="ph ph-pencil-simple"></i></a>
                         <a class="icon-btn icon-btn--sm" href="{{ e.get_absolute_url }}" data-tip="Abrir"><i class="ph ph-arrow-up-right"></i></a>
                     </td>
                 </tr>
@@ -82,7 +82,7 @@
             {% include 'components/vacio.html' with icono='ph ph-binoculars' titulo='Sin coincidencias' texto='Prueba con otros filtros o revisa la pestaña “Todos”.' %}
         {% else %}
             {% url 'eventos:crear' as url_crear %}
-            {% include 'components/vacio.html' with icono='ph ph-calendar-dots' titulo='No hay eventos aquí' texto='Crea un evento para generar su invitación digital, el QR para invitados y el panel del DJ.' boton_url=url_crear boton_modal=True boton_texto='Crear evento' %}
+            {% include 'components/vacio.html' with icono='ph ph-calendar-dots' titulo='No hay eventos aquí' texto='Crea un evento para generar su invitación digital, el QR para invitados y el panel del DJ.' boton_url=url_crear boton_texto='Crear evento' %}
         {% endif %}
     </div>
     {% endif %}

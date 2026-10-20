@@ -25,8 +25,11 @@ BLOQUEO_VIP_SEG = 300
 
 
 def _con_modulo(evento, *modulos):
-    """Las páginas en vivo solo existen si el plan de la agencia incluye la experiencia en vivo (y lo que se pida)."""
-    if not all(tiene(evento.agencia, m) for m in ('en_vivo',) + modulos):
+    """
+    Las páginas en vivo solo existen si el evento tiene activa su experiencia en vivo y el plan de la agencia
+    la incluye (y lo que se pida: fotos, álbum).
+    """
+    if not evento.con_en_vivo or not all(tiene(evento.agencia, m) for m in ('en_vivo',) + modulos):
         raise Http404
     return evento
 

@@ -1,0 +1,110 @@
+{% extends 'layouts/app.html' %}
+{% load ui %}
+{% block title %}Catálogo · Cotizaciones{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div class="page-head__title">
+        <div class="breadcrumb"><a href="{% url 'cotizaciones:lista' %}">Cotizaciones</a><i class="ph ph-caret-right"></i>Catálogo</div>
+        <h1>Catálogo</h1>
+        <p>Tus servicios con precio y tus paquetes. Al cotizar se agregan con un clic y puedes ajustar cada precio.</p>
+    </div>
+    <div class="page-head__actions">
+        {% if puede_editar %}
+        <button class="btn" data-modal="{% url 'cotizaciones:paquete_crear' %}"><i class="ph ph-package"></i>Nuevo paquete</button>
+        <button class="btn btn--primary" data-modal="{% url 'cotizaciones:servicio_crear' %}"><i class="ph ph-plus"></i>Nuevo servicio</button>
+        {% else %}
+        <a class="btn btn--primary" href="{% url 'cotizaciones:nueva' %}"><i class="ph ph-plus"></i>Nueva cotización</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if not n_servicios %}
+<div class="card">
+    <div class="empty">
+        <div class="empty__art"><i class="ph ph-package"></i></div>
+        <h3>Arma tu catálogo</h3>
+        <p>Agrega lo que cobras: audio, iluminación, pista, cabina, hora extra… Si quieres, empieza con un catálogo de ejemplo y cambia los precios por los tuyos.</p>
+        {% if puede_editar %}
+        <div class="row row-wrap" style="justify-content:center">
+            <button class="btn" data-post="{% url 'cotizaciones:catalogo_ejemplo' %}" data-confirm="¿Cargar el catálogo de ejemplo?" data-confirm-text="Se agregan 12 servicios (DJ, audio, iluminación, pista, pantalla, cabina, hora extra…) y 3 paquetes. Podrás editar o borrar cualquiera." data-confirm-button="Cargar ejemplo"><i class="ph ph-magic-wand"></i>Usar catálogo de ejemplo</button>
+            <button class="btn btn--primary" data-modal="{% url 'cotizaciones:servicio_crear' %}"><i class="ph ph-plus"></i>Agregar mi primer servicio</button>
+        </div>
+        {% else %}<p class="muted small">Pídele a un administrador que lo arme.</p>{% endif %}
+    </div>
+</div>
+{% else %}
+<div data-tabs-scope>
+    <nav class="tabs mb-3" data-tabs data-tabs-hash>
+        <a href="#servicios" class="tab is-active" data-tab="servicios"><i class="ph ph-tag"></i>Servicios<span class="count">{{ n_servicios }}</span></a>
+        <a href="#paquetes" class="tab" data-tab="paquetes"><i class="ph ph-package"></i>Paquetes<span class="count">{{ paquetes|length }}</span></a>
+    </nav>
+
+    {# ---------------- Servicios por categoría ---------------- #}
+    <section data-panel="servicios">
+        <div class="catalogo">
+            {% for g in grupos %}
+            <div class="card catalogo__grupo">
+                <div class="catalogo__cabeza"><span class="ico"><i class="{{ g.icono }}"></i></span><h3>{{ g.nombre }}</h3><span class="count">{{ g.servicios|length }}</span></div>
+                {% for s in g.servicios %}
+                <div class="catalogo__item {% if not s.activo %}is-inactivo{% endif %}">
+                    <div class="grow">
+                        <div class="catalogo__nombre">{{ s.nombre }}{% if not s.activo %} <span class="chip chip--muted">Inactivo</span>{% endif %}</div>
+                        {% if s.descripcion %}<div class="t-sub">{{ s.descripcion }}</div>{% endif %}
+                        {% if s.activa %}<span class="catalogo__activa"><i class="ph ph-lightning"></i>Al venderlo activa: {{ s.get_activa_display|lower }}</span>{% endif %}
+                    </div>
+                    <div class="catalogo__precio">{{ s.precio|moneda }}<small>{{ s.get_unidad_display }}</small></div>
+                    {% if puede_editar %}
+                    <div class="dropdown">
+                        <button class="icon-btn" data-dropdown aria-label="Acciones de {{ s.nombre }}"><i class="ph ph-dots-three-vertical"></i></button>
+                        <div class="dropdown__menu">
+                            <button class="menu-item" data-modal="{% url 'cotizaciones:servicio_editar' s.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
+                            <div class="menu-sep"></div>
+                            <button class="menu-item menu-item--danger" data-post="{% url 'cotizaciones:servicio_eliminar' s.pk %}" data-danger data-confirm="¿Quitar “{{ s.nombre }}” del catálogo?" data-confirm-text="{% if s.n_paquetes %}También se quitará de {{ s.n_paquetes }} paquete{{ s.n_paquetes|pluralize }}. {% endif %}Las cotizaciones ya hechas no cambian."><i class="ph ph-trash"></i>Quitar</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ---------------- Paquetes ---------------- #}
+    <section data-panel="paquetes" hidden>
+        {% if paquetes %}
+        <div class="paquetes">
+            {% for p in paquetes %}
+            <article class="card paquete {% if not p.activo %}is-inactivo{% endif %}">
+                <div class="paquete__cabeza">
+                    <div class="row between"><h3>{{ p.nombre }}</h3>{% if not p.activo %}<span class="chip chip--muted">Inactivo</span>{% endif %}</div>
+                    {% if p.descripcion %}<p class="t-sub">{{ p.descripcion }}</p>{% endif %}
+                    <div class="paquete__precio">{{ p.precio|moneda }}</div>
+                    {% if p.ahorro %}<div class="paquete__ahorro"><s>{{ p.precio_por_separado|moneda }}</s> · Ahorra {{ p.ahorro|moneda }}</div>{% endif %}
+                </div>
+                <ul class="paquete__lista">
+                    {% for i in p.items.all %}<li><i class="ph-fill ph-check-circle"></i><span>{{ i.texto }}{% if i.servicio.activa %} <em class="catalogo__activa"><i class="ph ph-lightning"></i>activa {{ i.servicio.get_activa_display|lower }}</em>{% endif %}</span></li>{% endfor %}
+                </ul>
+                {% if puede_editar %}
+                <div class="paquete__pie">
+                    <button class="btn" data-modal="{% url 'cotizaciones:paquete_editar' p.pk %}"><i class="ph ph-pencil-simple"></i>Editar</button>
+                    <button class="icon-btn" data-post="{% url 'cotizaciones:paquete_eliminar' p.pk %}" data-danger data-confirm="¿Eliminar el paquete “{{ p.nombre }}”?" data-confirm-text="Sus servicios siguen en el catálogo; las cotizaciones ya hechas no cambian." aria-label="Eliminar paquete"><i class="ph ph-trash"></i></button>
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            {% url 'cotizaciones:paquete_crear' as url_paquete %}
+            {% if puede_editar %}
+            {% include 'components/vacio.html' with icono='ph ph-package' titulo='Sin paquetes todavía' texto='Junta servicios con un precio especial (p. ej. "Boda Plata"): en la cotización el cliente ve cuánto ahorra.' boton_url=url_paquete boton_modal=True boton_texto='Nuevo paquete' %}
+            {% else %}
+            {% include 'components/vacio.html' with icono='ph ph-package' titulo='Sin paquetes todavía' %}
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endif %}
+{% endblock %}

@@ -9,7 +9,7 @@ COLOR_POR_DEFECTO = '#0098DA'
 
 
 class Marca:
-    def __init__(self, evento):
+    def __init__(self, evento):  # también sirve con una cotización (tiene agencia y sub-agencia)
         self.colaborador = evento.colaborador
         self.ajustes = Ajustes.de(evento.agencia_id)
         origen = self.colaborador or self.ajustes
@@ -20,6 +20,8 @@ class Marca:
         self.logo = origen.logo  # para fondo oscuro: proyector, chip del pie de la invitación
         self.logo_pie = origen.logo_pie
         self.whatsapp_url = origen.whatsapp_url
+        self.telefono = origen.telefono or ''
+        self.email = origen.email or ''
         self.instagram = origen.instagram or ''
         self.facebook = origen.facebook or ''
         self.tiktok = origen.tiktok or ''

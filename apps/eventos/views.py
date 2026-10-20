@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Lower
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -28,8 +28,9 @@ from apps.envivo.servicios import notificar_evento, notificar_proyector
 from apps.invitaciones.models import Invitado
 
 from .asistente import crear_itinerario, eventos_cercanos
-from .forms import ActividadForm, EventoForm, PagoForm, ProyectorForm
-from .models import ActividadItinerario, Evento, Pago, TipoEvento
+from .extras import activar, extras_de_conceptos, tiene_invitacion, valores_en_vivo
+from .forms import ActividadForm, EnVivoForm, EventoForm, PagoForm, ProyectorForm
+from .models import ActividadItinerario, ConceptoEvento, Evento, Pago, TipoEvento
 
 
 # --- Utilidades de acceso -------------------------------------------------------------------
@@ -164,6 +165,18 @@ def _resumen_mensajes(evento):
     return resumen
 
 
+def _resumen_en_vivo(evento):
+    """'Reciben canciones, saludos y fotos · 2 min de espera · VIP' para la tarjeta de la experiencia en vivo."""
+    envia = [nombre for activo, nombre in ((evento.permitir_canciones, 'canciones'), (evento.permitir_saludos, 'saludos'),
+                                            (evento.permitir_fotos, 'fotos')) if activo]
+    partes = [f'Reciben {", ".join(envia[:-1]) + " y " + envia[-1] if len(envia) > 1 else envia[0]}' if envia else 'Sin envíos de los invitados']
+    if evento.cooldown:
+        partes.append(f'{evento.cooldown:g} min de espera')
+    if evento.password_vip:
+        partes.append('con VIP')
+    return ' · '.join(partes)
+
+
 @login_required
 def detalle(request, pk):
     evento = obtener_evento(request, pk)
@@ -184,7 +197,8 @@ def detalle(request, pk):
         'url_pantalla_fotos': request.build_absolute_uri(evento.url_pantalla_fotos()),
         'limite_fotos': limite_fotos(evento),
         'fotos_subidas': fotos_subidas(evento),
-        'qr': qr_svg(url_invitados),
+        'resumen_en_vivo': _resumen_en_vivo(evento),
+        'qr': qr_svg(url_invitados) if evento.con_en_vivo else '',
         'puede_eliminar': puede_eliminar(request.user, evento),
     })
 
@@ -231,7 +245,7 @@ def orden(request, pk):
 
 @login_required
 def qr_png(request, pk):
-    evento = obtener_evento(request, pk)
+    evento = obtener_evento_en_vivo(request, pk)
     url = request.build_absolute_uri(evento.url_invitados())
     imagen = qrcode.make(url, box_size=16, border=2)
     buffer = io.BytesIO()
@@ -244,7 +258,7 @@ def qr_png(request, pk):
 @login_required
 def centro_envivo(request):
     ahora = timezone.now()
-    eventos = eventos_de(request.user).vigentes().select_related('colaborador', 'banner')
+    eventos = eventos_de(request.user).vigentes().filter(con_en_vivo=True).select_related('colaborador', 'banner')
     en_curso = list(eventos.en_curso().order_by('fecha_inicio_evento'))
     hoy_fin = timezone.make_aware(datetime.combine(timezone.localdate() + timedelta(days=3), datetime.max.time()))
     siguientes = list(eventos.filter(fecha_inicio_evento__gt=ahora, fecha_inicio_evento__lte=hoy_fin).order_by('fecha_inicio_evento'))
@@ -260,11 +274,21 @@ def centro_envivo(request):
 # --- Crear / editar / acciones ----------------------------------------------------------------
 
 class EventoFormMixin(LoginRequiredMixin, FormularioModalMixin):
+    """El registro de eventos es una página completa (ya no un modal): todo a la vista, con resumen al lado."""
     model = Evento
     form_class = EventoForm
-    template_modal = 'eventos/partials/form_evento.html'
-    tamano = 'lg'
+    template_modal = 'eventos/form_evento.html'
     icono = 'ph ph-sparkle'
+
+    def get_template_names(self):
+        return [self.template_modal]
+
+    def get(self, request, *args, **kwargs):
+        if es_ajax(request):  # algo todavía lo abre en un modal: se manda a la página
+            if 'pk' in kwargs:
+                self.get_object()  # antes, 404 si el evento no es suyo
+            return JsonResponse({'ok': True, 'redirect': request.get_full_path()})
+        return super().get(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -276,30 +300,20 @@ class EventoFormMixin(LoginRequiredMixin, FormularioModalMixin):
 class EventoCrear(LimitePlanMixin, AsignarAgenciaMixin, EventoFormMixin, CreateView):
     recurso_limitado = 'eventos'
     titulo = 'Nuevo evento'
-    subtitulo = 'Te guiamos paso a paso. Podrás editar todo después.'
+    subtitulo = 'Llena lo que tengas a la mano; todo se puede completar después.'
     texto_boton = 'Crear evento'
-
-    def get_initial(self):
-        # Los eventos nuevos nacen con la configuración en vivo definida en los Ajustes de la agencia
-        ajustes = Ajustes.de(self.request.user.agencia_id)
-        return {
-            **super().get_initial(),
-            'cooldown': ajustes.cooldown,
-            'permitir_saludos': ajustes.permitir_saludos,
-            'permitir_canciones': ajustes.permitir_canciones,
-            'permitir_fotos': ajustes.permitir_fotos,
-            'moderar_pantalla': ajustes.moderar_pantalla,
-            'mensaje_bienvenida': ajustes.mensaje_bienvenida,
-        }
 
     def form_valid(self, form):
         form.instance.agencia_id = self.request.user.agencia_id
         form.instance.creado_por = self.request.user
         if not self.request.user.ve_todo and self.request.user.colaborador_id:
             form.instance.colaborador_id = self.request.user.colaborador_id
+        # La experiencia en vivo nace con los valores de los Ajustes (y activa solo si la agencia lo eligió)
+        valores_en_vivo(form.instance)
         extras = []
         with transaction.atomic():
             self.object = form.save()
+            extras += [f'{nombre.lower()} activada' for nombre in activar(self.object, extras_de_conceptos(self.object.conceptos.all()))]
             if form.cleaned_data.get('anticipo'):
                 Pago.objects.create(evento=self.object, monto=form.cleaned_data['anticipo'], referencia='Anticipo',
                                     metodo=form.cleaned_data.get('anticipo_metodo') or Pago.Metodo.TRANSFERENCIA,
@@ -317,6 +331,9 @@ class EventoEditar(EventoFormMixin, UpdateView):
     texto_boton = 'Guardar cambios'
     mensaje_exito = 'Evento actualizado.'
 
+    def get_url_exito(self):
+        return super().get_url_exito() or self.object.get_absolute_url()
+
     def get_queryset(self):
         return eventos_de(self.request.user)
 
@@ -326,9 +343,71 @@ class EventoEditar(EventoFormMixin, UpdateView):
     def get_subtitulo(self):
         return self.object.nombre_evento
 
+    def get_mensaje_exito(self):
+        activados = getattr(self, 'activados', [])
+        return f'Evento actualizado · se activó {" y ".join(activados).lower()}.' if activados else self.mensaje_exito
+
+    def form_valid(self, form):
+        self.object = form.save()
+        # Un servicio vendido que activa un extra (en vivo, invitación) lo activa al guardar
+        self.activados = activar(self.object, extras_de_conceptos(self.object.conceptos.all()))
+        return self.respuesta_exito()
+
+
+def obtener_evento_en_vivo(request, pk):
+    """El evento, solo si tiene activa la experiencia en vivo (sus pantallas, QR y proyector)."""
+    evento = obtener_evento(request, pk)
+    if not evento.con_en_vivo:
+        raise Http404('Este evento no tiene la experiencia en vivo.')
+    return evento
+
+
+@login_required
+@require_POST
+def en_vivo_activar(request, pk):
+    evento = obtener_evento(request, pk)
+    if not evento.con_en_vivo:
+        evento.con_en_vivo = True
+        evento.save(update_fields=['con_en_vivo', 'actualizado'])
+    return respuesta_ok(request, 'Experiencia en vivo activada: revisa cómo quieres que funcione.',
+                        abrir=reverse('eventos:en_vivo', args=[evento.pk]))
+
+
+@login_required
+@require_POST
+def en_vivo_desactivar(request, pk):
+    evento = obtener_evento(request, pk)
+    if evento.con_en_vivo:
+        evento.con_en_vivo = False
+        evento.save(update_fields=['con_en_vivo', 'actualizado'])
+        notificar_evento(evento)
+    return respuesta_ok(request, 'Experiencia en vivo desactivada. Sus mensajes y fotos se conservan por si la vuelves a activar.')
+
+
+class EnVivoEditar(LoginRequiredMixin, FormularioModalMixin, UpdateView):
+    """Cómo funciona la experiencia en vivo de un evento: fondo, interacción, qué envían los invitados y proyector."""
+    model = Evento
+    form_class = EnVivoForm
+    template_modal = 'eventos/partials/form_en_vivo.html'
+    titulo = 'Experiencia en vivo'
+    icono = 'ph ph-broadcast'
+    tamano = 'lg'
+    mensaje_exito = 'Experiencia en vivo actualizada.'
+
+    def get_queryset(self):
+        return eventos_de(self.request.user).filter(con_en_vivo=True)
+
+    def get_subtitulo(self):
+        return self.object.nombre_evento
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), 'usuario': self.request.user}
+
     def form_valid(self, form):
         respuesta = super().form_valid(form)
-        if {'pantalla_contenido', 'pantalla_qr', 'moderar_pantalla'} & set(form.changed_data):
+        if 'estado' in form.changed_data:
+            notificar_evento(self.object)
+        if {'pantalla_contenido', 'pantalla_qr', 'moderar_pantalla', 'banner'} & set(form.changed_data):
             notificar_proyector(self.object)
         return respuesta
 
@@ -346,7 +425,7 @@ class ProyectorEditar(LoginRequiredMixin, FormularioModalMixin, UpdateView):
     mensaje_exito = 'Proyector actualizado.'
 
     def get_queryset(self):
-        return eventos_de(self.request.user)
+        return eventos_de(self.request.user).filter(con_en_vivo=True)
 
     def form_valid(self, form):
         respuesta = super().form_valid(form)
@@ -373,6 +452,7 @@ def duplicar(request, pk):
     if bloqueo is not None:
         return bloqueo
     actividades = list(original.itinerario.all())
+    conceptos = list(original.conceptos.all())
     copia = original
     copia.pk = None
     copia._state.adding = True
@@ -387,14 +467,19 @@ def duplicar(request, pk):
         ActividadItinerario(evento=copia, hora=a.hora, titulo=a.titulo, descripcion=a.descripcion, icono=a.icono)
         for a in actividades
     ])
-    destino = f"{copia.get_absolute_url()}?abrir={reverse('eventos:editar', args=[copia.pk])}"
+    ConceptoEvento.objects.bulk_create([
+        ConceptoEvento(evento=copia, servicio_id=c.servicio_id, paquete_id=c.paquete_id, descripcion=c.descripcion,
+                       detalle=c.detalle, cantidad=c.cantidad, unidad=c.unidad, precio_unitario=c.precio_unitario, orden=c.orden)
+        for c in conceptos
+    ])
+    destino = reverse('eventos:editar', args=[copia.pk])
     return respuesta_ok(request, 'Evento duplicado. Ajusta la fecha y los datos.', redirect=destino)
 
 
 @login_required
 @require_POST
 def alternar_estado(request, pk):
-    evento = obtener_evento(request, pk)
+    evento = obtener_evento_en_vivo(request, pk)
     evento.estado = not evento.estado
     evento.save(update_fields=['estado', 'actualizado'])
     notificar_evento(evento)

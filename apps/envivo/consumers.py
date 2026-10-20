@@ -51,7 +51,7 @@ class InvitadosConsumer(BaseConsumer):
     @database_sync_to_async
     def obtener_evento(self):
         codigo = self.scope['url_route']['kwargs']['codigo']
-        return Evento.objects.filter(codigo=codigo).values_list('pk', flat=True).first()
+        return Evento.objects.filter(codigo=codigo, con_en_vivo=True).values_list('pk', flat=True).first()
 
     def nombre_grupo(self, evento_id):
         return grupo_estado(evento_id)
@@ -66,7 +66,7 @@ class DJConsumer(BaseConsumer):
     @database_sync_to_async
     def obtener_evento(self):
         token = self.scope['url_route']['kwargs']['token']
-        return Evento.objects.filter(token_dj=token).values_list('pk', flat=True).first()
+        return Evento.objects.filter(token_dj=token, con_en_vivo=True).values_list('pk', flat=True).first()
 
     def nombre_grupo(self, evento_id):
         return grupo_dj(evento_id)

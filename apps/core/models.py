@@ -30,6 +30,10 @@ class Plan(models.Model):
     )
     con_fotos = models.BooleanField('fotos de invitados', default=True, help_text='Los invitados suben fotos al evento (requiere experiencia en vivo).')
     con_album = models.BooleanField('álbum digital', default=True, help_text='Álbum en línea con las fotos y saludos del evento (requiere experiencia en vivo).')
+    con_cotizaciones = models.BooleanField(
+        'cotizaciones', default=True,
+        help_text='Catálogo de servicios y paquetes, cotizaciones en PDF y aceptación en línea que crea el evento.',
+    )
     con_banners = models.BooleanField(
         'banners propios', default=True,
         help_text='Subir sus propios fondos. Sin esto solo usan los de la biblioteca de EventPro.',
@@ -158,6 +162,10 @@ class Ajustes(models.Model):
     tiktok = models.URLField('TikTok', blank=True)
 
     # Valores para eventos nuevos
+    en_vivo_por_defecto = models.BooleanField(
+        'activar la experiencia en vivo en todos los eventos nuevos', default=False,
+        help_text='Apagado, cada evento la activa cuando la vendes (con un servicio del catálogo) o desde el evento.',
+    )
     cooldown = models.FloatField(
         'tiempo entre mensajes (min)', default=2,
         validators=[MinValueValidator(0), MaxValueValidator(60)],
