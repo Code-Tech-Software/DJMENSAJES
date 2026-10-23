@@ -27,6 +27,7 @@ class Invitacion(models.Model):
         JARDIN = 'jardin', 'Jardín'
         MODERNA = 'moderna', 'Moderna'
         FIESTA = 'fiesta', 'Neón'
+        SELLO = 'sello', 'Sello de cera'
 
     class Tipografia(models.TextChoices):
         AUTO = 'auto', 'La de la plantilla'
@@ -41,6 +42,7 @@ class Invitacion(models.Model):
         'jardin': '#7A9471',
         'moderna': '#0098DA',
         'fiesta': '#E040FB',
+        'sello': '#4F6F93',
     }
 
     PALETAS = {
@@ -48,6 +50,7 @@ class Invitacion(models.Model):
         'jardin': ['#7A9471', '#5E7D5A', '#C98B8B', '#B49A6B', '#8A9BB0', '#6E6A8E'],
         'moderna': ['#0098DA', '#111827', '#E4572E', '#16A34A', '#7C3AED', '#DB2777'],
         'fiesta': ['#E040FB', '#00E5FF', '#FF3D7F', '#7C4DFF', '#FFD60A', '#39FF14'],
+        'sello': ['#4F6F93', '#2F3E4E', '#7D8F69', '#B5838D', '#8C6A4F', '#6B5B95'],
     }
 
     evento = models.OneToOneField('eventos.Evento', on_delete=models.CASCADE, related_name='invitacion')
@@ -135,6 +138,21 @@ class Invitacion(models.Model):
             'aniversario': 'Nuestro aniversario',
             'corporativo': 'Te invitamos',
         }.get(self.evento.tipo_evento, '¡Estás invitado!')
+
+    @property
+    def titulo_formal(self):
+        """Encabezado de la plantilla Sello de cera cuando no se escribió uno."""
+        if self.titulo:
+            return self.titulo
+        return {
+            'boda': 'Tenemos el honor de invitarte a la boda de',
+            'quinse': 'Tenemos el honor de invitarte a los XV años de',
+            'cumple': 'Te invitamos a celebrar el cumpleaños de',
+            'bautizo': 'Te invitamos al bautizo de',
+            'graduacion': 'Te invitamos a celebrar la graduación de',
+            'aniversario': 'Te invitamos a celebrar el aniversario de',
+            'corporativo': 'Tenemos el gusto de invitarte a',
+        }.get(self.evento.tipo_evento, 'Tenemos el honor de invitarte a')
 
     @property
     def imagen_portada(self):

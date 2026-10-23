@@ -1,0 +1,254 @@
+{% load static ui %}<!doctype html>
+<html lang="es">
+<head>
+{% include 'invitaciones/publica/_head.html' %}
+    <link rel="stylesheet" href="{% static 'css/invitacion.css' %}">
+    <link rel="stylesheet" href="{% static 'css/invitacion-sello.css' %}">
+    <style>:root { --acento: {{ invitacion.color_principal }}; --sl-forro: url("{% static 'img/invitacion/toile.svg' %}"); --sl-hojas: url("{% static 'img/invitacion/hojas.svg' %}"); }</style>
+</head>
+{# Plantilla "Sello de cera": sobre con sello que se abre, tarjetas de papel, flores blancas y calas #}
+{% with foto=invitacion.imagen_portada titulo_def=invitacion.titulo_formal %}
+<body data-plantilla="sello" data-tipografia="{{ invitacion.tipografia }}" class="{% if preview %}es-preview{% endif %}{% if not preview and not respondio %} bloqueado{% endif %}">
+{% include 'invitaciones/publica/_sello_dibujos.html' %}
+<div class="sl-sombras" aria-hidden="true"></div>
+
+{% if es_equipo and not invitacion.publicada and not preview %}
+<div class="preview-banda">Vista previa · borrador visible solo para tu equipo</div>
+{% elif es_anfitrion and not invitacion.publicada and not preview %}
+<div class="preview-banda">Vista previa · tus invitados podrán verla cuando se publique</div>
+{% endif %}
+
+{# ------------------------------------------------------------ Sobre cerrado #}
+<div class="sobre sl-sobre" id="sobre" {% if preview or respondio %}hidden{% endif %}>
+    <div class="sl-sombras" aria-hidden="true"></div>
+    <div class="sl-sobre__escena">
+        <h1 class="sl-sobre__nombres" data-bind="nombres" data-formato="capitular" data-fallback="{{ evento.nombre_evento }}">{{ invitacion.nombres_visibles|capitular }}</h1>
+        <button type="button" class="sl-carta" id="abrir-sobre" aria-label="Abrir la invitación">
+            <span class="sl-carta__fondo"></span>
+            <span class="sl-carta__tarjeta">
+                <small data-bind="titulo" data-fallback="{{ titulo_def }}">{{ titulo_def }}</small>
+                <strong data-bind="nombres" data-formato="pareja" data-fallback="{{ evento.nombre_evento }}">{{ invitacion.nombres_visibles|pareja }}</strong>
+            </span>
+            {% include 'invitaciones/publica/_sello_frente.html' %}
+            <span class="sl-carta__solapa"><i class="sl-carta__cara"></i><i class="sl-carta__forro"></i></span>
+            <svg class="sl-cera sl-carta__sello" viewBox="0 0 120 120" aria-hidden="true"><use href="#sl-cera"/></svg>
+            <span class="sl-carta__abrir"><span class="sl-con-raton">Da clic para abrir</span><span class="sl-con-dedo">Toca para abrir</span></span>
+        </button>
+        <div class="sl-sobre__para">
+            {% if invitado %}
+            <p class="sl-guion">{{ invitado.nombre }}</p>
+            <p class="sl-mayus">Hemos reservado ({{ invitado.pases }}) {% if invitado.pases == 1 %}lugar{% else %}lugares{% endif %} para ti</p>
+            {% else %}
+            <p class="sl-mayus" data-bind="texto_sobre" data-fallback="Tienes una invitación especial">{{ invitacion.texto_sobre|default:"Tienes una invitación especial" }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% include 'invitaciones/publica/_musica.html' %}
+
+<main class="sl">
+    {# ------------------------------------------------------------ Portada: el sobre abierto y la tarjeta #}
+    <header class="sl-portada" data-seccion="portada">
+        <div class="sl-portada__escena">
+            <div class="sl-abierto" aria-hidden="true">
+                <span class="sl-abierto__solapa"></span>
+                <span class="sl-abierto__interior"></span>
+                {% include 'invitaciones/publica/_sello_frente.html' %}
+            </div>
+            <div class="sl-marco">
+                <svg class="sl-marco__forma" viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">
+                    <path class="sl-marco__papel" d="M28 20C90 20 120 20 132 12C142 4 158 4 168 12C180 20 210 20 272 20A18 18 0 0 0 290 38L290 362A18 18 0 0 0 272 380C210 380 180 380 168 388C158 396 142 396 132 388C120 380 90 380 28 380A18 18 0 0 0 10 362L10 38A18 18 0 0 0 28 20Z"/>
+                    <path class="sl-marco__linea" d="M34 28C92 28 122 28 134 20C143 13 157 13 166 20C178 28 208 28 266 28A16 16 0 0 0 282 44L282 356A16 16 0 0 0 266 372C208 372 178 372 166 380C157 387 143 387 134 380C122 372 92 372 34 372A16 16 0 0 0 18 356L18 44A16 16 0 0 0 34 28Z"/>
+                    <path class="sl-marco__linea sl-marco__linea--fina" d="M38 34C94 34 124 34 136 26C144 20 156 20 164 26C176 34 206 34 262 34A14 14 0 0 0 276 48L276 352A14 14 0 0 0 262 366C206 366 176 366 164 374C156 380 144 380 136 374C124 366 94 366 38 366A14 14 0 0 0 24 352L24 48A14 14 0 0 0 38 34Z"/>
+                </svg>
+                <div class="sl-marco__contenido">
+                    <p class="sl-mayus sl-marco__titulo" data-bind="titulo" data-fallback="{{ titulo_def }}">{{ titulo_def }}</p>
+                    <h1 class="sl-marco__nombres" data-bind="nombres" data-formato="pareja" data-fallback="{{ evento.nombre_evento }}">{{ invitacion.nombres_visibles|pareja }}</h1>
+                    <p class="sl-marco__pie">{% if evento.lugar %}{{ evento.lugar }}<br>{% endif %}{{ inicio|date:"d.m.Y" }}</p>
+                </div>
+                <svg class="sl-ramo sl-marco__ramo" viewBox="0 0 170 220" aria-hidden="true"><use href="#sl-ramo"/></svg>
+            </div>
+        </div>
+
+        {% if invitacion.musica %}
+        <div class="sl-reproductor" data-reproductor>
+            <p class="sl-mayus">Dale play para escuchar nuestra canción</p>
+            <p class="sl-reproductor__titulo" data-bind="musica_titulo">{{ invitacion.musica_titulo }}</p>
+            <div class="sl-reproductor__barra"><span data-avance></span></div>
+            <div class="sl-reproductor__controles">
+                <button type="button" data-atras aria-label="Escuchar desde el inicio"><i class="ph-fill ph-skip-back"></i></button>
+                <button type="button" class="sl-reproductor__play" data-play aria-label="Reproducir o pausar"><i class="ph-fill ph-play"></i><i class="ph-fill ph-pause"></i></button>
+                <button type="button" data-adelante aria-label="Adelantar"><i class="ph-fill ph-skip-forward"></i></button>
+            </div>
+        </div>
+        {% endif %}
+        {% if invitado %}<p class="sl-para">Invitación para <strong>{{ invitado.nombre }}</strong></p>{% endif %}
+        <a href="#inicio" class="sl-bajar" aria-label="Ver más"><span>Desliza</span><i class="ph ph-arrow-down"></i></a>
+    </header>
+    <div id="inicio"></div>
+
+    {# ------------------------------------------------------------ Mensaje #}
+    <section class="sl-seccion" data-seccion="mensaje" data-si="frase" {% if not invitacion.frase %}hidden{% endif %}>
+        <div class="sl-papel sl-papel--nota revela">
+            <svg class="sl-cera sl-papel__sello" viewBox="0 0 120 120" aria-hidden="true"><use href="#sl-cera"/></svg>
+            <p class="sl-frase" data-bind="frase" data-formato="lineas">{{ invitacion.frase|linebreaksbr }}</p>
+        </div>
+    </section>
+
+    {# ------------------------------------------------------------ Personas especiales #}
+    {% if menciones %}
+    <section class="sl-seccion" data-seccion="personas">
+        <div class="sl-papel sl-papel--ancho revela">
+            <h2 class="sl-titulo">{{ "Con el cariño de"|capitular:"primera" }}</h2>
+            <div class="sl-menciones">
+                {% for m in menciones %}
+                <div class="sl-mencion">
+                    <h3 class="sl-mayus">{{ m.titulo }}</h3>
+                    <p>{% for n in m.lista %}<span>{{ n }}</span>{% endfor %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {# ------------------------------------------------------------ Lugares #}
+    {% if ubicaciones or evento.lugar %}
+    <section class="sl-seccion" data-seccion="lugares" data-mostrar="mostrar_mapa" {% if not invitacion.mostrar_mapa %}hidden{% endif %}>
+        <div class="sl-collage {% if foto or fotos %}sl-collage--fotos{% endif %} revela">
+            {% if foto %}<figure class="sl-polaroid sl-polaroid--1"><img src="{{ foto.url }}" alt="" loading="lazy"></figure>{% endif %}
+            {% with segunda=fotos.0 %}{% if segunda %}<figure class="sl-polaroid {% if foto %}sl-polaroid--2{% else %}sl-polaroid--1{% endif %}"><img src="{{ segunda.imagen.url }}" alt="" loading="lazy"></figure>{% endif %}{% endwith %}
+            <div class="sl-papel sl-lugares">
+                {% for u in ubicaciones %}
+                <div class="sl-lugar">
+                    <h2 class="sl-titulo">{{ u.nombre_visible|capitular:"primera" }}</h2>
+                    <p class="sl-lugar__nombre">{{ u.lugar }}</p>
+                    {% if u.direccion %}<p class="sl-lugar__dir">{{ u.direccion }}</p>{% endif %}
+                    {% if u.fecha and u.fecha != inicio.date %}<p class="sl-lugar__dir">{{ u.fecha|date:"l j \d\e F"|lower|capfirst }}</p>{% endif %}
+                    <a class="sl-pastilla" href="{{ u.mapa }}" target="_blank" rel="noopener">Ubicación</a>
+                    {% if u.hora %}<p class="sl-mayus sl-lugar__hora">Hora: {{ u.hora|time:"H:i" }}</p>{% endif %}
+                    {% if u.notas %}<p class="sl-lugar__notas">{{ u.notas }}</p>{% endif %}
+                </div>
+                {% empty %}
+                <div class="sl-lugar">
+                    <h2 class="sl-titulo">{{ "Celebración"|capitular:"primera" }}</h2>
+                    <p class="sl-lugar__nombre">{{ evento.lugar }}</p>
+                    {% if evento.direccion %}<p class="sl-lugar__dir">{{ evento.direccion }}</p>{% endif %}
+                    <a class="sl-pastilla" target="_blank" rel="noopener" href="{% if evento.url_mapa %}{{ evento.url_mapa }}{% else %}https://www.google.com/maps/search/?api=1&query={{ evento.lugar|add:' '|add:evento.direccion|urlencode }}{% endif %}">Ubicación</a>
+                    <p class="sl-mayus sl-lugar__hora">Hora: {{ inicio|date:"H:i" }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {# ------------------------------------------------------------ Itinerario #}
+    {% if itinerario %}
+    <section class="sl-seccion" data-seccion="itinerario" data-mostrar="mostrar_itinerario" {% if not invitacion.mostrar_itinerario %}hidden{% endif %}>
+        <div class="sl-papel sl-papel--ancho revela">
+            <h2 class="sl-titulo">{{ "Itinerario"|capitular:"primera" }}</h2>
+            <ol class="sl-itinerario">
+                {% for a in itinerario %}
+                <li><time>{{ a.hora|time:"H:i" }}</time><span><strong>{{ a.titulo }}</strong>{% if a.descripcion %}<small>{{ a.descripcion }}</small>{% endif %}</span></li>
+                {% endfor %}
+            </ol>
+        </div>
+    </section>
+    {% endif %}
+
+    {# ------------------------------------------------------------ Detalles: vestimenta, regalos, hashtag y aviso #}
+    <section class="sl-seccion sl-detalles" data-seccion="detalles" {% if not invitacion.dress_code and not invitacion.mesa_regalos and not invitacion.regalos_url and not invitacion.aviso and not invitacion.hashtag %}hidden{% endif %}>
+        <div class="sl-vestimenta revela" data-si="dress_code" {% if not invitacion.dress_code %}hidden{% endif %}>
+            <div class="sl-papel sl-vestimenta__nota"><p data-bind="dress_code">{{ invitacion.dress_code }}</p></div>
+            <div class="sl-vestimenta__dibujo sl-papel">
+                <div class="sl-placa"><span class="sl-titulo">{{ "Dress code"|capitular:"primera" }}</span></div>
+                <img src="{% static 'img/invitacion/novios_dibujo.svg' %}" width="984" height="910" alt="" loading="lazy">
+            </div>
+            <svg class="sl-ramo sl-vestimenta__ramo" viewBox="0 0 170 220" aria-hidden="true"><use href="#sl-ramo"/></svg>
+        </div>
+
+        <div class="sl-regalos revela" data-si="mesa_regalos" {% if not invitacion.mesa_regalos and not invitacion.regalos_url %}hidden{% endif %}>
+            <div class="sl-papel sl-regalos__nota">
+                <svg class="sl-cera sl-papel__sello" viewBox="0 0 120 120" aria-hidden="true"><use href="#sl-cera"/></svg>
+                <p class="sl-regalos__texto" data-bind="mesa_regalos" data-formato="lineas" data-fallback="Su compañía es lo más importante. Si desean hacernos un obsequio, lo recibiremos con mucho cariño.">{% if invitacion.mesa_regalos %}{{ invitacion.mesa_regalos|linebreaksbr }}{% else %}Su compañía es lo más importante. Si desean hacernos un obsequio, lo recibiremos con mucho cariño.{% endif %}</p>
+                {% if invitacion.regalos_url %}<a class="sl-pastilla" href="{{ invitacion.regalos_url }}" target="_blank" rel="noopener">Ver mesa de regalos</a>{% endif %}
+            </div>
+            <div class="sl-medalla"><span class="sl-titulo">{{ "Regalos"|capitular:"primera" }}</span></div>
+            <svg class="sl-calas sl-regalos__calas" viewBox="0 -6 176 166" aria-hidden="true"><use href="#sl-cala"/></svg>
+        </div>
+
+        <div class="sl-etiquetas">
+            <div class="sl-papel sl-etiqueta revela" data-si="hashtag" {% if not invitacion.hashtag %}hidden{% endif %}>
+                <span class="sl-mayus">Comparte tus fotos</span><strong data-bind="hashtag">{{ invitacion.hashtag }}</strong>
+            </div>
+            <div class="sl-papel sl-etiqueta revela" data-si="aviso" {% if not invitacion.aviso %}hidden{% endif %}>
+                <span class="sl-mayus">Importante</span><strong data-bind="aviso">{{ invitacion.aviso }}</strong>
+            </div>
+        </div>
+    </section>
+
+    {# ------------------------------------------------------------ Galería #}
+    {% if fotos %}
+    <section class="sl-seccion" data-seccion="galeria">
+        <h2 class="sl-titulo sl-titulo--suelto revela">{{ "Nuestros momentos"|capitular:"primera" }}</h2>
+        <div class="sl-galeria revela">
+            {% for f in fotos %}<button type="button" class="sl-polaroid sl-galeria__foto" data-foto="{{ forloop.counter0 }}" aria-label="Ver foto {{ forloop.counter }}"><img src="{{ f.imagen.url }}" alt="" loading="lazy"></button>{% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# ------------------------------------------------------------ Cuenta regresiva y fecha #}
+    <section class="sl-seccion sl-fecha" data-seccion="fecha">
+        {% if evento.estado_temporal == 'proximo' %}
+        <div class="revela" data-mostrar="mostrar_contador" {% if not invitacion.mostrar_contador %}hidden{% endif %}>
+            <p class="sl-guion sl-fecha__faltan">Faltan</p>
+            <div class="sl-contador" data-objetivo="{{ evento.fecha_inicio_evento|date:'c' }}" data-ceros>
+                <div><strong data-u="d">00</strong><small>Días</small></div>
+                <div><strong data-u="h">00</strong><small>Horas</small></div>
+                <div><strong data-u="m">00</strong><small>Minutos</small></div>
+            </div>
+            <p class="sl-mayus sl-fecha__gran-dia">Para el gran día</p>
+        </div>
+        {% endif %}
+        <div class="sl-fecha__dia revela">
+            <span>{{ inicio|date:"l"|lower|capfirst }}</span><strong>{{ inicio|date:"j" }}</strong><span>{{ inicio|date:"F"|lower|capfirst }} {{ inicio|date:"Y" }}</span>
+        </div>
+        <div class="sl-acciones revela">
+            <a class="sl-pastilla" href="{{ google_calendar }}" target="_blank" rel="noopener"><i class="ph ph-google-logo"></i>Google Calendar</a>
+            <a class="sl-pastilla" href="{% url 'invitacion_publica:ics' invitacion.slug %}"><i class="ph ph-calendar"></i>iPhone / Outlook</a>
+        </div>
+    </section>
+
+    {# ------------------------------------------------------------ Confirmación #}
+    <section class="sl-seccion sl-confirmar" id="confirmar" data-seccion="confirmar">
+        <div class="sl-confirmar__escena revela">
+            <svg class="sl-calas sl-confirmar__calas" viewBox="0 -6 176 166" aria-hidden="true"><use href="#sl-cala"/></svg>
+            <span class="sl-confirmar__fondo" aria-hidden="true"></span>
+            <div class="sl-confirmar__tarjeta rsvp">
+                <h2 class="sl-confirmar__titulo">Confirmación de asistencia</h2>
+                {% include 'invitaciones/publica/_rsvp.html' %}
+            </div>
+            <svg class="sl-confirmar__bolsillo" viewBox="0 0 600 150" preserveAspectRatio="none" aria-hidden="true">
+                <path class="sl-frente__lado" d="M0 0L300 92L600 0L600 150L0 150Z"/>
+                <path class="sl-frente__abajo" d="M0 150L300 46L600 150Z"/>
+                <path class="sl-frente__pliegue" d="M0 0L300 92L600 0" fill="none"/>
+            </svg>
+        </div>
+        {% if invitacion.fecha_limite_rsvp and not rsvp_cerrado %}
+        <p class="sl-mayus sl-confirmar__cierre revela">Con mucho cariño, agradeceremos que nos confirmes tu asistencia antes del {{ invitacion.fecha_limite_rsvp|date:"j \d\e F" }}</p>
+        {% endif %}
+    </section>
+
+    {% include 'invitaciones/publica/_pie.html' %}
+</main>
+
+{% include 'invitaciones/publica/_visor.html' %}
+
+<canvas id="confeti" hidden></canvas>
+
+{% include 'invitaciones/publica/_script.html' %}
+</body>
+{% endwith %}
+</html>

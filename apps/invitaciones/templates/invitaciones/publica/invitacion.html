@@ -1,23 +1,7 @@
 {% load static ui %}<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>{{ invitacion.titulo_visible }} · {{ invitacion.nombres_visibles }}</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/favicon-192.png' %}">
-    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
-    <meta name="description" content="{{ evento.fecha_inicio_evento|date:'l j \d\e F \d\e Y' }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{% if invitado %}{{ invitado.nombre }}, estás invitado: {% endif %}{{ invitacion.titulo_visible }} · {{ invitacion.nombres_visibles }}">
-    <meta property="og:description" content="{{ evento.fecha_inicio_evento|date:'l j \d\e F' }}{% if evento.lugar %} · {{ evento.lugar }}{% endif %}. Abre tu invitación y confirma tu asistencia.">
-    {% if og_imagen %}<meta property="og:image" content="{{ og_imagen }}">{% endif %}
-    <meta name="theme-color" content="{{ invitacion.color_principal }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Great+Vibes&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Jost:wght@300;400;500;600&family=Syne:wght@600;700;800&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
+{% include 'invitaciones/publica/_head.html' %}
     <link rel="stylesheet" href="{% static 'css/invitacion.css' %}">
     <style>:root { --acento: {{ invitacion.color_principal }}; }</style>
 </head>
@@ -51,13 +35,7 @@
     </div>
 </div>
 
-{% if invitacion.musica %}
-<audio id="musica" src="{{ invitacion.musica.url }}" loop preload="none"></audio>
-<button class="disco" id="disco" aria-label="Reproducir o pausar la música" hidden>
-    <span class="disco__vinilo"><i class="ph-fill ph-music-notes"></i></span>
-    <span class="disco__titulo" data-bind="musica_titulo">{{ invitacion.musica_titulo }}</span>
-</button>
-{% endif %}
+{% include 'invitaciones/publica/_musica.html' %}
 
 <main>
     {# ------------------------------------------------------------ Portada #}
@@ -278,214 +256,14 @@
         </div>
     </section>
 
-    <footer class="pie">
-        <div class="pie__nombres" data-bind="nombres" data-fallback="{{ evento.nombre_evento }}">{{ invitacion.nombres_visibles }}</div>
-        <p class="pie__fecha">{{ inicio|date:"d · m · Y" }}</p>
-        <a class="pie__marca" {% if marca.whatsapp_url %}href="{{ marca.whatsapp_url }}" target="_blank" rel="noopener"{% endif %}>
-            <span>Evento organizado por</span>
-            {% if marca.logo %}<span class="pie__logo-fondo"><img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}"></span>{% else %}<strong>{{ marca.nombre }}</strong>{% endif %}
-        </a>
-        <p class="pie__creditos">Invitación digital · {% include 'components/credito_eventpro.html' %}</p>
-    </footer>
+    {% include 'invitaciones/publica/_pie.html' %}
 </main>
 
-{% if fotos %}
-<div class="visor" id="visor" hidden>
-    <button class="visor__cerrar" data-visor="cerrar" aria-label="Cerrar"><i class="ph ph-x"></i></button>
-    <button class="visor__nav visor__nav--prev" data-visor="prev" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
-    <img alt="">
-    <button class="visor__nav visor__nav--next" data-visor="next" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
-    <span class="visor__contador"></span>
-</div>
-{{ fotos_urls|json_script:"datos-fotos" }}
-{% endif %}
+{% include 'invitaciones/publica/_visor.html' %}
 
 <canvas id="confeti" hidden></canvas>
 
-<script>
-    (() => {
-        const body = document.body;
-        const $ = s => document.querySelector(s);
-        const $$ = s => [...document.querySelectorAll(s)];
-        const PREVIEW = body.classList.contains('es-preview');
-
-        /* ---------- Música ---------- */
-        const audio = $('#musica');
-        const disco = $('#disco');
-        function sonar() {
-            if (!audio) return;
-            disco.hidden = false;
-            audio.play().then(() => disco.classList.add('sonando')).catch(() => {});
-        }
-        if (disco) disco.addEventListener('click', () => {
-            if (audio.paused) sonar(); else { audio.pause(); disco.classList.remove('sonando'); }
-        });
-        if (audio && (PREVIEW || !$('#sobre') || $('#sobre').hidden)) disco.hidden = false;
-
-        /* ---------- Sobre ---------- */
-        const sobre = $('#sobre');
-        function abrirSobre() {
-            sobre.classList.add('abriendo');
-            if (!PREVIEW) sonar();
-            setTimeout(() => sobre.classList.add('abierto'), 1500);
-            setTimeout(() => { body.classList.remove('bloqueado'); sobre.hidden = true; sobre.classList.remove('abriendo', 'abierto'); }, 2300);
-        }
-        $('#abrir-sobre').addEventListener('click', abrirSobre);
-        function mostrarSobre() {
-            sobre.classList.remove('abriendo', 'abierto');
-            sobre.hidden = false;
-            window.scrollTo({ top: 0 });
-        }
-
-        /* ---------- Aparición al hacer scroll ---------- */
-        if (PREVIEW) $$('.revela').forEach(e => e.classList.add('visible'));
-        const io = new IntersectionObserver(entradas => entradas.forEach(e => {
-            if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
-        }), { threshold: .12 });
-        $$('.revela').forEach(el => io.observe(el));
-
-        /* ---------- Cuenta regresiva ---------- */
-        const contador = $('[data-objetivo]');
-        if (contador) {
-            const objetivo = new Date(contador.dataset.objetivo).getTime();
-            const u = k => contador.querySelector(`[data-u=${k}]`);
-            const tick = () => {
-                let s = Math.max(0, (objetivo - Date.now()) / 1000);
-                const d = Math.floor(s / 86400); s -= d * 86400;
-                const h = Math.floor(s / 3600); s -= h * 3600;
-                const m = Math.floor(s / 60);
-                u('d').textContent = d; u('h').textContent = h; u('m').textContent = m; u('s').textContent = Math.floor(s - m * 60);
-            };
-            tick(); setInterval(tick, 1000);
-        }
-
-        /* ---------- Galería ---------- */
-        const visor = $('#visor');
-        if (visor) {
-            const fotos = JSON.parse($('#datos-fotos').textContent);
-            let i = 0;
-            const img = visor.querySelector('img');
-            const ver = n => { i = (n + fotos.length) % fotos.length; img.src = fotos[i]; visor.querySelector('.visor__contador').textContent = `${i + 1} / ${fotos.length}`; };
-            $$('[data-foto]').forEach(b => b.addEventListener('click', () => { ver(+b.dataset.foto); visor.hidden = false; }));
-            visor.addEventListener('click', e => {
-                const a = e.target.closest('[data-visor]');
-                if (!a) { if (e.target === visor) visor.hidden = true; return; }
-                if (a.dataset.visor === 'cerrar') visor.hidden = true;
-                if (a.dataset.visor === 'prev') ver(i - 1);
-                if (a.dataset.visor === 'next') ver(i + 1);
-            });
-            document.addEventListener('keydown', e => {
-                if (visor.hidden) return;
-                if (e.key === 'Escape') visor.hidden = true;
-                if (e.key === 'ArrowLeft') ver(i - 1);
-                if (e.key === 'ArrowRight') ver(i + 1);
-            });
-            let x0 = null;
-            visor.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
-            visor.addEventListener('touchend', e => {
-                if (x0 === null) return;
-                const dx = e.changedTouches[0].clientX - x0;
-                if (Math.abs(dx) > 50) ver(i + (dx < 0 ? 1 : -1));
-                x0 = null;
-            });
-        }
-
-        /* ---------- Confirmación ---------- */
-        $$('.form-rsvp').forEach(form => {
-            const caja = form.querySelector('[data-pases]');
-            const input = caja && caja.querySelector('input');
-            const actualizar = () => { if (caja) caja.style.display = form.asistira.value === 'si' ? '' : 'none'; };
-            form.querySelectorAll('input[name=asistira]').forEach(r => r.addEventListener('change', actualizar));
-            actualizar();
-            if (caja) {
-                const max = +input.max || 10;
-                caja.querySelector('[data-menos]').onclick = () => { input.value = Math.max(1, (+input.value || 1) - 1); };
-                caja.querySelector('[data-mas]').onclick = () => { input.value = Math.min(max, (+input.value || 1) + 1); };
-            }
-            form.addEventListener('submit', e => {
-                if (PREVIEW) { e.preventDefault(); return; }
-                const b = form.querySelector('[type=submit]'); b.disabled = true; b.style.opacity = .7;
-            });
-        });
-
-        /* ---------- Vista previa en vivo (dentro del editor) ---------- */
-        if (PREVIEW && window.parent !== window) {
-            const ORIGEN = location.origin;
-            const escapar = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-            const monograma = t => {
-                const partes = String(t).split(/\s+(?:&|y|e)\s+|\s*&\s*/i).map(x => x.trim()).filter(Boolean);
-                if (partes.length >= 2) return `${partes[0][0]}&${partes[1][0]}`.toUpperCase();
-                return (partes[0] || '?')[0].toUpperCase();
-            };
-            const aplicar = campos => {
-                Object.entries(campos).forEach(([k, v]) => {
-                    if (k === 'color_principal') { document.documentElement.style.setProperty('--acento', v); return; }
-                    if (k === 'tipografia') { body.dataset.tipografia = v; return; }
-                    if (k.startsWith('mostrar_')) { $$(`[data-mostrar="${k}"]`).forEach(el => { el.hidden = !v; }); return; }
-                    $$(`[data-bind="${k}"]`).forEach(el => {
-                        const valor = v || el.dataset.fallback || '';
-                        if (el.dataset.formato === 'lineas') el.innerHTML = escapar(valor).replace(/\n/g, '<br>');
-                        else el.textContent = valor;
-                    });
-                    $$(`[data-si="${k}"]`).forEach(el => { el.hidden = !v; });
-                    if (k === 'nombres') {
-                        const base = v || $('[data-bind="nombres"]').dataset.fallback;
-                        $$('[data-bind="monograma"]').forEach(el => { el.textContent = monograma(base); });
-                    }
-                });
-                const detalles = $('[data-seccion="detalles"]');
-                if (detalles) detalles.hidden = $$('[data-seccion="detalles"] .detalle').every(d => d.hidden);
-            };
-            // Los saltos esperan a que carguen las imágenes para que la posición sea la correcta
-            const cuandoCargue = fn => (document.readyState === 'complete' ? fn() : window.addEventListener('load', fn, { once: true }));
-            window.addEventListener('message', e => {
-                if (e.origin !== ORIGEN) return;
-                const d = e.data || {};
-                if (d.em === 'actualizar') aplicar(d.campos || {});
-                if (d.em === 'scroll') cuandoCargue(() => window.scrollTo({ top: d.y, behavior: 'instant' }));
-                if (d.em === 'sobre') mostrarSobre();
-                if (d.em === 'ir') cuandoCargue(() => {
-                    const destino = $(`[data-seccion="${d.seccion}"]:not([hidden])`) || $('[data-seccion="portada"]');
-                    const maximo = document.documentElement.scrollHeight - window.innerHeight;
-                    const y = Math.max(0, Math.min(destino.getBoundingClientRect().top + window.scrollY, maximo));
-                    const suave = d.suave !== false;
-                    window.scrollTo({ top: y, behavior: suave ? 'smooth' : 'instant' });
-                    // Si la animación no corre (pestaña en segundo plano), se salta directo
-                    if (suave) setTimeout(() => { if (Math.abs(window.scrollY - y) > 4) window.scrollTo({ top: y, behavior: 'instant' }); }, 900);
-                });
-            });
-            let t;
-            window.addEventListener('scroll', () => {
-                clearTimeout(t);
-                t = setTimeout(() => window.parent.postMessage({ em: 'scroll', y: window.scrollY }, ORIGEN), 120);
-            }, { passive: true });
-            window.parent.postMessage({ em: 'listo' }, ORIGEN);
-        }
-
-        {% if respondio == 'si' %}
-        /* ---------- Celebración al confirmar ---------- */
-        const lienzo = $('#confeti');
-        lienzo.hidden = false;
-        const ctx = lienzo.getContext('2d');
-        lienzo.width = innerWidth; lienzo.height = innerHeight;
-        const colores = ['{{ invitacion.color_principal }}', '#ffd166', '#06d6a0', '#ef476f', '#118ab2', '#ffffff'];
-        const piezas = Array.from({ length: 160 }, () => ({
-            x: Math.random() * lienzo.width, y: -20 - Math.random() * lienzo.height * .6,
-            w: 6 + Math.random() * 6, h: 8 + Math.random() * 10, c: colores[Math.floor(Math.random() * colores.length)],
-            vy: 2 + Math.random() * 3.5, vx: -1.5 + Math.random() * 3, r: Math.random() * Math.PI, vr: -.15 + Math.random() * .3,
-        }));
-        let cuadros = 0;
-        (function animar() {
-            ctx.clearRect(0, 0, lienzo.width, lienzo.height);
-            piezas.forEach(p => {
-                p.x += p.vx; p.y += p.vy; p.r += p.vr;
-                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
-            });
-            if (++cuadros < 260) requestAnimationFrame(animar); else lienzo.remove();
-        })();
-        {% endif %}
-    })();
-</script>
+{% include 'invitaciones/publica/_script.html' %}
 </body>
 {% endwith %}
 </html>

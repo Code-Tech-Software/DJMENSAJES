@@ -65,6 +65,38 @@ def monograma(texto):
 
 
 @register.filter
+def capitular(texto, modo=''):
+    """
+    'Ana & Luis' con la primera letra de cada palabra aparte (la plantilla Sello de cera la pone en caligrafía).
+    Con modo "primera", solo la de la primera palabra (para títulos: "Dress code").
+    """
+    import re
+    from django.utils.html import escape
+    from django.utils.safestring import mark_safe
+    partes = re.split(r'(\s+)', str(texto or ''))
+    hechas = 0
+    for i, p in enumerate(partes):
+        if p.strip() and p[0].isalnum() and not (modo == 'primera' and hechas):
+            partes[i] = f'<span class="cap">{escape(p[0])}</span>{escape(p[1:])}'
+            hechas += 1
+        else:
+            partes[i] = escape(p)
+    return mark_safe(''.join(partes))
+
+
+@register.filter
+def pareja(texto):
+    """'Ana García & Luis Meza' -> los dos nombres con el "&" en su propio renglón."""
+    import re
+    from django.utils.html import escape
+    from django.utils.safestring import mark_safe
+    partes = [p.strip() for p in re.split(r'\s+(?:&|y|e)\s+|\s*&\s*', str(texto or ''), flags=re.I) if p.strip()]
+    if len(partes) < 2:
+        return escape(str(texto or ''))
+    return mark_safe(f'{escape(partes[0])}<span class="y">&amp;</span>{escape(" & ".join(partes[1:]))}')
+
+
+@register.filter
 def moneda(valor):
     try:
         numero = Decimal(valor or 0)

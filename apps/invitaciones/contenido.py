@@ -17,6 +17,10 @@ PLANTILLAS = [
         'valor': 'fiesta', 'nombre': 'Neón',
         'descripcion': 'Noche de fiesta con luces de neón y brillo.',
     },
+    {
+        'valor': 'sello', 'nombre': 'Sello de cera',
+        'descripcion': 'Sobre con sello de cera, tarjetas de papel y flores blancas.',
+    },
 ]
 
 FRASES = {

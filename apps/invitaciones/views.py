@@ -409,6 +409,11 @@ def _contexto_publico(request, invitacion, invitado=None):
     return contexto
 
 
+def plantilla_publica(invitacion):
+    """La plantilla Sello de cera tiene su propia página; las demás comparten la misma con distintos estilos."""
+    return 'invitaciones/publica/sello.html' if invitacion.plantilla == Invitacion.Plantilla.SELLO else 'invitaciones/publica/invitacion.html'
+
+
 def clave_anfitrion(invitacion):
     return f'anfitrion_{invitacion.pk}'
 
@@ -437,7 +442,7 @@ def invitacion_general(request, slug):
         Invitacion.objects.filter(pk=invitacion.pk).update(visitas=F('visitas') + 1)
     contexto = _contexto_publico(request, invitacion)
     contexto['form'] = RSVPAbiertoForm()
-    return render(request, 'invitaciones/publica/invitacion.html', contexto)
+    return render(request, plantilla_publica(invitacion), contexto)
 
 
 def invitacion_personal(request, slug, token):
@@ -453,7 +458,7 @@ def invitacion_personal(request, slug, token):
         Invitacion.objects.filter(pk=invitacion.pk).update(visitas=F('visitas') + 1)
     contexto['form'] = RSVPForm(maximo=invitado.pases)
     contexto['respondio'] = request.GET.get('respondio')
-    return render(request, 'invitaciones/publica/invitacion.html', contexto)
+    return render(request, plantilla_publica(invitacion), contexto)
 
 
 @require_POST

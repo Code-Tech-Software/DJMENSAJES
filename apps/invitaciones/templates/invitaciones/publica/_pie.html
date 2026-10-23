@@ -1,0 +1,10 @@
+{# Pie: nombres, fecha y la agencia que organiza #}
+<footer class="pie">
+    <div class="pie__nombres" data-bind="nombres" data-fallback="{{ evento.nombre_evento }}">{{ invitacion.nombres_visibles }}</div>
+    <p class="pie__fecha">{{ inicio|date:"d · m · Y" }}</p>
+    <a class="pie__marca" {% if marca.whatsapp_url %}href="{{ marca.whatsapp_url }}" target="_blank" rel="noopener"{% endif %}>
+        <span>Evento organizado por</span>
+        {% if marca.logo %}<span class="pie__logo-fondo"><img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}"></span>{% else %}<strong>{{ marca.nombre }}</strong>{% endif %}
+    </a>
+    <p class="pie__creditos">Invitación digital · {% include 'components/credito_eventpro.html' %}</p>
+</footer>

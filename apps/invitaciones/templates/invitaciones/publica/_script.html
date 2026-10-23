@@ -1,0 +1,214 @@
+{# Comportamiento común de la invitación: sobre, música, apariciones, cuenta regresiva, galería, confirmación y la vista previa del editor #}
+<script>
+    (() => {
+        const body = document.body;
+        const $ = s => document.querySelector(s);
+        const $$ = s => [...document.querySelectorAll(s)];
+        const PREVIEW = body.classList.contains('es-preview');
+
+        /* ---------- Música ---------- */
+        const audio = $('#musica');
+        const disco = $('#disco');
+        function sonar() {
+            if (!audio) return;
+            disco.hidden = false;
+            audio.play().catch(() => {});
+        }
+        if (disco) disco.addEventListener('click', () => { if (audio.paused) sonar(); else audio.pause(); });
+        if (audio) {
+            const reproductor = $('[data-reproductor]');
+            const pintar = () => {
+                const sonando = !audio.paused;
+                disco.classList.toggle('sonando', sonando);
+                if (reproductor) reproductor.classList.toggle('sonando', sonando);
+            };
+            audio.addEventListener('play', pintar);
+            audio.addEventListener('pause', pintar);
+            if (reproductor) {
+                const barra = reproductor.querySelector('[data-avance]');
+                reproductor.querySelector('[data-play]').addEventListener('click', () => { if (audio.paused) sonar(); else audio.pause(); });
+                reproductor.querySelector('[data-atras]').addEventListener('click', () => { audio.currentTime = 0; sonar(); });
+                reproductor.querySelector('[data-adelante]').addEventListener('click', () => {
+                    if (audio.duration) audio.currentTime = Math.min(audio.duration - 1, audio.currentTime + 15);
+                });
+                audio.addEventListener('timeupdate', () => {
+                    if (barra && audio.duration) barra.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+                });
+            }
+        }
+        if (audio && (PREVIEW || !$('#sobre') || $('#sobre').hidden)) disco.hidden = false;
+
+        /* ---------- Sobre ---------- */
+        const sobre = $('#sobre');
+        function abrirSobre() {
+            sobre.classList.add('abriendo');
+            if (!PREVIEW) sonar();
+            setTimeout(() => sobre.classList.add('abierto'), 1500);
+            setTimeout(() => { body.classList.remove('bloqueado'); sobre.hidden = true; sobre.classList.remove('abriendo', 'abierto'); }, 2300);
+        }
+        $('#abrir-sobre').addEventListener('click', abrirSobre);
+        function mostrarSobre() {
+            sobre.classList.remove('abriendo', 'abierto');
+            sobre.hidden = false;
+            window.scrollTo({ top: 0 });
+        }
+
+        /* ---------- Aparición al hacer scroll ---------- */
+        if (PREVIEW) $$('.revela').forEach(e => e.classList.add('visible'));
+        const io = new IntersectionObserver(entradas => entradas.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+        }), { threshold: .12 });
+        $$('.revela').forEach(el => io.observe(el));
+
+        /* ---------- Cuenta regresiva ---------- */
+        const contador = $('[data-objetivo]');
+        if (contador) {
+            const objetivo = new Date(contador.dataset.objetivo).getTime();
+            const u = k => contador.querySelector(`[data-u=${k}]`) || {};
+            const dos = n => (contador.dataset.ceros !== undefined ? String(n).padStart(2, '0') : n);
+            const tick = () => {
+                let s = Math.max(0, (objetivo - Date.now()) / 1000);
+                const d = Math.floor(s / 86400); s -= d * 86400;
+                const h = Math.floor(s / 3600); s -= h * 3600;
+                const m = Math.floor(s / 60);
+                u('d').textContent = dos(d); u('h').textContent = dos(h); u('m').textContent = dos(m); u('s').textContent = dos(Math.floor(s - m * 60));
+            };
+            tick(); setInterval(tick, 1000);
+        }
+
+        /* ---------- Galería ---------- */
+        const visor = $('#visor');
+        if (visor) {
+            const fotos = JSON.parse($('#datos-fotos').textContent);
+            let i = 0;
+            const img = visor.querySelector('img');
+            const ver = n => { i = (n + fotos.length) % fotos.length; img.src = fotos[i]; visor.querySelector('.visor__contador').textContent = `${i + 1} / ${fotos.length}`; };
+            $$('[data-foto]').forEach(b => b.addEventListener('click', () => { ver(+b.dataset.foto); visor.hidden = false; }));
+            visor.addEventListener('click', e => {
+                const a = e.target.closest('[data-visor]');
+                if (!a) { if (e.target === visor) visor.hidden = true; return; }
+                if (a.dataset.visor === 'cerrar') visor.hidden = true;
+                if (a.dataset.visor === 'prev') ver(i - 1);
+                if (a.dataset.visor === 'next') ver(i + 1);
+            });
+            document.addEventListener('keydown', e => {
+                if (visor.hidden) return;
+                if (e.key === 'Escape') visor.hidden = true;
+                if (e.key === 'ArrowLeft') ver(i - 1);
+                if (e.key === 'ArrowRight') ver(i + 1);
+            });
+            let x0 = null;
+            visor.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+            visor.addEventListener('touchend', e => {
+                if (x0 === null) return;
+                const dx = e.changedTouches[0].clientX - x0;
+                if (Math.abs(dx) > 50) ver(i + (dx < 0 ? 1 : -1));
+                x0 = null;
+            });
+        }
+
+        /* ---------- Confirmación ---------- */
+        $$('.form-rsvp').forEach(form => {
+            const caja = form.querySelector('[data-pases]');
+            const input = caja && caja.querySelector('input');
+            const actualizar = () => { if (caja) caja.style.display = form.asistira.value === 'si' ? '' : 'none'; };
+            form.querySelectorAll('input[name=asistira]').forEach(r => r.addEventListener('change', actualizar));
+            actualizar();
+            if (caja) {
+                const max = +input.max || 10;
+                caja.querySelector('[data-menos]').onclick = () => { input.value = Math.max(1, (+input.value || 1) - 1); };
+                caja.querySelector('[data-mas]').onclick = () => { input.value = Math.min(max, (+input.value || 1) + 1); };
+            }
+            form.addEventListener('submit', e => {
+                if (PREVIEW) { e.preventDefault(); return; }
+                const b = form.querySelector('[type=submit]'); b.disabled = true; b.style.opacity = .7;
+            });
+        });
+
+        /* ---------- Vista previa en vivo (dentro del editor) ---------- */
+        if (PREVIEW && window.parent !== window) {
+            const ORIGEN = location.origin;
+            const escapar = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const monograma = t => {
+                const partes = String(t).split(/\s+(?:&|y|e)\s+|\s*&\s*/i).map(x => x.trim()).filter(Boolean);
+                if (partes.length >= 2) return `${partes[0][0]}&${partes[1][0]}`.toUpperCase();
+                return (partes[0] || '?')[0].toUpperCase();
+            };
+            // "Ana & Luis" -> letras capitulares o la pareja en dos renglones (plantilla Sello de cera)
+            const FORMATOS = {
+                lineas: v => escapar(v).replace(/\n/g, '<br>'),
+                capitular: v => String(v).split(/(\s+)/).map(p => (/^[\p{L}\p{N}]/u.test(p) ? `<span class="cap">${escapar(p[0])}</span>${escapar(p.slice(1))}` : escapar(p))).join(''),
+                pareja: v => {
+                    const partes = String(v).split(/\s+(?:&|y|e)\s+|\s*&\s*/i).map(x => x.trim()).filter(Boolean);
+                    return partes.length >= 2 ? `${escapar(partes[0])}<span class="y">&amp;</span>${escapar(partes.slice(1).join(' & '))}` : escapar(v);
+                },
+            };
+            const aplicar = campos => {
+                Object.entries(campos).forEach(([k, v]) => {
+                    if (k === 'color_principal') { document.documentElement.style.setProperty('--acento', v); return; }
+                    if (k === 'tipografia') { body.dataset.tipografia = v; return; }
+                    if (k.startsWith('mostrar_')) { $$(`[data-mostrar="${k}"]`).forEach(el => { el.hidden = !v; }); return; }
+                    $$(`[data-bind="${k}"]`).forEach(el => {
+                        const valor = v || el.dataset.fallback || '';
+                        if (FORMATOS[el.dataset.formato]) el.innerHTML = FORMATOS[el.dataset.formato](valor);
+                        else el.textContent = valor;
+                    });
+                    $$(`[data-si="${k}"]`).forEach(el => { el.hidden = !v; });
+                    if (k === 'nombres') {
+                        const base = v || $('[data-bind="nombres"]').dataset.fallback;
+                        $$('[data-bind="monograma"]').forEach(el => { el.textContent = monograma(base); });
+                    }
+                });
+                const detalles = $('[data-seccion="detalles"]');
+                if (detalles) detalles.hidden = $$('[data-seccion="detalles"] [data-si]').every(d => d.hidden);
+            };
+            // Los saltos esperan a que carguen las imágenes para que la posición sea la correcta
+            const cuandoCargue = fn => (document.readyState === 'complete' ? fn() : window.addEventListener('load', fn, { once: true }));
+            window.addEventListener('message', e => {
+                if (e.origin !== ORIGEN) return;
+                const d = e.data || {};
+                if (d.em === 'actualizar') aplicar(d.campos || {});
+                if (d.em === 'scroll') cuandoCargue(() => window.scrollTo({ top: d.y, behavior: 'instant' }));
+                if (d.em === 'sobre') mostrarSobre();
+                if (d.em === 'ir') cuandoCargue(() => {
+                    const destino = $(`[data-seccion="${d.seccion}"]:not([hidden])`) || $('[data-seccion="portada"]');
+                    const maximo = document.documentElement.scrollHeight - window.innerHeight;
+                    const y = Math.max(0, Math.min(destino.getBoundingClientRect().top + window.scrollY, maximo));
+                    const suave = d.suave !== false;
+                    window.scrollTo({ top: y, behavior: suave ? 'smooth' : 'instant' });
+                    // Si la animación no corre (pestaña en segundo plano), se salta directo
+                    if (suave) setTimeout(() => { if (Math.abs(window.scrollY - y) > 4) window.scrollTo({ top: y, behavior: 'instant' }); }, 900);
+                });
+            });
+            let t;
+            window.addEventListener('scroll', () => {
+                clearTimeout(t);
+                t = setTimeout(() => window.parent.postMessage({ em: 'scroll', y: window.scrollY }, ORIGEN), 120);
+            }, { passive: true });
+            window.parent.postMessage({ em: 'listo' }, ORIGEN);
+        }
+
+        {% if respondio == 'si' %}
+        /* ---------- Celebración al confirmar ---------- */
+        const lienzo = $('#confeti');
+        lienzo.hidden = false;
+        const ctx = lienzo.getContext('2d');
+        lienzo.width = innerWidth; lienzo.height = innerHeight;
+        const colores = ['{{ invitacion.color_principal }}', '#ffd166', '#06d6a0', '#ef476f', '#118ab2', '#ffffff'];
+        const piezas = Array.from({ length: 160 }, () => ({
+            x: Math.random() * lienzo.width, y: -20 - Math.random() * lienzo.height * .6,
+            w: 6 + Math.random() * 6, h: 8 + Math.random() * 10, c: colores[Math.floor(Math.random() * colores.length)],
+            vy: 2 + Math.random() * 3.5, vx: -1.5 + Math.random() * 3, r: Math.random() * Math.PI, vr: -.15 + Math.random() * .3,
+        }));
+        let cuadros = 0;
+        (function animar() {
+            ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+            piezas.forEach(p => {
+                p.x += p.vx; p.y += p.vy; p.r += p.vr;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+            });
+            if (++cuadros < 260) requestAnimationFrame(animar); else lienzo.remove();
+        })();
+        {% endif %}
+    })();
+</script>

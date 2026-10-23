@@ -1,0 +1,11 @@
+{# Visor de la galería a pantalla completa #}
+{% if fotos %}
+<div class="visor" id="visor" hidden>
+    <button class="visor__cerrar" data-visor="cerrar" aria-label="Cerrar"><i class="ph ph-x"></i></button>
+    <button class="visor__nav visor__nav--prev" data-visor="prev" aria-label="Anterior"><i class="ph ph-caret-left"></i></button>
+    <img alt="">
+    <button class="visor__nav visor__nav--next" data-visor="next" aria-label="Siguiente"><i class="ph ph-caret-right"></i></button>
+    <span class="visor__contador"></span>
+</div>
+{{ fotos_urls|json_script:"datos-fotos" }}
+{% endif %}

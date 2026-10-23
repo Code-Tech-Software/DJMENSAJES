@@ -1,0 +1,8 @@
+{# Música de fondo: suena al abrir el sobre; el disco flotante la pausa o reanuda #}
+{% if invitacion.musica %}
+<audio id="musica" src="{{ invitacion.musica.url }}" loop preload="none"></audio>
+<button class="disco" id="disco" aria-label="Reproducir o pausar la música" hidden>
+    <span class="disco__vinilo"><i class="ph-fill ph-music-notes"></i></span>
+    <span class="disco__titulo" data-bind="musica_titulo">{{ invitacion.musica_titulo }}</span>
+</button>
+{% endif %}

@@ -1,0 +1,322 @@
+/* ==========================================================================
+   Invitación · plantilla "Sello de cera"
+   Sobre con sello de cera que se abre, tarjetas de papel sobre un fondo claro con sombras de hojas,
+   flores blancas y calas. El color del sobre y de las insignias sale de --acento.
+   Se carga después de invitacion.css (de ahí toma la confirmación, el pase, el visor y el pie).
+   ========================================================================== */
+[data-plantilla="sello"] {
+  --inv-bg: #f5f5f2;
+  --inv-surface: #ffffff;
+  --inv-text: #262a30;
+  --inv-muted: #6b7179;
+  --inv-line: #dcdfe1;
+  --inv-radius: 4px;
+  --f-body: "Cormorant Garamond", Georgia, serif;
+  --f-display: "Cormorant Garamond", Georgia, serif;
+  --sl-guion: "Pinyon Script", "Great Vibes", Georgia, serif;  /* sin "cursive": en Windows cae en Comic Sans mientras carga */
+  --sl-numeros: "Playfair Display", Georgia, serif;
+  --sl-tinta: color-mix(in srgb, var(--acento) 42%, #1b2430);
+  --sl-sobre-claro: color-mix(in srgb, var(--acento) 90%, #fff);
+  --sl-sobre-oscuro: color-mix(in srgb, var(--acento) 80%, #000);
+  --sl-forro-fondo: #f3efe5;
+  --sl-papel: #fffffc;
+  --sl-sombra: 0 1px 2px rgba(28, 38, 50, .08), 0 16px 30px -16px rgba(28, 38, 50, .38);
+  --sl-ruido: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .32 0 0 0 0 .3 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --sobre-bg: var(--inv-bg);
+  font-size: 18px;
+  font-variant-numeric: lining-nums;
+}
+/* La letra de los nombres: caligrafía fina salvo que se elija otra en el editor */
+[data-plantilla="sello"][data-tipografia="auto"] {
+  --f-names: "Pinyon Script", "Great Vibes", Georgia, serif; --names-weight: 400; --names-style: normal; --names-transform: none; --names-tracking: 0;
+}
+.sl-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ------------------------------------------------------------------ Texto */
+.sl-mayus { font-weight: 600; font-size: 13.5px; letter-spacing: .14em; text-transform: uppercase; line-height: 1.6; }
+.sl-guion { font-family: var(--sl-guion); font-weight: 400; font-size: clamp(40px, 11vw, 62px); line-height: 1.15; color: #1b1e23; }
+.sl-titulo { font-weight: 500; font-size: 21px; letter-spacing: .07em; text-transform: uppercase; line-height: 1.2; color: var(--inv-text); }
+.sl-titulo .cap, .sl-sobre__nombres .cap {
+  font-family: var(--sl-guion); font-weight: 400; text-transform: none; letter-spacing: 0;
+  font-size: 2.3em; line-height: .4; vertical-align: -.1em; margin-right: -.06em;
+}
+.sl-titulo--suelto { text-align: center; margin-bottom: 26px; }
+
+/* Sombras de hojas sobre el fondo (como luz de ventana) */
+.sl-sombras {
+  position: fixed; inset: -6%; z-index: 0; pointer-events: none; opacity: .065; filter: blur(9px);
+  background: var(--sl-hojas) no-repeat right -16vmax top -14vmax / 78vmax, var(--sl-hojas) no-repeat left -28vmax bottom -24vmax / 74vmax;
+}
+
+/* ------------------------------------------------------------------ Sobre cerrado (antes de abrir) */
+.sl-sobre { background: var(--inv-bg); padding: 18px 14px; overflow-x: hidden; overflow-y: auto; place-items: safe center; }
+.sl-sobre > .sl-sombras { position: absolute; }
+.sl-sobre__escena { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: clamp(18px, 4.2vh, 44px); width: 100%; text-align: center; }
+.sl-sobre__nombres { font-weight: 400; text-transform: uppercase; font-size: clamp(24px, 7.2vw, 56px); letter-spacing: .02em; line-height: 1.6; color: #15181c; text-wrap: balance; }
+[data-plantilla="sello"]:not([data-tipografia="auto"]) .sl-sobre__nombres {
+  font-family: var(--f-names); font-weight: var(--names-weight); font-style: var(--names-style);
+  text-transform: var(--names-transform); letter-spacing: var(--names-tracking);
+}
+[data-plantilla="sello"]:not([data-tipografia="auto"]) .sl-sobre__nombres .cap { font: inherit; vertical-align: baseline; margin: 0; line-height: inherit; }
+.sl-sobre__para { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sl-sobre__para .sl-guion { font-size: clamp(36px, 10vw, 60px); }
+.sl-sobre__para .sl-mayus { font-size: clamp(13px, 3.4vw, 18px); font-weight: 500; letter-spacing: .06em; max-width: 48ch; text-wrap: balance; }
+
+/* El sobre: fondo con forro, tarjeta adentro, bolsillo, solapa que se abre y sello */
+.sl-carta {
+  position: relative; display: block; width: min(560px, 92vw); aspect-ratio: 3 / 2; padding: 0; border: 0; background: none;
+  cursor: pointer; perspective: 1500px; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 26px 30px rgba(25, 38, 55, .28)); transition: transform .4s cubic-bezier(.2, .8, .2, 1);
+}
+.sl-carta:hover { transform: translateY(-4px); }
+.sl-carta:focus-visible { outline: 2px solid var(--acento); outline-offset: 10px; border-radius: 6px; }
+.sl-carta__fondo, .sl-abierto__interior { position: absolute; inset: 0; border-radius: 3px; background: var(--sl-forro-fondo); overflow: hidden; }
+.sl-carta__fondo::after, .sl-abierto__interior::after, .sl-carta__forro::after, .sl-abierto__solapa::after, .sl-confirmar__fondo::after {
+  content: ""; position: absolute; inset: 0; background: var(--acento); opacity: .82;
+  -webkit-mask: var(--sl-forro) 0 0 / 118px; mask: var(--sl-forro) 0 0 / 118px;
+}
+.sl-carta__tarjeta {
+  position: absolute; left: 6%; right: 6%; top: 6%; height: 84%; z-index: 2; border-radius: 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6% 10% 20%;
+  background: var(--sl-papel); color: var(--inv-text); box-shadow: 0 2px 8px rgba(0, 0, 0, .14);
+  transition: transform 1.1s cubic-bezier(.2, .8, .2, 1) .85s;
+}
+.sl-carta__tarjeta small { font-size: clamp(8px, 1.9vw, 11px); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.sl-carta__tarjeta strong { font-family: var(--f-names); font-weight: var(--names-weight); font-style: var(--names-style); text-transform: var(--names-transform); font-size: clamp(22px, 6vw, 40px); line-height: 1.05; }
+.sl-carta__tarjeta .y, .sl-marco__nombres .y { display: block; font-size: .72em; margin: .08em 0; }
+.sl-frente { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; overflow: visible; }
+.sl-frente__lado { fill: var(--sl-sobre-claro); }
+.sl-frente__lado--der { fill: color-mix(in srgb, var(--acento) 94%, #fff); }
+.sl-frente__abajo { fill: color-mix(in srgb, var(--acento) 97%, #fff); }
+.sl-frente__pliegue { stroke: rgba(255, 255, 255, .24); stroke-width: 1.1; vector-effect: non-scaling-stroke; }
+.sl-frente__sombra { fill: rgba(14, 24, 36, .26); transition: opacity .35s .25s; }
+.sl-carta__solapa {
+  position: absolute; left: 0; right: 0; top: 0; height: 57%; z-index: 4; transform-origin: top center; transform-style: preserve-3d;
+  transition: transform .9s cubic-bezier(.45, .05, .3, 1) .25s, z-index 0s .7s;
+}
+.sl-carta__cara, .sl-carta__forro {
+  position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 53% 97%, 50% 100%, 47% 97%);
+}
+.sl-carta__cara { background: linear-gradient(180deg, color-mix(in srgb, var(--acento) 88%, #000), color-mix(in srgb, var(--acento) 96%, #fff)); }
+/* El forro es la otra cara de la solapa: se voltea de lado (no de arriba abajo) para que al abrir quede apuntando hacia arriba */
+.sl-carta__forro { transform: rotateY(180deg); background: var(--sl-forro-fondo); }
+.sl-carta__sello {
+  position: absolute; left: 50%; top: 57%; z-index: 6; width: 21%; transform: translate(-50%, -50%);
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .3)); transition: transform .5s cubic-bezier(.4, 0, .2, 1), opacity .45s;
+  animation: sl-latido 2.8s ease-in-out infinite;
+}
+.sl-carta__abrir {
+  position: absolute; left: 0; right: 0; bottom: 14%; z-index: 6; color: rgba(255, 255, 255, .94);
+  font-size: clamp(10px, 2.3vw, 13.5px); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; transition: opacity .3s;
+}
+.sl-con-dedo { display: none; }
+@media (hover: none) { .sl-con-raton { display: none; } .sl-con-dedo { display: inline; } }
+/* Al abrir: se quita el sello, se levanta la solapa (deja ver el forro) y sale la tarjeta */
+.sobre.abriendo .sl-carta { transform: none; }
+.sl-sobre__nombres, .sl-sobre__para { transition: opacity .45s ease; }
+.sobre.abriendo .sl-sobre__nombres, .sobre.abriendo .sl-sobre__para { opacity: 0; }
+.sobre.abriendo .sl-carta__sello { animation: none; transform: translate(-50%, -20%) scale(.6) rotate(-16deg); opacity: 0; }
+.sobre.abriendo .sl-carta__abrir, .sobre.abriendo .sl-frente__sombra { opacity: 0; }
+.sobre.abriendo .sl-carta__solapa { transform: rotateX(180deg); z-index: 1; }
+.sobre.abriendo .sl-carta__tarjeta { transform: translateY(-56%); }
+
+/* ------------------------------------------------------------------ Portada: el sobre abierto con la tarjeta */
+.sl { position: relative; z-index: 1; overflow-x: clip; }
+.sl-portada { position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 54px 16px 86px; text-align: center; }
+.sl-portada__escena { position: relative; width: min(400px, 86vw); }
+.sl-abierto { position: relative; width: 100%; aspect-ratio: 3 / 2; margin-top: 40%; filter: drop-shadow(0 20px 24px rgba(25, 38, 55, .22)); }
+.sl-abierto__solapa {
+  position: absolute; left: 0; right: 0; bottom: 100%; height: 60%; background: var(--sl-sobre-oscuro);
+  clip-path: polygon(0 100%, 47% 3%, 50% 0, 53% 3%, 100% 100%);
+}
+.sl-abierto__solapa::before, .sl-abierto__solapa::after { clip-path: polygon(3.5% 100%, 50% 6%, 96.5% 100%); }
+.sl-abierto__solapa::before { content: ""; position: absolute; inset: 0; background: var(--sl-forro-fondo); }
+.sl-abierto .sl-frente__sombra { display: none; }
+.sl-marco { position: relative; z-index: 2; width: 86%; aspect-ratio: 3 / 4; margin: -50% auto 0; }
+.sl-marco__forma { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 16px 22px rgba(25, 38, 55, .24)); }
+.sl-marco__papel { fill: var(--sl-papel); }
+.sl-marco__linea { fill: none; stroke: color-mix(in srgb, var(--acento) 72%, #fff); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.sl-marco__linea--fina { stroke-width: .7; opacity: .75; }
+.sl-marco__contenido { position: absolute; inset: 15% 12% 13%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.sl-marco__titulo { font-size: clamp(10px, 2.7vw, 12.5px); text-wrap: balance; }
+.sl-marco__nombres {
+  font-family: var(--f-names); font-weight: var(--names-weight); font-style: var(--names-style); text-transform: var(--names-transform);
+  letter-spacing: var(--names-tracking); font-size: clamp(30px, 9.2vw, 46px); line-height: 1.05; color: #1b1e23; overflow-wrap: anywhere;
+}
+[data-tipografia="moderna"] .sl-marco__nombres, [data-tipografia="impacto"] .sl-marco__nombres,
+[data-tipografia="moderna"] .sl-carta__tarjeta strong, [data-tipografia="impacto"] .sl-carta__tarjeta strong { font-size: clamp(18px, 5.4vw, 28px); }
+.sl-marco__pie { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--inv-muted); line-height: 1.5; }
+.sl-ramo { display: block; overflow: visible; filter: drop-shadow(0 8px 10px rgba(30, 40, 30, .2)); }
+.sl-marco__ramo { position: absolute; z-index: 3; width: 52%; left: -24%; top: -13%; pointer-events: none; }
+
+/* Reproductor de la canción */
+.sl-reproductor { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(330px, 86vw); }
+.sl-reproductor .sl-mayus { font-size: 11.5px; }
+.sl-reproductor__titulo { font-size: 16px; font-style: italic; color: var(--inv-muted); margin-top: -6px; }
+.sl-reproductor__titulo:empty { display: none; }
+.sl-reproductor__barra { position: relative; width: 100%; height: 2px; border-radius: 2px; background: #cdd1d4; }
+.sl-reproductor__barra span { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: inherit; background: #23272c; transition: width .3s linear; }
+.sl-reproductor__barra span::after { content: ""; position: absolute; right: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #23272c; }
+.sl-reproductor__controles { display: flex; align-items: center; gap: 20px; }
+.sl-reproductor__controles button { border: 0; background: none; cursor: pointer; color: #23272c; font-size: 16px; display: grid; place-items: center; padding: 4px; }
+.sl-reproductor__controles .sl-reproductor__play { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid #23272c; font-size: 15px; }
+.sl-reproductor .ph-pause, .sl-reproductor.sonando .ph-play { display: none; }
+.sl-reproductor.sonando .ph-pause { display: inline-block; }
+.sl-para { font-size: 16px; color: var(--inv-muted); }
+.sl-para strong { color: var(--inv-text); font-weight: 600; }
+.sl-bajar { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--inv-muted); font-size: 11px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; }
+.sl-bajar i { font-size: 20px; animation: rebote 2s infinite; }
+
+/* ------------------------------------------------------------------ Papel */
+.sl-seccion { position: relative; padding: 46px 16px; }
+.sl-papel { position: relative; background: var(--sl-papel); box-shadow: var(--sl-sombra); padding: 30px 24px; }
+.sl-papel::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: var(--sl-ruido); mix-blend-mode: multiply; }
+.sl-papel > * { position: relative; }
+.sl-papel--nota { width: min(480px, 90vw); margin: 0 auto; padding: 50px 30px 34px; text-align: center; rotate: -1deg; }
+.sl-papel--ancho { width: min(560px, 92vw); margin: 0 auto; padding: 34px 26px; text-align: center; }
+.sl-papel--ancho .sl-titulo { margin-bottom: 22px; }
+.sl-cera { display: block; overflow: visible; }
+.sl-papel__sello { position: absolute !important; left: 50%; top: 0; width: 66px; transform: translate(-50%, -48%); rotate: -8deg; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .25)); }
+.sl-frase { font-size: clamp(21px, 5vw, 25px); font-style: italic; line-height: 1.45; }
+
+/* Personas especiales */
+.sl-menciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 18px; }
+.sl-menciones:has(> :only-child) { grid-template-columns: 1fr; }
+.sl-mencion h3 { font-size: 12px; color: var(--acento); margin-bottom: 6px; }
+.sl-mencion p { display: flex; flex-direction: column; gap: 2px; font-size: 19px; line-height: 1.3; }
+
+/* ------------------------------------------------------------------ Lugares: fotos instantáneas y la tarjeta */
+.sl-collage { position: relative; width: min(560px, 92vw); margin: 0 auto; }
+.sl-collage--fotos { padding-top: 76px; }
+.sl-polaroid { display: block; margin: 0; padding: 8px 8px 30px; border: 0; background: #fff; box-shadow: var(--sl-sombra); }
+.sl-polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; filter: saturate(.82) contrast(1.02); }
+.sl-collage .sl-polaroid { position: absolute; top: 0; width: 44%; }
+.sl-polaroid--1 { left: 0; z-index: 1; rotate: -7deg; }
+.sl-polaroid--2 { left: 13%; top: 22px !important; z-index: 0; rotate: 5deg; }
+.sl-lugares { position: relative; z-index: 2; width: min(440px, 100%); margin: 0 auto; padding: 36px 22px 32px; display: flex; flex-direction: column; gap: 34px; text-align: center; }
+.sl-collage--fotos .sl-lugares { width: 76%; margin: 0 0 0 auto; }
+.sl-lugar { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.sl-lugar .sl-titulo { margin-bottom: 8px; }
+.sl-lugar__nombre { font-size: 19px; font-weight: 600; line-height: 1.25; }
+.sl-lugar__dir { font-size: 16px; color: var(--inv-muted); line-height: 1.35; }
+.sl-lugar__hora { margin-top: 12px; font-size: 13px; }
+.sl-lugar__notas { margin-top: 6px; font-size: 15px; font-style: italic; color: var(--inv-muted); }
+.sl-pastilla {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; padding: 5px 16px;
+  border: 1px solid #262a30; border-radius: 999px; background: transparent; color: #262a30; text-decoration: none; cursor: pointer;
+  font-family: var(--f-body); font-size: 12px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; transition: background .2s, color .2s;
+}
+.sl-pastilla:hover { background: #262a30; color: #fff; }
+.sl-pastilla i { font-size: 15px; }
+
+/* ------------------------------------------------------------------ Itinerario */
+.sl-itinerario { list-style: none; padding: 0; max-width: 380px; margin: 0 auto; text-align: left; }
+.sl-itinerario li { display: flex; gap: 18px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--inv-line); }
+.sl-itinerario li:last-child { border-bottom: 0; }
+.sl-itinerario time { flex-shrink: 0; width: 52px; font-family: var(--sl-numeros); font-size: 17px; color: var(--acento); }
+.sl-itinerario strong { display: block; font-size: 19px; font-weight: 600; line-height: 1.25; }
+.sl-itinerario small { display: block; font-size: 15px; color: var(--inv-muted); }
+
+/* ------------------------------------------------------------------ Vestimenta y regalos */
+.sl-detalles { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+/* La ilustración en una tarjeta grande; la placa "Dress code" en su esquina y la nota del código encima */
+.sl-vestimenta { position: relative; width: min(500px, 92vw); margin: 0 auto 50px; }
+.sl-vestimenta__nota {
+  z-index: 2; width: 58%; margin: 0 0 -16px auto; padding: 16px 16px; text-align: center; rotate: 2deg;
+  font-size: 14px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; line-height: 1.5;
+}
+.sl-vestimenta__dibujo { z-index: 1; width: 88%; margin-left: auto; padding: 58px 12px 14px; rotate: -1deg; }
+.sl-vestimenta__dibujo img { display: block; width: 100%; height: auto; }
+.sl-vestimenta__dibujo > .sl-placa { position: absolute; left: -15%; top: -22px; z-index: 3; width: min(44%, 176px); rotate: -2deg; }
+.sl-placa, .sl-medalla { display: grid; place-items: center; color: #fff; background: var(--sl-tinta); box-shadow: var(--sl-sombra); }
+.sl-placa .sl-titulo, .sl-medalla .sl-titulo { color: #fff; font-size: clamp(17px, 4.8vw, 24px); text-align: center; }
+.sl-placa {
+  position: relative; aspect-ratio: 16 / 9;
+  -webkit-mask: radial-gradient(circle at 0 0, #0000 11px, #000 12px) top left / 51% 51% no-repeat, radial-gradient(circle at 100% 0, #0000 11px, #000 12px) top right / 51% 51% no-repeat,
+    radial-gradient(circle at 0 100%, #0000 11px, #000 12px) bottom left / 51% 51% no-repeat, radial-gradient(circle at 100% 100%, #0000 11px, #000 12px) bottom right / 51% 51% no-repeat;
+  mask: radial-gradient(circle at 0 0, #0000 11px, #000 12px) top left / 51% 51% no-repeat, radial-gradient(circle at 100% 0, #0000 11px, #000 12px) top right / 51% 51% no-repeat,
+    radial-gradient(circle at 0 100%, #0000 11px, #000 12px) bottom left / 51% 51% no-repeat, radial-gradient(circle at 100% 100%, #0000 11px, #000 12px) bottom right / 51% 51% no-repeat;
+}
+.sl-placa::before { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(255, 255, 255, .45); border-radius: 2px; }
+.sl-vestimenta__ramo { position: absolute; right: -6%; bottom: -21%; width: 24%; z-index: 4; pointer-events: none; }
+
+.sl-regalos { position: relative; width: min(500px, 90vw); margin: 40px auto 150px; }
+.sl-regalos__nota { width: 88%; padding: 50px 26px 76px; }
+.sl-regalos__texto { font-size: 14px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; line-height: 1.85; text-wrap: pretty; }
+.sl-regalos__texto::first-letter { float: left; margin: .12em .06em 0 0; font-family: var(--sl-guion); font-size: 3.4em; font-weight: 400; line-height: .7; text-transform: none; }
+.sl-regalos__nota .sl-pastilla { margin-top: 18px; }
+.sl-medalla { position: absolute; right: -3%; bottom: -26%; z-index: 3; width: min(40%, 190px); aspect-ratio: 1; border-radius: 50%; box-shadow: var(--sl-sombra), inset 0 0 0 7px var(--sl-tinta), inset 0 0 0 8px rgba(255, 255, 255, .4); }
+.sl-regalos__calas { position: absolute; left: -5%; bottom: -36%; z-index: 4; width: min(34%, 150px); filter: drop-shadow(0 8px 10px rgba(30, 40, 30, .2)); pointer-events: none; }
+
+.sl-etiquetas { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; width: min(560px, 92vw); }
+.sl-etiquetas:not(:has(> :not([hidden]))) { display: none; }
+.sl-etiqueta { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 18px 24px; text-align: center; }
+.sl-etiqueta:nth-child(odd) { rotate: -1.5deg; }
+.sl-etiqueta:nth-child(even) { rotate: 1.2deg; }
+.sl-etiqueta .sl-mayus { font-size: 11px; color: var(--inv-muted); }
+.sl-etiqueta strong { font-size: 20px; font-weight: 600; line-height: 1.3; }
+
+/* ------------------------------------------------------------------ Galería */
+.sl-galeria { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; width: min(640px, 92vw); margin: 0 auto; }
+.sl-galeria__foto { cursor: zoom-in; transition: rotate .3s, transform .3s; }
+.sl-galeria__foto:nth-child(odd) { rotate: -2deg; }
+.sl-galeria__foto:nth-child(even) { rotate: 2deg; }
+.sl-galeria__foto:hover { rotate: 0deg; transform: scale(1.03); }
+@media (min-width: 700px) { .sl-galeria { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ------------------------------------------------------------------ Cuenta regresiva y fecha */
+.sl-fecha { text-align: center; }
+.sl-fecha__faltan { font-size: clamp(46px, 12vw, 66px); }
+.sl-contador { display: flex; justify-content: center; gap: clamp(20px, 7vw, 44px); margin: 4px 0 10px; }
+.sl-contador strong { display: block; font-family: var(--sl-numeros); font-weight: 700; font-size: clamp(46px, 13vw, 74px); line-height: 1; font-variant-numeric: tabular-nums; color: #15181c; }
+.sl-contador small { display: block; margin-top: 6px; font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--inv-muted); }
+.sl-fecha__gran-dia { font-size: 15px; letter-spacing: .12em; }
+.sl-fecha__dia { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 30px; font-size: 13px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.sl-fecha__dia span { min-width: 104px; padding: 6px 0; border-top: 1px solid #262a30; border-bottom: 1px solid #262a30; }
+.sl-fecha__dia strong { font-family: var(--sl-numeros); font-size: 50px; font-weight: 500; line-height: 1; letter-spacing: 0; }
+.sl-acciones { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+
+/* ------------------------------------------------------------------ Confirmación: la tarjeta sale de un sobre */
+.sl-confirmar__escena { position: relative; width: min(440px, 90vw); margin: 0 auto; padding-top: 150px; }
+.sl-confirmar__calas { position: absolute; top: 0; left: 50%; z-index: 0; width: min(62%, 260px); transform: translateX(-50%); filter: drop-shadow(0 8px 10px rgba(30, 40, 30, .2)); pointer-events: none; }
+.sl-confirmar__fondo { position: absolute; left: -6%; right: -6%; bottom: 0; height: 250px; z-index: 0; border-radius: 3px; overflow: hidden; background: var(--sl-forro-fondo); box-shadow: var(--sl-sombra); }
+.sl-confirmar__tarjeta.rsvp { position: relative; z-index: 1; margin: 0 2%; padding: 38px 22px 136px; border: 0; border-radius: 2px; background: var(--sl-papel); box-shadow: var(--sl-sombra); }
+.sl-confirmar__titulo { font-size: 25px; font-weight: 600; line-height: 1.2; margin-bottom: 14px; }
+.sl-confirmar__bolsillo { position: absolute; left: -6%; bottom: 0; z-index: 2; width: 112%; height: 124px; overflow: visible; filter: drop-shadow(0 -3px 8px rgba(20, 30, 45, .16)); }
+.sl-confirmar__cierre { width: min(440px, 90vw); margin: 34px auto 0; text-align: center; font-size: 13.5px; font-weight: 500; letter-spacing: .08em; }
+
+/* El formulario de confirmación con el estilo de la tarjeta */
+[data-plantilla="sello"] .rsvp__saludo { font-size: 23px; }
+[data-plantilla="sello"] .rsvp__texto { font-size: 17px; }
+[data-plantilla="sello"] .rsvp__pases { border-radius: 4px; font-weight: 600; }
+[data-plantilla="sello"] .opciones { grid-template-columns: 1fr; gap: 8px; }
+[data-plantilla="sello"] .opciones span {
+  flex-direction: row; justify-content: center; gap: 8px; padding: 13px 12px; border: 0; border-radius: 4px;
+  background: #e7e9eb; color: #3a4048; font-size: 16px; font-weight: 600;
+}
+[data-plantilla="sello"] .opciones i { font-size: 20px; color: inherit; }
+[data-plantilla="sello"] .opciones input:checked + span { background: color-mix(in srgb, var(--acento) 82%, #fff); color: #fff; box-shadow: none; }
+[data-plantilla="sello"] .opciones input:checked + span i { color: #fff; transform: none; }
+[data-plantilla="sello"] .campo label { font-size: 14px; font-weight: 600; }
+[data-plantilla="sello"] .campo input, [data-plantilla="sello"] .campo textarea { border-radius: 4px; background: #fff; font-size: 17px; }
+[data-plantilla="sello"] .contador-pases { border-radius: 4px; }
+[data-plantilla="sello"] .boton { border-radius: 999px; font-family: var(--f-body); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; border-color: var(--sl-tinta); color: var(--sl-tinta); }
+[data-plantilla="sello"] .boton--lleno { background: var(--sl-tinta); color: #fff; box-shadow: 0 12px 24px -14px var(--sl-tinta); }
+[data-plantilla="sello"] .icono-grande { background: var(--sl-tinta); }
+[data-plantilla="sello"] .pase__corte::before, [data-plantilla="sello"] .pase__corte::after { background: var(--sl-papel); }
+
+/* ------------------------------------------------------------------ Pie */
+[data-plantilla="sello"] .pie { position: relative; z-index: 1; padding-top: 30px; }
+[data-plantilla="sello"] .pie__nombres { color: #1b1e23; font-size: clamp(38px, 10vw, 58px); }
+[data-plantilla="sello"] .pie__fecha { font-weight: 700; color: var(--inv-text); }
+
+@media (min-width: 900px) {
+  .sl-seccion { padding: 60px 16px; }
+  .sl-portada__escena { width: 420px; }
+}
+@keyframes sl-latido { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) {
+  .sl-carta__sello { animation: none; }
+  .sl-carta__solapa, .sl-carta__tarjeta { transition-duration: .01s; transition-delay: 0s; }
+}

@@ -130,6 +130,7 @@ class Ajustes(models.Model):
         JARDIN = 'jardin', 'Jardín'
         MODERNA = 'moderna', 'Moderna'
         FIESTA = 'fiesta', 'Neón'
+        SELLO = 'sello', 'Sello de cera'
 
     agencia = models.OneToOneField(
         Agencia, on_delete=models.CASCADE, null=True, blank=True, related_name='ajustes', editable=False,

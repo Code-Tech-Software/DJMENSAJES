@@ -91,7 +91,7 @@
 .editor__progreso { font-size: 12.5px; font-weight: 650; color: var(--text-3); }
 
 /* Tarjetas de plantilla con ilustración en miniatura */
-.plantillas-editor { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.plantillas-editor { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 14px; }
 .plantilla-card { position: relative; cursor: pointer; display: flex; flex-direction: column; gap: 10px; }
 .plantilla-card input { position: absolute; opacity: 0; pointer-events: none; }
 .plantilla-card__texto { text-align: center; }
@@ -136,6 +136,19 @@
 .mini--fiesta .mini__foto { border-radius: 50%; aspect-ratio: 1; width: 40%; border: 2px solid #f6b3ff; box-shadow: 0 0 10px #e040fb, inset 0 0 10px #e040fb; }
 .mini--fiesta .mini__nombres { background: #fff; box-shadow: 0 0 8px #e040fb, 0 0 16px #e040fb; }
 .mini--fiesta .mini__linea { background: #7ff3ff; box-shadow: 0 0 6px #00e5ff; }
+
+.mini--sello { background: #f6f6f3; justify-content: center; padding: 0 12% 12%; }
+.mini--sello::before {
+  content: ""; position: absolute; left: 12%; right: 12%; top: 26%; aspect-ratio: 3 / 2; border-radius: 3px;
+  background: linear-gradient(32deg, transparent 49.5%, rgba(255, 255, 255, .22) 50%, transparent 51%),
+    linear-gradient(-32deg, transparent 49.5%, rgba(255, 255, 255, .22) 50%, transparent 51%), linear-gradient(160deg, #6f8fb1, #4f6f93);
+  box-shadow: 0 8px 14px -8px rgba(30, 45, 65, .6);
+}
+.mini--sello .mini__marco { left: 50%; top: calc(26% + 9%); inset-inline: auto; width: 18%; aspect-ratio: 1; height: auto; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #fbf2da, #e3cf9f 55%, #c4a76b); box-shadow: 0 2px 4px rgba(0, 0, 0, .25); z-index: 1; }
+.mini--sello .mini__foto { display: none; }
+.mini--sello .mini__nombres { position: absolute; top: 9%; width: 70%; height: 6px; background: #2f3e4e; opacity: .85; }
+.mini--sello .mini__linea { margin-top: auto; background: #c9cfd6; }
 
 /* Paleta de color */
 .paleta { display: flex; gap: 8px; flex-wrap: wrap; }
