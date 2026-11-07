@@ -1,0 +1,9 @@
+{% extends 'components/modal_form.html' %}
+{% load ui %}
+{% block cuerpo %}
+<div class="form-grid">
+    {% campo form.activo clase="span-2" %}
+    {% campo form.mostrar_pagos clase="span-2" %}
+    {% campo form.fecha_limite icono="ph ph-calendar-x" clase="span-2" %}
+</div>
+{% endblock %}

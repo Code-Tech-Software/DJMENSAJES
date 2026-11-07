@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from apps.core.modulos import tiene
 from apps.envivo.models import Mensaje
-from apps.eventos.models import Cotizacion, Evento
+from apps.eventos.models import Cotizacion, Evento, PortalCliente
 from apps.invitaciones.models import Invitado
 
 
@@ -56,6 +56,19 @@ def actividad_reciente(usuario, limite=10, desde=None):
             'tono': '',
             'texto': f'<strong>{_e(autor)}</strong> registró el evento <strong>{_e(evento.nombre_evento)}</strong>',
             'url': evento.get_absolute_url(),
+        })
+
+    musica = PortalCliente.objects.filter(evento__in=eventos, musica_el__isnull=False).select_related('evento').order_by('-musica_el')
+    if desde:
+        musica = musica.filter(musica_el__gt=desde)
+    for portal in musica[:limite]:
+        quien = portal.evento.cliente_nombre or 'Tu cliente'
+        elementos.append({
+            'fecha': portal.musica_el,
+            'icono': 'ph ph-music-notes',
+            'tono': 'tone-live',
+            'texto': f'<strong>{_e(quien)}</strong> guardó su música para <strong>{_e(portal.evento.nombre_evento)}</strong>',
+            'url': reverse('eventos:detalle', args=[portal.evento_id]) + '#musica',
         })
 
     cotizaciones = _cotizaciones(usuario)
@@ -108,7 +121,8 @@ def contar_no_vistas(usuario):
     return (Invitado.objects.filter(evento__in=eventos, respondido_en__gt=desde).count()
             + Mensaje.objects.filter(evento__in=eventos, vip=True, fecha_creacion__gt=desde).count()
             + cotizaciones.filter(estado=Cotizacion.Estado.ACEPTADA, respondida_el__gt=desde).count()
-            + cotizaciones.filter(vista_el__gt=desde).count())
+            + cotizaciones.filter(vista_el__gt=desde).count()
+            + PortalCliente.objects.filter(evento__in=eventos, musica_el__gt=desde).count())
 
 
 def _e(texto):

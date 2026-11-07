@@ -744,6 +744,7 @@ i.ph-dots-three, i.ph-dots-three-vertical { font-size: 22px; }
   background: var(--brand);
 }
 .tab .count { font-size: 11px; padding: 0 7px; border-radius: 99px; background: var(--surface-3); color: var(--text-2); }
+.tab .count--ok { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
 .tab-panel { animation: rise .3s var(--ease); }
 
 /* Steps (wizard) */
@@ -1843,3 +1844,117 @@ kbd {
 .cliente-mini__texto strong { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cliente-mini__texto small { font-size: 12px; color: var(--text-3); }
 .cliente-mini .chip i { font-size: 12px; }
+
+/* ----------------------------------------------------------------- Portal del cliente (página pública) */
+.portal { min-height: 100vh; background: var(--bg); }
+.portal__hero {
+  position: relative; color: #fff; padding: 26px 16px 0; overflow: hidden;
+  background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--marca) 45%, transparent), transparent 60%), #0e1726;
+}
+.portal__hero-interior { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.portal__marca { margin-bottom: 18px; }
+.portal__marca img { max-height: 42px; max-width: 170px; object-fit: contain; }
+.portal__marca strong { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.portal__etiqueta { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255, 255, 255, .72); }
+.portal__hero h1 { font-size: clamp(30px, 8vw, 44px); line-height: 1.08; letter-spacing: -.02em; color: #fff; }
+.portal__fecha { font-size: 15px; color: rgba(255, 255, 255, .82); }
+.portal__cuenta { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px; padding: 7px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 600; background: rgba(255, 255, 255, .12); }
+.portal__cuenta strong { font-size: 16px; }
+.portal__nav { max-width: 760px; margin: 22px auto 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.portal__nav::-webkit-scrollbar { display: none; }
+.portal__nav a { display: inline-flex; align-items: center; gap: 6px; padding: 11px 14px; border-radius: 12px 12px 0 0; white-space: nowrap; font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, .8); text-decoration: none; }
+.portal__nav a:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.portal__listo { color: #4ade80; }
+.portal__contenido { max-width: 760px; margin: 0 auto; padding: 18px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+.portal__seccion { scroll-margin-top: 16px; }
+.portal__titulo { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.portal__titulo .ico { width: 42px; height: 42px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px; font-size: 21px; background: var(--brand-soft); color: var(--brand); }
+.portal__titulo .ico--marca { background: color-mix(in srgb, var(--marca) 14%, transparent); color: color-mix(in srgb, var(--marca) 85%, #000); }
+.portal__titulo h2 { font-size: 20px; }
+.portal__titulo p { font-size: 14px; color: var(--text-2); }
+.portal__titulo h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; }
+.portal__estado { font-size: 11.5px; }
+.portal__datos dd small { display: block; font-weight: 500; color: var(--text-3); font-size: 13px; }
+.portal__mapa { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--brand); }
+.portal__subtitulo { margin: 24px 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.portal__servicios { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.portal__servicios li { display: flex; gap: 8px; align-items: flex-start; font-size: 14.5px; }
+.portal__servicios i { color: var(--success); margin-top: 3px; }
+.portal__itinerario { list-style: none; padding: 0; margin: 0; }
+.portal__itinerario li { display: flex; gap: 14px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 14.5px; }
+.portal__itinerario li:first-child { border-top: 0; }
+.portal__itinerario time { width: 48px; flex-shrink: 0; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
+.portal__itinerario small { display: block; color: var(--text-3); font-size: 13px; }
+.portal__boton { width: 100%; justify-content: center; --btn-bg: var(--marca); --btn-bd: transparent; }
+.portal__boton:hover { --btn-bg: var(--marca); filter: brightness(.94); }
+.portal__enlaces { display: grid; gap: 12px; }
+.portal__enlace { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
+.portal__enlace .ico { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; font-size: 20px; background: var(--brand-soft); color: var(--brand); }
+.portal__enlace span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+.portal__enlace small { color: var(--text-3); font-size: 13px; }
+.portal__enlace:hover { border-color: var(--brand); }
+.portal__pie { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 10px; font-size: 12px; color: var(--text-3); text-align: center; }
+
+/* Cuestionario musical */
+.portal-musica__form { display: flex; flex-direction: column; gap: 22px; }
+.portal-musica__bloque { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.portal-musica__bloque legend { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 15px; font-weight: 800; }
+.portal-musica__bloque legend i { color: color-mix(in srgb, var(--marca) 85%, #000); }
+.portal-musica__ayuda { margin-top: -6px; font-size: 13.5px; color: var(--text-2); }
+.portal-musica__momentos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.portal-musica__bloque .field__label i { margin-right: 4px; }
+.portal-musica__bloque textarea.input { resize: vertical; min-height: 84px; }
+.portal-musica__cerrado { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14px; color: var(--text-2); }
+.portal-musica__cerrado a { color: var(--brand); font-weight: 700; }
+.portal-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.portal-chip input, .portal-ambiente__opcion input { position: absolute; opacity: 0; pointer-events: none; }
+.portal-chip span {
+  display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 13.5px; font-weight: 600;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--text-2); transition: background .15s, border-color .15s, color .15s;
+}
+.portal-chip input:checked + span { border-color: var(--marca); background: color-mix(in srgb, var(--marca) 12%, var(--surface)); color: color-mix(in srgb, var(--marca) 80%, #000); }
+.portal-chip input:focus-visible + span, .portal-ambiente__opcion input:focus-visible + span { box-shadow: 0 0 0 3px color-mix(in srgb, var(--marca) 30%, transparent); }
+.portal-ambiente { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.portal-ambiente__opcion span {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 100%; padding: 14px 8px; text-align: center; cursor: pointer;
+  border-radius: var(--r); border: 1.5px solid var(--border); background: var(--surface); font-size: 13.5px; font-weight: 600; color: var(--text-2);
+}
+.portal-ambiente__opcion i { font-size: 24px; color: var(--text-3); }
+.portal-ambiente__opcion input:checked + span { border-color: var(--marca); background: color-mix(in srgb, var(--marca) 10%, var(--surface)); color: var(--text); }
+.portal-ambiente__opcion input:checked + span i { color: color-mix(in srgb, var(--marca) 85%, #000); }
+@media (max-width: 560px) {
+  .portal-musica__momentos { grid-template-columns: minmax(0, 1fr); }
+  .portal-ambiente { grid-template-columns: minmax(0, 1fr); }
+  .portal-ambiente__opcion span { flex-direction: row; justify-content: flex-start; padding: 12px 14px; }
+}
+
+/* Pagos */
+.portal-pagos__resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.portal-pagos__resumen div { display: flex; flex-direction: column; padding: 12px; border-radius: var(--r); background: var(--surface-2); }
+.portal-pagos__resumen small { font-size: 12px; font-weight: 600; color: var(--text-3); }
+.portal-pagos__resumen strong { font-size: clamp(16px, 4.6vw, 20px); font-weight: 800; font-variant-numeric: tabular-nums; }
+.portal-pagos__lista { list-style: none; padding: 0; margin: 16px 0 0; }
+.portal-pagos__lista li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.portal-pagos__lista li span { display: flex; flex-direction: column; }
+.portal-pagos__lista small { color: var(--text-3); font-size: 12.5px; }
+.portal-pagos__datos { margin-top: 16px; padding: 14px 16px; border-radius: var(--r); border: 1px dashed var(--border-strong); background: var(--surface-2); }
+.portal-pagos__datos h3 { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 4px; }
+.portal-pagos__datos p { font-size: 14.5px; color: var(--text-2); }
+.portal-pagos__listo { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-weight: 700; color: var(--success); }
+
+/* El cuestionario respondido, para leerlo (portal cerrado y detalle del evento) */
+.musica-cliente { display: grid; gap: 18px; }
+.musica-cliente__bloque h4 { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.musica-cliente__momentos { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.musica-cliente__momentos li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: var(--r-sm); background: var(--surface-2); font-size: 14px; }
+.musica-cliente__momentos span { color: var(--text-2); }
+.musica-cliente__momentos strong { text-align: right; }
+.musica-cliente__lista { list-style: none; padding: 0; margin: 0; columns: 2 220px; column-gap: 20px; font-size: 14px; }
+.musica-cliente__lista li { break-inside: avoid; display: flex; gap: 6px; padding: 3px 0; }
+.musica-cliente__lista--si li::before { content: "\2713"; color: var(--success); font-weight: 800; }
+.musica-cliente__lista--no li::before { content: "\2715"; color: var(--danger); font-weight: 800; }
+.musica-cliente__ambiente { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-weight: 700; }
+.musica-cliente__generos { display: flex; flex-wrap: wrap; gap: 6px; }
+.musica-cliente__generos span { padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--brand-soft); color: var(--brand-strong); }
+.musica-cliente__texto { white-space: pre-line; font-size: 14.5px; }
+.extra-card--portal.is-on .extra-card__icono { background: var(--brand-soft); color: var(--brand); }

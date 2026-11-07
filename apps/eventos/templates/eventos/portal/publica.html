@@ -1,0 +1,186 @@
+{% load static ui %}<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0e1726">
+    <title>{{ evento.nombre_evento }} · {{ marca.nombre }}</title>
+    <meta property="og:title" content="Tu evento con {{ marca.nombre }}">
+    <meta property="og:description" content="{{ evento.nombre_evento }} · {{ evento.fecha_inicio_evento|date:'j \d\e F \d\e Y'|lower }}. Revisa los detalles y llena tu cuestionario musical.">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/em.css' %}">
+</head>
+{# Portal del cliente: su evento, su música para el DJ y sus pagos, con la marca de la agencia #}
+<body class="portal tipo-{{ evento.tipo_evento }}" style="--marca: {{ marca.color }}">
+<header class="portal__hero">
+    <div class="portal__hero-interior">
+        <div class="portal__marca">
+            {% if marca.logo %}<img src="{{ marca.logo.url }}" alt="{{ marca.nombre }}">{% else %}<strong>{{ marca.nombre }}</strong>{% endif %}
+        </div>
+        <span class="portal__etiqueta"><i class="{{ evento.icono }}"></i>{{ evento.tipo_corto }}{% if evento.cliente_nombre %} · Portal de {{ evento.cliente_nombre }}{% endif %}</span>
+        <h1>{{ evento.nombre_evento }}</h1>
+        <p class="portal__fecha">{{ evento.fecha_inicio_evento|date:"l j \d\e F \d\e Y"|lower|capfirst }} · {{ evento.fecha_inicio_evento|date:"H:i" }} h</p>
+        <span class="portal__cuenta">
+            {% if evento.etapa == 'cancelado' %}<i class="ph ph-x-circle"></i>Evento cancelado
+            {% elif dias > 1 %}<i class="ph ph-hourglass-medium"></i>Faltan <strong>{{ dias }}</strong> días
+            {% elif dias == 1 %}<i class="ph ph-confetti"></i>¡Es mañana!
+            {% elif dias == 0 %}<i class="ph-fill ph-confetti"></i>¡Hoy es el gran día!
+            {% else %}<i class="ph ph-heart"></i>Gracias por celebrar con nosotros{% endif %}
+        </span>
+    </div>
+    <nav class="portal__nav" aria-label="Secciones">
+        <a href="#evento"><i class="ph ph-calendar-dots"></i>Tu evento</a>
+        <a href="#musica"><i class="ph ph-music-notes"></i>Tu música{% if portal.respondido %} <i class="ph-fill ph-check-circle portal__listo"></i>{% endif %}</a>
+        {% if portal.mostrar_pagos and evento.precio_total %}<a href="#pagos"><i class="ph ph-wallet"></i>Pagos</a>{% endif %}
+        {% if invitacion %}<a href="{{ invitacion.get_absolute_url }}" target="_blank" rel="noopener"><i class="ph ph-envelope-open"></i>Invitación</a>{% endif %}
+    </nav>
+</header>
+
+<main class="portal__contenido">
+    {% if es_del_equipo %}<div class="alert"><i class="ph ph-eye"></i><div>Así lo ve tu cliente. Tus visitas no cuentan como “visto”.</div></div>{% endif %}
+
+    {# ---------------- Tu evento ---------------- #}
+    <section class="card card--pad portal__seccion" id="evento">
+        <div class="portal__titulo"><span class="ico"><i class="ph ph-calendar-dots"></i></span><div><h2>Tu evento</h2><p>Lo que acordaste con {{ marca.nombre }}</p></div></div>
+        <dl class="dl portal__datos">
+            <div><dt><i class="ph ph-calendar-blank"></i>Fecha</dt><dd>{{ evento.fecha_inicio_evento|date:"l j \d\e F"|lower|capfirst }}</dd></div>
+            <div><dt><i class="ph ph-clock"></i>Horario</dt><dd>{{ evento.fecha_inicio_evento|date:"H:i" }} a {{ evento.fecha_fin_evento|date:"H:i" }} h</dd></div>
+            {% if evento.lugar %}<div><dt><i class="ph ph-map-pin"></i>Lugar</dt><dd>{{ evento.lugar }}{% if evento.direccion %}<small>{{ evento.direccion }}</small>{% endif %}
+                <a class="portal__mapa" target="_blank" rel="noopener" href="{% if evento.url_mapa %}{{ evento.url_mapa }}{% else %}https://www.google.com/maps/search/?api=1&query={{ evento.lugar|add:' '|add:evento.direccion|urlencode }}{% endif %}"><i class="ph ph-navigation-arrow"></i>Cómo llegar</a></dd></div>{% endif %}
+            {% if evento.num_invitados %}<div><dt><i class="ph ph-users"></i>Invitados</dt><dd>{{ evento.num_invitados }}</dd></div>{% endif %}
+        </dl>
+        {% if conceptos or evento.lista_servicios %}
+        <h3 class="portal__subtitulo">Servicios contratados</h3>
+        <ul class="portal__servicios">
+            {% if conceptos %}{% for c in conceptos %}{% if c.precio_unitario >= 0 %}<li><i class="ph-fill ph-check-circle"></i><span>{{ c.texto_servicio }}</span></li>{% endif %}{% endfor %}
+            {% else %}{% for s in evento.lista_servicios %}<li><i class="ph-fill ph-check-circle"></i><span>{{ s }}</span></li>{% endfor %}{% endif %}
+        </ul>
+        {% endif %}
+        {% if itinerario %}
+        <h3 class="portal__subtitulo">Itinerario</h3>
+        <ol class="portal__itinerario">
+            {% for a in itinerario %}<li><time>{{ a.hora|time:"H:i" }}</time><span><strong>{{ a.titulo }}</strong>{% if a.descripcion %}<small>{{ a.descripcion }}</small>{% endif %}</span></li>{% endfor %}
+        </ol>
+        {% endif %}
+    </section>
+
+    {# ---------------- Tu música ---------------- #}
+    <section class="card card--pad portal__seccion portal-musica" id="musica">
+        <div class="portal__titulo"><span class="ico ico--marca"><i class="ph ph-music-notes"></i></span>
+            <div><h2>Tu música{% if portal.respondido %} <span class="chip chip--success chip--dot portal__estado">Guardada</span>{% endif %}</h2><p>{% if portal.editable %}Cuéntale a tu DJ qué quieres escuchar{% if portal.fecha_limite %}; puedes cambiarla hasta el {{ portal.fecha_limite|date:"j \d\e F"|lower }}{% endif %}.{% else %}Lo que elegiste para tu evento.{% endif %}</p></div>
+            </div>
+
+        {% if guardado %}<div class="alert alert--success mb-3"><i class="ph ph-check-circle"></i><div><strong>¡Listo! Tu música quedó guardada.</strong>Tu DJ ya la tiene. Si se te ocurre algo más, vuelve cuando quieras{% if portal.fecha_limite %} hasta el {{ portal.fecha_limite|date:"j \d\e F"|lower }}{% endif %}.</div></div>{% endif %}
+
+        {% if portal.editable %}
+        <form method="post" action="{% url 'portal_musica' portal.token %}" class="portal-musica__form" novalidate>
+            {% csrf_token %}
+            {% if form.errors %}<div class="alert alert--danger"><i class="ph ph-warning-circle"></i><div>Revisa lo que está marcado en rojo.</div></div>{% endif %}
+            <fieldset class="portal-musica__bloque">
+                <legend><i class="ph ph-star"></i>Momentos especiales</legend>
+                <p class="portal-musica__ayuda">La canción para cada momento. Deja en blanco lo que prefieras que elija el DJ.</p>
+                <div class="portal-musica__momentos">
+                    {% for campo in form.momentos %}
+                    <div class="field">
+                        <label class="field__label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                        <div class="field__control has-icon"><i class="ph ph-music-note field__icon"></i>{{ campo }}</div>
+                        {% for e in campo.errors %}<small class="field__error">{{ e }}</small>{% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <fieldset class="portal-musica__bloque">
+                <legend><i class="ph ph-playlist"></i>Su lista</legend>
+                <div class="field">
+                    <label class="field__label" for="{{ form.imprescindibles.id_for_label }}"><i class="ph ph-heart text-success"></i>{{ form.imprescindibles.label }}</label>
+                    {{ form.imprescindibles }}
+                    {% for e in form.imprescindibles.errors %}<small class="field__error">{{ e }}</small>{% endfor %}
+                </div>
+                <div class="field">
+                    <label class="field__label" for="{{ form.prohibidas.id_for_label }}"><i class="ph ph-prohibit text-danger"></i>{{ form.prohibidas.label }}</label>
+                    {{ form.prohibidas }}
+                    {% for e in form.prohibidas.errors %}<small class="field__error">{{ e }}</small>{% endfor %}
+                </div>
+            </fieldset>
+
+            <fieldset class="portal-musica__bloque">
+                <legend><i class="ph ph-vinyl-record"></i>Su estilo</legend>
+                <span class="field__label">{{ form.generos.label }}</span>
+                <div class="portal-chips">
+                    {% for opcion in form.generos %}<label class="portal-chip">{{ opcion.tag }}<span>{{ opcion.choice_label }}</span></label>{% endfor %}
+                </div>
+                <span class="field__label mt-3">{{ form.ambiente.label }}</span>
+                <div class="portal-ambiente">
+                    {% for opcion in form.ambiente %}
+                    <label class="portal-ambiente__opcion">{{ opcion.tag }}
+                        <span><i class="ph {% if opcion.data.value == 'tranquilo' %}ph-wine{% elif opcion.data.value == 'equilibrado' %}ph-music-notes-simple{% else %}ph-fire{% endif %}"></i>{{ opcion.choice_label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <fieldset class="portal-musica__bloque">
+                <legend><i class="ph ph-microphone-stage"></i>Para el micrófono</legend>
+                <div class="field">
+                    <label class="field__label" for="{{ form.menciones.id_for_label }}">{{ form.menciones.label }} (y cómo se pronuncian)</label>
+                    {{ form.menciones }}
+                </div>
+                <div class="field">
+                    <label class="field__label" for="{{ form.notas.id_for_label }}">{{ form.notas.label }}</label>
+                    {{ form.notas }}
+                </div>
+            </fieldset>
+            <button type="submit" class="btn btn--primary btn--lg portal__boton"><i class="ph ph-check"></i>Guardar mi música</button>
+        </form>
+        {% elif portal.tiene_musica %}
+        {% include 'eventos/portal/_musica.html' %}
+        <p class="portal-musica__cerrado"><i class="ph ph-lock-simple"></i>Tu música ya quedó lista. Si necesitas un cambio, {% if contacto %}<a href="{{ contacto }}" target="_blank" rel="noopener">escríbele a {{ marca.nombre }}</a>{% else %}avísale a {{ marca.nombre }}{% endif %}.</p>
+        {% else %}
+        <p class="portal-musica__cerrado"><i class="ph ph-lock-simple"></i>El cuestionario ya cerró. Si quieres pedir algo para tu evento{% if contacto %}, <a href="{{ contacto }}" target="_blank" rel="noopener">escríbele a {{ marca.nombre }}</a>{% endif %}.</p>
+        {% endif %}
+    </section>
+
+    {# ---------------- Pagos ---------------- #}
+    {% if portal.mostrar_pagos and evento.precio_total %}
+    <section class="card card--pad portal__seccion" id="pagos">
+        <div class="portal__titulo"><span class="ico"><i class="ph ph-wallet"></i></span><div><h2>Pagos</h2><p>Tu estado de cuenta</p></div></div>
+        <div class="portal-pagos__resumen">
+            <div><small>Total</small><strong>{{ evento.precio_total|moneda }}</strong></div>
+            <div><small>Pagado</small><strong class="text-success">{{ evento.total_pagado|moneda }}</strong></div>
+            <div><small>Saldo</small><strong {% if evento.saldo > 0 %}class="text-warning"{% endif %}>{{ evento.saldo|moneda }}</strong></div>
+        </div>
+        <div class="progress progress--success mt-2"><span data-width="{{ evento.porcentaje_pagado }}" style="width: {{ evento.porcentaje_pagado }}%"></span></div>
+        {% if pagos %}
+        <ul class="portal-pagos__lista">
+            {% for p in pagos %}<li><span><strong>{{ p.referencia|default:"Abono" }}</strong><small>{{ p.fecha|date:"j \d\e F \d\e Y"|lower }} · {{ p.get_metodo_display }}</small></span><strong>{{ p.monto|moneda }}</strong></li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% if evento.saldo > 0 and datos_pago %}
+        <div class="portal-pagos__datos"><h3><i class="ph ph-bank"></i>Para pagar</h3><p>{{ datos_pago|linebreaksbr }}</p></div>
+        {% endif %}
+        {% if evento.saldo > 0 and comprobante %}<a class="btn btn--whatsapp mt-2" href="{{ comprobante }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Enviar mi comprobante</a>{% endif %}
+        {% if evento.saldo <= 0 %}<p class="portal-pagos__listo"><i class="ph-fill ph-seal-check"></i>¡Tu evento está pagado! Gracias.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if invitacion or album %}
+    <section class="portal__enlaces">
+        {% if invitacion %}<a class="card card--pad portal__enlace" href="{{ invitacion.get_absolute_url }}" target="_blank" rel="noopener"><span class="ico"><i class="ph ph-envelope-open"></i></span><span><strong>Tu invitación digital</strong><small>Compártela con tus invitados</small></span><i class="ph ph-arrow-up-right"></i></a>{% endif %}
+        {% if album %}<a class="card card--pad portal__enlace" href="{{ album }}" target="_blank" rel="noopener"><span class="ico"><i class="ph ph-images"></i></span><span><strong>El álbum de tu evento</strong><small>Las fotos que compartieron tus invitados</small></span><i class="ph ph-arrow-up-right"></i></a>{% endif %}
+    </section>
+    {% endif %}
+
+    <footer class="portal__pie">
+        {% if contacto %}<a class="btn btn--whatsapp" href="{{ contacto }}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Escribir a {{ marca.nombre }}</a>{% endif %}
+        <p>{% include 'components/credito_eventpro.html' %}</p>
+    </footer>
+</main>
+</body>
+</html>

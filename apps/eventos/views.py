@@ -31,6 +31,7 @@ from .asistente import crear_itinerario, eventos_cercanos
 from .extras import activar, extras_de_conceptos, tiene_invitacion, valores_en_vivo
 from .forms import ActividadForm, EnVivoForm, EventoForm, PagoForm, ProyectorForm
 from .clientes.servicios import resumen_de
+from .portal.servicios import obtener_portal
 from .models import ActividadItinerario, Cliente, ConceptoEvento, Evento, Pago, TipoEvento
 
 
@@ -183,6 +184,7 @@ def detalle(request, pk):
     evento = obtener_evento(request, pk)
     invitacion = getattr(evento, 'invitacion', None)
     url_invitados = request.build_absolute_uri(evento.url_invitados())
+    portal = obtener_portal(evento)
     return render(request, 'eventos/detalle.html', {
         'evento': evento,
         'invitacion': invitacion,
@@ -202,6 +204,8 @@ def detalle(request, pk):
         'qr': qr_svg(url_invitados) if evento.con_en_vivo else '',
         'puede_eliminar': puede_eliminar(request.user, evento),
         'cliente': resumen_de(evento.cliente_id, request.user),
+        'portal': portal,
+        'url_portal': request.build_absolute_uri(portal.get_absolute_url()),
     })
 
 
@@ -242,6 +246,7 @@ def orden(request, pk):
         'folio': f'EP-{evento.pk:05d}',  # EP = EventPro
         'hoy': timezone.localdate(),
         'agencia': Ajustes.de(evento.agencia_id),
+        'portal': getattr(evento, 'portal', None),
     })
 
 

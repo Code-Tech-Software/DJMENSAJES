@@ -184,6 +184,12 @@ class Ajustes(models.Model):
         help_text='Lo ven los invitados al escanear el QR.',
     )
 
+    # Cobros: lo ve el cliente en su portal, junto a su saldo
+    datos_pago = models.TextField(
+        'datos para pagar', blank=True,
+        help_text='Banco, cuenta o CLABE, a nombre de quién… Tu cliente lo ve en su portal junto a su saldo.',
+    )
+
     # Invitaciones nuevas
     plantilla = models.CharField(
         'plantilla inicial', max_length=20, choices=Plantilla.choices, blank=True, default=Plantilla.AUTOMATICA,

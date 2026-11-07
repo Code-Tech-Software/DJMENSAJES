@@ -1,0 +1,40 @@
+{# El cuestionario musical del cliente, para leerlo (portal cerrado, detalle del evento y panel del DJ). Recibe portal #}
+<div class="musica-cliente">
+    {% with momentos=portal.momentos_con_cancion %}{% if momentos %}
+    <div class="musica-cliente__bloque">
+        <h4><i class="ph ph-star"></i>Momentos especiales</h4>
+        <ul class="musica-cliente__momentos">{% for nombre, cancion in momentos %}<li><span>{{ nombre }}</span><strong>{{ cancion }}</strong></li>{% endfor %}</ul>
+    </div>
+    {% endif %}{% endwith %}
+    {% if portal.lista_imprescindibles %}
+    <div class="musica-cliente__bloque">
+        <h4><i class="ph ph-heart"></i>No pueden faltar</h4>
+        <ul class="musica-cliente__lista musica-cliente__lista--si">{% for c in portal.lista_imprescindibles %}<li>{{ c }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    {% if portal.lista_prohibidas %}
+    <div class="musica-cliente__bloque">
+        <h4><i class="ph ph-prohibit"></i>No quieren escuchar</h4>
+        <ul class="musica-cliente__lista musica-cliente__lista--no">{% for c in portal.lista_prohibidas %}<li>{{ c }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    {% if portal.generos or portal.ambiente %}
+    <div class="musica-cliente__bloque">
+        <h4><i class="ph ph-vinyl-record"></i>Su estilo</h4>
+        {% if portal.ambiente %}<p class="musica-cliente__ambiente"><i class="ph {% if portal.ambiente == 'tranquilo' %}ph-wine{% elif portal.ambiente == 'equilibrado' %}ph-music-notes-simple{% else %}ph-fire{% endif %}"></i>{{ portal.get_ambiente_display }}</p>{% endif %}
+        {% if portal.generos %}<div class="musica-cliente__generos">{% for g in portal.generos %}<span>{{ g }}</span>{% endfor %}</div>{% endif %}
+    </div>
+    {% endif %}
+    {% if portal.menciones %}
+    <div class="musica-cliente__bloque">
+        <h4><i class="ph ph-microphone-stage"></i>Para mencionar</h4>
+        <p class="musica-cliente__texto">{{ portal.menciones }}</p>
+    </div>
+    {% endif %}
+    {% if portal.notas %}
+    <div class="musica-cliente__bloque">
+        <h4><i class="ph ph-note"></i>Notas para el DJ</h4>
+        <p class="musica-cliente__texto">{{ portal.notas }}</p>
+    </div>
+    {% endif %}
+</div>

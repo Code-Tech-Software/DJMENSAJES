@@ -51,6 +51,7 @@ urlpatterns = [
     path('i/', include('apps.invitaciones.urls_publicas')),
     path('anfitriones/', include('apps.invitaciones.urls_anfitriones')),
     path('c/', include('apps.eventos.urls_cotizaciones_publicas')),
+    path('p/', include('apps.eventos.urls_portal')),
     path('', include('apps.envivo.urls')),
 ]
 

@@ -773,3 +773,88 @@ class Cliente(models.Model):
     @property
     def icono_origen(self):
         return self.ICONOS_ORIGEN.get(self.origen, '')
+
+
+# --- Portal del cliente ---------------------------------------------------------------------------
+# Un enlace privado por evento (sin cuenta): el cliente ve su evento y su estado de cuenta y llena su
+# cuestionario musical, que el DJ consulta en el evento, la orden de servicio y su panel.
+
+def _token_portal():
+    return generar_token(18)
+
+
+class PortalCliente(models.Model):
+    class Ambiente(models.TextChoices):
+        TRANQUILO = 'tranquilo', 'Más ambiente que baile'
+        EQUILIBRADO = 'equilibrado', 'De todo un poco'
+        FIESTERO = 'fiestero', '¡Que no pare la pista!'
+
+    evento = models.OneToOneField(Evento, on_delete=models.CASCADE, related_name='portal')
+    token = models.CharField(max_length=40, unique=True, default=_token_portal, editable=False)
+    activo = models.BooleanField('enlace activo', default=True, help_text='Apagado, el enlace deja de funcionar.')
+    mostrar_pagos = models.BooleanField('mostrar su estado de cuenta', default=True)
+    fecha_limite = models.DateField(
+        'puede cambiar su música hasta', null=True, blank=True,
+        help_text='Después de esta fecha el cuestionario queda listo y solo se puede consultar.',
+    )
+
+    # Cuestionario musical
+    momentos = models.JSONField('canciones de los momentos especiales', default=dict, blank=True)  # {clave: "Canción – Artista"}
+    imprescindibles = models.TextField('canciones que no pueden faltar', blank=True)
+    prohibidas = models.TextField('canciones que no quieren escuchar', blank=True)
+    generos = models.JSONField('géneros favoritos', default=list, blank=True)
+    ambiente = models.CharField('ambiente', max_length=12, choices=Ambiente.choices, blank=True)
+    menciones = models.TextField('nombres para mencionar', blank=True)
+    notas = models.TextField('algo más para el DJ', blank=True)
+
+    # Seguimiento
+    enviado_el = models.DateTimeField(null=True, blank=True, editable=False)
+    visto_el = models.DateTimeField(null=True, blank=True, editable=False, help_text='Primera vez que el cliente lo abrió.')
+    musica_el = models.DateTimeField(null=True, blank=True, editable=False, help_text='Última vez que guardó su música.')
+    creado = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = 'portal del cliente'
+        verbose_name_plural = 'portales del cliente'
+
+    def __str__(self):
+        return f'Portal · {self.evento}'
+
+    def get_absolute_url(self):
+        return reverse('portal_cliente', args=[self.token])
+
+    @property
+    def respondido(self):
+        return self.musica_el is not None
+
+    @property
+    def editable(self):
+        """El cliente todavía puede cambiar su música: hasta la fecha límite y antes de que empiece el evento."""
+        if self.evento.fecha_inicio_evento <= timezone.now():
+            return False
+        return self.fecha_limite is None or timezone.localdate() <= self.fecha_limite
+
+    def momentos_con_cancion(self):
+        """[(nombre del momento, canción)] en el orden del tipo de evento; también los de un tipo anterior."""
+        from .portal.musica import ETIQUETAS, momentos_de
+        guardados = dict(self.momentos or {})
+        lista = [(nombre, guardados.pop(clave, '')) for clave, nombre in momentos_de(self.evento.tipo_evento)]
+        lista += [(ETIQUETAS.get(clave, clave), cancion) for clave, cancion in guardados.items()]
+        return [(nombre, cancion) for nombre, cancion in lista if cancion]
+
+    @staticmethod
+    def _lineas(texto):
+        return [linea.strip(' -•\t') for linea in (texto or '').splitlines() if linea.strip(' -•\t')]
+
+    @property
+    def lista_imprescindibles(self):
+        return self._lineas(self.imprescindibles)
+
+    @property
+    def lista_prohibidas(self):
+        return self._lineas(self.prohibidas)
+
+    @property
+    def tiene_musica(self):
+        return bool(self.momentos_con_cancion() or self.imprescindibles.strip() or self.prohibidas.strip() or self.generos
+                    or self.ambiente or self.menciones.strip() or self.notas.strip())

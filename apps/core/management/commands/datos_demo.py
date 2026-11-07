@@ -21,12 +21,12 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from apps.banners.models import Banner
 from apps.colaboradores.models import Colaborador
-from apps.core.models import Agencia, Plan
+from apps.core.models import Agencia, Ajustes, Plan
 from apps.cuentas.models import Usuario
 from apps.envivo.models import Mensaje
 from apps.eventos.clientes.servicios import vincular
 from apps.eventos.cotizacion.servicios import CONDICIONES_BASE, aceptar, cargar_catalogo_ejemplo, guardar_conceptos
-from apps.eventos.models import ActividadItinerario, Cliente, Cotizacion, Evento, Paquete, Pago, Servicio
+from apps.eventos.models import ActividadItinerario, Cliente, Cotizacion, Evento, Paquete, Pago, PortalCliente, Servicio
 from apps.invitaciones.models import FotoInvitacion, Invitacion, Invitado, Mencion, Ubicacion
 
 USUARIO_DEMO = 'demo'
@@ -326,6 +326,22 @@ class Command(BaseCommand):
             ('Paola Méndez', Cliente.Origen.EVENTO, ''),
         ]:
             Cliente.objects.filter(agencia=agencia, nombre=nombre).update(origen=origen, notas=notas)
+
+        # --- Portal del cliente de la boda, con su cuestionario musical ya respondido
+        PortalCliente.objects.create(
+            evento=boda, fecha_limite=hoy + timedelta(days=7), enviado_el=ahora - timedelta(days=3), visto_el=ahora - timedelta(days=2),
+            musica_el=ahora - timedelta(hours=20),
+            momentos={'entrada': 'A Thousand Years – Christina Perri', 'primer_baile': 'Perfect – Ed Sheeran',
+                      'padres': 'Amor eterno – Rocío Dúrcal', 'cierre': 'Cielito lindo'},
+            imprescindibles='Celebration – Kool & The Gang\nLa Bikina – Luis Miguel\nMr. Brightside – The Killers\nLa Chona – Los Tucanes de Tijuana',
+            prohibidas='Payaso de rodeo\nEl baile del perrito',
+            generos=['Pop', 'Rock en español', 'Cumbia', 'Éxitos de los 80 y 90'], ambiente=PortalCliente.Ambiente.FIESTERO,
+            menciones='Padrinos de anillos: Jorge y Lety (se pronuncia "Leti")\nLos papás de Ana: Rosa y Juan',
+            notas='Durante la cena, música tranquila en inglés. A la abuela le encanta Juan Gabriel.',
+        )
+        ajustes_agencia = Ajustes.de(agencia)
+        ajustes_agencia.datos_pago = 'Transferencia a BBVA · CLABE 0121 8000 1234 5678 90\nA nombre de Eventos Grupo EM'
+        ajustes_agencia.save(update_fields=['datos_pago'])
 
         self.stdout.write(self.style.SUCCESS(
             f'Datos de demostración listos. Inicia sesión con usuario "{USUARIO_DEMO}" y contraseña "{CLAVE_DEMO}".'))

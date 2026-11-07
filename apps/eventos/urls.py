@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from .portal import views as portal
 
 app_name = 'eventos'
 
@@ -18,6 +19,8 @@ urlpatterns = [
     path('<int:pk>/proyector/', views.ProyectorEditar.as_view(), name='proyector'),
     path('<int:pk>/en-vivo/', views.EnVivoEditar.as_view(), name='en_vivo'),
     path('<int:pk>/en-vivo/activar/', views.en_vivo_activar, name='en_vivo_activar'),
+    path('<int:pk>/portal/enviar/', portal.enviar, name='portal_enviar'),
+    path('<int:pk>/portal/opciones/', portal.PortalOpciones.as_view(), name='portal_opciones'),
     path('<int:pk>/en-vivo/desactivar/', views.en_vivo_desactivar, name='en_vivo_desactivar'),
     path('<int:pk>/eliminar/', views.eliminar, name='eliminar'),
     path('<int:pk>/duplicar/', views.duplicar, name='duplicar'),

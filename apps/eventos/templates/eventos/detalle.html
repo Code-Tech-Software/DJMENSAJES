@@ -48,9 +48,35 @@
     </div>
 </section>
 
-{# ---------------- Extras del evento: se venden y se activan por evento ---------------- #}
-{% if modulos.en_vivo or modulos.invitaciones %}
+{# ---------------- Portal del cliente y extras del evento (se venden y se activan por evento) ---------------- #}
 <div class="extras-ev mt-3 reveal">
+    <div class="extra-card extra-card--portal {% if portal.activo and portal.enviado_el or portal.visto_el or portal.respondido %}is-on{% endif %}">
+        <span class="extra-card__icono"><i class="ph ph-user-circle-gear"></i></span>
+        <div class="extra-card__texto">
+            <div class="extra-card__titulo"><h3>Portal del cliente</h3>
+                {% if not portal.activo %}<span class="chip chip--muted">Desactivado</span>
+                {% elif portal.respondido %}<span class="chip chip--success chip--dot">Música lista</span>
+                {% elif portal.visto_el %}<span class="chip chip--info chip--dot">Visto</span>
+                {% elif portal.enviado_el %}<span class="chip chip--warning chip--dot">Enviado</span>
+                {% else %}<span class="chip chip--muted">Sin enviar</span>{% endif %}</div>
+            <p>{% if portal.respondido %}Llenó su cuestionario musical {{ portal.musica_el|hace }}.{% elif portal.visto_el %}Lo abrió {{ portal.visto_el|hace }}; aún no llena su música.{% else %}Su página con el evento, sus pagos y un cuestionario musical para el DJ.{% endif %}</p>
+        </div>
+        <div class="extra-card__acciones">
+            {% if portal.activo %}<a class="btn btn--sm {% if not portal.enviado_el %}btn--primary{% endif %}" href="{% url 'eventos:portal_enviar' evento.pk %}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>{% if portal.enviado_el %}Reenviar{% else %}Enviar{% endif %}</a>{% endif %}
+            <div class="dropdown">
+                <button class="icon-btn icon-btn--sm" data-dropdown aria-label="Más opciones del portal"><i class="ph ph-dots-three-vertical"></i></button>
+                <div class="dropdown__menu">
+                    {% if portal.activo %}
+                    <button class="menu-item" data-copy="{{ url_portal }}"><i class="ph ph-link"></i>Copiar enlace</button>
+                    <a class="menu-item" href="{{ url_portal }}" target="_blank" rel="noopener"><i class="ph ph-arrow-square-out"></i>Ver como cliente</a>
+                    {% endif %}
+                    <a class="menu-item" href="#musica" data-ir-tab="musica"><i class="ph ph-music-notes"></i>Ver su música</a>
+                    <div class="menu-sep"></div>
+                    <button class="menu-item" data-modal="{% url 'eventos:portal_opciones' evento.pk %}"><i class="ph ph-gear-six"></i>Opciones del portal</button>
+                </div>
+            </div>
+        </div>
+    </div>
     {% if modulos.en_vivo %}
     <div class="extra-card extra-card--vivo {% if evento.con_en_vivo %}is-on{% endif %}">
         <span class="extra-card__icono"><i class="ph ph-broadcast"></i></span>
@@ -92,7 +118,6 @@
     </div>
     {% endif %}
 </div>
-{% endif %}
 
 {# ---------------- Pantallas de la experiencia en vivo (solo si está activa) ---------------- #}
 {% if modulos.en_vivo and evento.con_en_vivo %}
@@ -149,6 +174,7 @@
         <a href="#resumen" class="tab is-active" data-tab="resumen"><i class="ph ph-squares-four"></i>Resumen</a>
         {% if modulos.invitaciones and invitacion %}<a href="#invitados" class="tab" data-tab="invitados"><i class="ph ph-user-list"></i>Invitados<span class="count">{{ rsvp.total|default:0 }}</span></a>{% endif %}
         <a href="#itinerario" class="tab" data-tab="itinerario"><i class="ph ph-clock"></i>Itinerario<span class="count">{{ itinerario|length }}</span></a>
+        <a href="#musica" class="tab" data-tab="musica"><i class="ph ph-music-notes"></i>Música{% if portal.respondido %}<span class="count count--ok"><i class="ph ph-check"></i></span>{% endif %}</a>
         {% if modulos.en_vivo and evento.con_en_vivo %}<a href="#mensajes" class="tab" data-tab="mensajes"><i class="ph ph-chats"></i>Mensajes<span class="count">{{ mensajes_resumen.total }}</span></a>{% endif %}
         <a href="#pagos" class="tab" data-tab="pagos"><i class="ph ph-wallet"></i>Pagos</a>
     </nav>
@@ -337,6 +363,27 @@
     {% endif %}
 
     {# Pagos #}
+    <section class="tab-panel" data-panel="musica" hidden>
+        <div class="card card--pad">
+            <div class="card__head" style="padding:0;margin-bottom:18px"><div><h3>Música del cliente</h3>
+                <p>{% if portal.respondido %}Actualizada {{ portal.musica_el|hace }}{% if portal.editable %} · puede cambiarla{% if portal.fecha_limite %} hasta el {{ portal.fecha_limite|date:"j \d\e F"|lower }}{% endif %}{% else %} · ya no puede cambiarla{% endif %}{% else %}Lo que llene en su portal aparece aquí, en la orden de servicio y en el panel del DJ{% endif %}</p></div>
+                {% if portal.activo %}<a class="btn btn--sm" href="{{ url_portal }}#musica" target="_blank" rel="noopener"><i class="ph ph-arrow-square-out"></i>Abrir su portal</a>{% endif %}</div>
+            {% if portal.tiene_musica %}
+            {% include 'eventos/portal/_musica.html' %}
+            {% else %}
+            <div class="empty" style="padding:20px 0 6px">
+                <div class="empty__art"><i class="ph ph-music-notes"></i></div>
+                <h3>Aún no llena su cuestionario</h3>
+                <p>Mándale su portal: ahí elige las canciones de sus momentos especiales, las que no pueden faltar, las prohibidas y nombres a mencionar.</p>
+                {% if portal.activo %}<div class="row row-wrap" style="justify-content:center;gap:8px">
+                    <a class="btn btn--primary" href="{% url 'eventos:portal_enviar' evento.pk %}" target="_blank" rel="noopener"><i class="ph ph-whatsapp-logo"></i>Enviar por WhatsApp</a>
+                    <button class="btn" data-copy="{{ url_portal }}"><i class="ph ph-link"></i>Copiar enlace</button>
+                </div>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
     <section class="tab-panel" data-panel="pagos" hidden>
         <div class="grid grid-sidebar">
             <div class="card">

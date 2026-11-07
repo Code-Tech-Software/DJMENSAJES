@@ -77,6 +77,21 @@
         <table><tbody>{% for a in itinerario %}<tr><td style="width:90px" class="mono">{{ a.hora|time:"H:i" }}</td><td>{{ a.titulo }}{% if a.descripcion %} <span style="color:#64748b">· {{ a.descripcion }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
         {% endif %}
 
+        {% if portal and portal.tiene_musica %}
+        <h2>Música del cliente</h2>
+        {% with momentos=portal.momentos_con_cancion %}{% if momentos %}
+        <table><tbody>{% for nombre, cancion in momentos %}<tr><td style="width:220px;color:#64748b">{{ nombre }}</td><td><strong>{{ cancion }}</strong></td></tr>{% endfor %}</tbody></table>
+        {% endif %}{% endwith %}
+        <dl class="dl" style="margin-top:12px">
+            {% if portal.lista_imprescindibles %}<div style="grid-column:1/-1"><dt>No pueden faltar</dt><dd>{{ portal.lista_imprescindibles|join:" · " }}</dd></div>{% endif %}
+            {% if portal.lista_prohibidas %}<div style="grid-column:1/-1"><dt>No quieren escuchar</dt><dd>{{ portal.lista_prohibidas|join:" · " }}</dd></div>{% endif %}
+            {% if portal.ambiente %}<div><dt>Ambiente</dt><dd>{{ portal.get_ambiente_display }}</dd></div>{% endif %}
+            {% if portal.generos %}<div><dt>Géneros</dt><dd>{{ portal.generos|join:", " }}</dd></div>{% endif %}
+            {% if portal.menciones %}<div style="grid-column:1/-1"><dt>Para mencionar</dt><dd style="white-space:pre-line">{{ portal.menciones }}</dd></div>{% endif %}
+            {% if portal.notas %}<div style="grid-column:1/-1"><dt>Notas para el DJ</dt><dd style="white-space:pre-line">{{ portal.notas }}</dd></div>{% endif %}
+        </dl>
+        {% endif %}
+
         <h2>Pagos</h2>
         <table>
             <thead><tr><th>Fecha</th><th>Concepto</th><th>Método</th><th class="num">Monto</th></tr></thead>

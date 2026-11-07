@@ -333,6 +333,7 @@ def dj(request, token):
         'url_invitados': url_invitados,
         'qr': qr_svg(url_invitados),
         'url_pantalla': request.build_absolute_uri(evento.url_pantalla()),
+        'portal': getattr(evento, 'portal', None),
     })
 
 

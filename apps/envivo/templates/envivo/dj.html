@@ -35,12 +35,20 @@
             </button>
             <button class="ctrl" id="btn-sonido" title="Sonido al recibir mensajes"><i class="ph ph-bell-slash"></i><span>Sonido</span></button>
             <button class="ctrl" id="btn-tema" title="Cambiar a tema oscuro o claro"><i class="ph ph-moon-stars"></i></button>
+            {% if portal and portal.tiene_musica %}<button class="ctrl" type="button" title="La música que pidió el cliente" onclick="document.getElementById('musica-cliente').showModal()"><i class="ph ph-playlist"></i></button>{% endif %}
             <button class="ctrl" id="btn-qr" title="Mostrar QR para invitados"><i class="ph ph-qr-code"></i></button>
             <a class="ctrl" href="{{ url_pantalla }}" target="_blank" title="Abrir pantalla del proyector"><i class="ph ph-television-simple"></i></a>
             {% if mostrar_fotos %}<a class="ctrl" href="{{ url_fotos }}" target="_blank" title="Abrir carrusel de fotos (segunda pantalla)"><i class="ph ph-images"></i></a>{% endif %}
             <button class="ctrl" id="btn-completa" title="Pantalla completa"><i class="ph ph-corners-out"></i></button>
         </div>
     </header>
+
+    {% if portal and portal.tiene_musica %}
+    <dialog class="dj-musica" id="musica-cliente" onclick="if (event.target === this) this.close()">
+        <header><h2><i class="ph ph-playlist"></i>Música del cliente</h2><button type="button" class="ctrl" onclick="this.closest('dialog').close()" aria-label="Cerrar"><i class="ph ph-x"></i></button></header>
+        {% include 'eventos/portal/_musica.html' %}
+    </dialog>
+    {% endif %}
 
     <div class="dj-barra">
         <div class="contadores">

@@ -294,3 +294,26 @@ a { color: inherit; text-decoration: none; }
   .deshacer.visible, .aviso-pausa.visible { transform: none; }
   .deshacer.visible ~ .aviso-pausa.visible { transform: translateY(-64px); }
 }
+
+/* Música que pidió el cliente en su portal */
+.dj-musica { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 20px 22px; border: 1px solid var(--borde); border-radius: 18px;
+  background: var(--panel); color: var(--texto); box-shadow: var(--sombra-alta); font-family: var(--font); }
+.dj-musica::backdrop { background: rgba(7, 9, 15, .55); backdrop-filter: blur(3px); }
+.dj-musica header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.dj-musica h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; }
+.dj-musica h2 i { color: var(--cancion); }
+.dj-musica .musica-cliente { display: grid; gap: 16px; }
+.dj-musica h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+.dj-musica ul { list-style: none; margin: 0; padding: 0; }
+.dj-musica .musica-cliente__momentos { display: grid; gap: 6px; }
+.dj-musica .musica-cliente__momentos li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: 10px; background: var(--panel-2); font-size: 14px; }
+.dj-musica .musica-cliente__momentos span { color: var(--suave); }
+.dj-musica .musica-cliente__lista { columns: 2 200px; column-gap: 18px; font-size: 14px; }
+.dj-musica .musica-cliente__lista li { display: flex; gap: 6px; padding: 3px 0; break-inside: avoid; }
+.dj-musica .musica-cliente__lista--si li::before { content: "\2713"; color: var(--ok); font-weight: 800; }
+.dj-musica .musica-cliente__lista--no li::before { content: "\2715"; color: var(--peligro); font-weight: 800; }
+.dj-musica .musica-cliente__ambiente { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; font-weight: 700; }
+.dj-musica .musica-cliente__generos { display: flex; flex-wrap: wrap; gap: 6px; }
+.dj-musica .musica-cliente__generos span { padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--panel-2); border: 1px solid var(--borde); }
+.dj-musica .musica-cliente__texto { white-space: pre-line; margin: 0; font-size: 14.5px; }
+

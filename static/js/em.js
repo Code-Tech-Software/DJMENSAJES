@@ -399,6 +399,18 @@
       const initial = tabs.find(t => t.dataset.tab === fromHash) || tabs.find(t => t.classList.contains('is-active')) || tabs[0];
       if (initial) activate(initial.dataset.tab, false);
     });
+    // Enlaces que llevan a una pestaña (p. ej. "Ver su música" desde un menú)
+    $$('[data-ir-tab]', root).forEach(a => {
+      if (a.dataset.ready) return;
+      a.dataset.ready = '1';
+      a.addEventListener('click', e => {
+        const tab = document.querySelector(`[data-tab="${a.dataset.irTab}"]`);
+        if (!tab) return;
+        e.preventDefault();
+        tab.click();
+        tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
   }
 
   function initCountdowns(root) {

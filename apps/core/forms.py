@@ -12,7 +12,7 @@ class AjustesForm(forms.ModelForm):
         model = Ajustes
         fields = [
             'nombre', 'eslogan', 'logo_principal', 'logo_secundario', 'color_marca',
-            'whatsapp', 'telefono', 'email', 'sitio_web', 'instagram', 'facebook', 'tiktok',
+            'whatsapp', 'telefono', 'email', 'sitio_web', 'instagram', 'facebook', 'tiktok', 'datos_pago',
             'en_vivo_por_defecto', 'cooldown', 'permitir_saludos', 'permitir_canciones', 'permitir_fotos', 'moderar_pantalla', 'mensaje_bienvenida',
             'plantilla', 'dias_limite_rsvp',
         ]
@@ -30,6 +30,7 @@ class AjustesForm(forms.ModelForm):
             'cooldown': forms.NumberInput(attrs={'min': 0, 'max': 60, 'step': '0.5'}),
             'mensaje_bienvenida': forms.TextInput(attrs={'placeholder': '¡Bienvenidos! Pide tu canción o manda un saludo'}),
             'dias_limite_rsvp': forms.NumberInput(attrs={'min': 0, 'max': 90}),
+            'datos_pago': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Transferencia a BBVA · CLABE 0121 8000 1234 5678 90\nA nombre de Eventos Grupo EM'}),
         }
 
     def __init__(self, *args, **kwargs):
